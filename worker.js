@@ -114,6 +114,75 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
+      // 4. Session API: POST /api/session/start
+      if (url.pathname === "/api/session/start" && method === "POST") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
+        }
+        const body = await request.json().catch(() => ({}));
+        const playerName = (body.playerName || "Contestant").trim();
+        const sessionId = crypto.randomUUID();
+
+        await env.DB.prepare(
+          "INSERT INTO game_sessions (session_id, player_name, q_index, current_prize, guaranteed_prize, used_lifelines, status) VALUES (?, ?, 0, '₹ 0', '₹ 0', '{}', 'active')"
+        ).bind(sessionId, playerName).run();
+
+        return new Response(JSON.stringify({
+          sessionId,
+          status: "active",
+          timestamp: new Date().toISOString()
+        }), { status: 200, headers: corsHeaders });
+      }
+
+      // 5. Session API: POST /api/session/sync
+      if (url.pathname === "/api/session/sync" && method === "POST") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
+        }
+        const body = await request.json().catch(() => ({}));
+        const sessionId = body.sessionId;
+        if (!sessionId) {
+          return new Response(JSON.stringify({ error: "Missing sessionId" }), { status: 400, headers: corsHeaders });
+        }
+
+        const qIndex = typeof body.qIndex === "number" ? body.qIndex : 0;
+        const currentPrize = body.currentPrize || "₹ 0";
+        const guaranteedPrize = body.guaranteedPrize || "₹ 0";
+        const usedLifelines = JSON.stringify(body.usedLifelines || {});
+
+        await env.DB.prepare(
+          "UPDATE game_sessions SET q_index = ?, current_prize = ?, guaranteed_prize = ?, used_lifelines = ?, updated_at = CURRENT_TIMESTAMP WHERE session_id = ?"
+        ).bind(qIndex, currentPrize, guaranteedPrize, usedLifelines, sessionId).run();
+
+        return new Response(JSON.stringify({
+          success: true,
+          sessionId
+        }), { status: 200, headers: corsHeaders });
+      }
+
+      // 6. Session API: POST /api/session/end
+      if (url.pathname === "/api/session/end" && method === "POST") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
+        }
+        const body = await request.json().catch(() => ({}));
+        const sessionId = body.sessionId;
+        const finalPrize = body.finalPrize || "₹ 0";
+        const status = body.status || "ended"; // won, lost, quit
+
+        if (sessionId) {
+          await env.DB.prepare(
+            "UPDATE game_sessions SET current_prize = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE session_id = ?"
+          ).bind(finalPrize, status, sessionId).run();
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          finalPrize,
+          status
+        }), { status: 200, headers: corsHeaders });
+      }
+
       // Fallback 404 for unknown API routes
       if (url.pathname.startsWith("/api/")) {
         return new Response(JSON.stringify({ error: "Endpoint not found" }), {
