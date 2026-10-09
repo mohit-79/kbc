@@ -36,3 +36,19 @@ class_name = "SessionRoom"
 tag = "v1"
 new_classes = ["SessionRoom"]
 
+# Custom Domain Routing
+# Deploy Worker to handle /api/* and /ws* on kbc.harjani.me:
+# routes = [
+#   { pattern = "kbc.harjani.me/api/*", zone_name = "harjani.me" },
+#   { pattern = "kbc.harjani.me/ws*", zone_name = "harjani.me" }
+# ]
+
+# Optional Environment Variables for Automated WhatsApp
+[vars]
+WHATSAPP_GATEWAY_URL = ""
+WHATSAPP_GATEWAY_TOKEN = ""
+TWILIO_ACCOUNT_SID = ""
+TWILIO_AUTH_TOKEN = ""
+TWILIO_FROM_PHONE = ""
+
+

@@ -132,3 +132,32 @@ Result: PASS
 
 
 
+
+
+---
+
+## c4C.1 — 2026-10-10
+What: Created npm build/deployment script pipeline (`package.json`) with automated commands for `wrangler deploy`, `wrangler pages deploy`, and D1 schema migration.
+Test: Verified JSON syntax and script execution command lines.
+Result: PASS
+
+---
+
+## c4C.2 — 2026-10-10
+What: Configured `migrations/0001_initial_schema.sql` for automated zero-downtime D1 SQLite provisioning matching all 4 data tables (`profiles`, `friends`, `game_sessions`, `friend_requests`).
+Test: Verified SQLite table definitions, foreign keys, and indexes.
+Result: PASS
+
+---
+
+## c4C.3 — 2026-10-10
+What: Updated `wrangler.toml` with production configuration for Cloudflare Workers, Pages assets, D1 database binding, Durable Object `SessionRoom`, and `kbc.harjani.me` routes.
+Test: Verified TOML syntax and compatibility with Cloudflare Workers serverless runtime.
+Result: PASS
+
+---
+
+## c4C.4 — 2026-10-10
+What: Authored `DEPLOY.md` comprehensive 3-step deployment and DNS checklist for zero-server hosting on `kbc.harjani.me` with QR-gateway setup and iOS Safari PWA installation steps.
+Test: Verified all command instructions and URLs.
+Result: PASS

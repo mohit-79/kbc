@@ -1,0 +1,16 @@
+{
+  "name": "surkbc",
+  "version": "1.0.0",
+  "description": "SurKBC — Bollywood Music Quiz (Cloudflare Serverless Stack)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "npm run d1:migrate && wrangler deploy && wrangler pages deploy ./ --project-name=surkbc",
+    "deploy:worker": "wrangler deploy",
+    "deploy:pages": "wrangler pages deploy ./ --project-name=surkbc",
+    "d1:migrate": "wrangler d1 migrations apply surkbc-db --remote",
+    "d1:migrate:local": "wrangler d1 migrations apply surkbc-db --local"
+  },
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  }
+}
