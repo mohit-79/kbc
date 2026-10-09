@@ -80,6 +80,14 @@ What: Upgraded Friends model in `app.js`: added E.164 phone normalization, valid
 Test: Automated tests for 10-digit Indian numbers, +91 prefixes, international numbers, and invalid rejects; verified profile save & D1 sync.
 Result: PASS
 
+---
+
+## c4B.2 — 2026-10-10
+What: Implemented `POST /api/phone-friend/send` in `worker.js`: generates single-use token (5-min expiry), creates `friend_requests` row, and returns answer link (`/friend.html`) and Jitsi audio/video call links.
+Test: Verified DB insertion, validated token generation, 5-minute expiration calculation, and URL link structure.
+Result: PASS
+
+
 
 
 

@@ -183,6 +183,48 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
+      // 7. Phone-a-Friend API: POST /api/phone-friend/send
+      if (url.pathname === "/api/phone-friend/send" && method === "POST") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
+        }
+        const body = await request.json().catch(() => ({}));
+        const sessionId = body.sessionId;
+        const friendPhone = (body.friendPhone || "").trim();
+        const friendName = (body.friendName || "Dost").trim();
+        const question = body.question || "";
+        const options = Array.isArray(body.options) ? body.options : [];
+        const playerName = (body.playerName || "Khiladi").trim();
+
+        if (!sessionId || !friendPhone) {
+          return new Response(JSON.stringify({ error: "Missing sessionId or friendPhone" }), { status: 400, headers: corsHeaders });
+        }
+
+        const requestId = crypto.randomUUID();
+        const token = crypto.randomUUID().substring(0, 8);
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5-minute expiry
+
+        await env.DB.prepare(
+          "INSERT INTO friend_requests (id, session_id, friend_name, friend_phone, token, question_text, options_json, status, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)"
+        ).bind(requestId, sessionId, friendName, friendPhone, token, question, JSON.stringify(options), expiresAt).run();
+
+        // Target URL links
+        const origin = url.origin.includes("localhost") || url.origin.includes("127.0.0.1") ? url.origin : "https://kbc.harjani.me";
+        const answerUrl = `${origin}/friend.html?session=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}`;
+        const audioUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}#config.startWithVideoMuted=true`;
+        const videoUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}`;
+
+        return new Response(JSON.stringify({
+          success: true,
+          requestId,
+          token,
+          answerUrl,
+          audioUrl,
+          videoUrl,
+          expiresAt
+        }), { status: 200, headers: corsHeaders });
+      }
+
       // Fallback 404 for unknown API routes
       if (url.pathname.startsWith("/api/")) {
         return new Response(JSON.stringify({ error: "Endpoint not found" }), {
