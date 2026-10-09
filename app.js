@@ -309,12 +309,18 @@ function renderHome() {
 
   const friendsList = document.getElementById('home-friends-list');
   if (friendsList) {
-    friendsList.innerHTML = profile.friends.map(f => `
-      <div class="friend-row">
-        <span>👤 ${escapeHtml(f.name)}</span>
-        <button class="btn-remove-friend" onclick="removeFriend(${f.id})">✕</button>
-      </div>
-    `).join('');
+    friendsList.innerHTML = profile.friends.map(f => {
+      const phoneDisplay = f.phone ? `<span style="font-size: 10px; color: var(--neon-cyan); margin-left: 6px;">📞 ${escapeHtml(f.phone)}</span>` : `<span style="font-size: 10px; color: var(--color-amber); margin-left: 6px;">⚠️ Add No.</span>`;
+      return `
+        <div class="friend-row" style="cursor: pointer;" onclick="editFriendPhone(${f.id})">
+          <div style="display: flex; align-items: center; overflow: hidden;">
+            <span style="font-weight: 700;">👤 ${escapeHtml(f.name)}</span>
+            ${phoneDisplay}
+          </div>
+          <button class="btn-remove-friend" onclick="event.stopPropagation(); removeFriend(${f.id})">✕</button>
+        </div>
+      `;
+    }).join('');
   }
 }
 
@@ -323,17 +329,54 @@ window.onPlayerNameChange = function(name) {
   saveProfile();
 };
 
+function normalizePhoneNumber(raw) {
+  if (!raw) return "";
+  let clean = String(raw).replace(/[\s\-\(\)]/g, "");
+  if (/^[6-9]\d{9}$/.test(clean)) {
+    clean = "+91" + clean;
+  } else if (/^91[6-9]\d{9}$/.test(clean)) {
+    clean = "+" + clean;
+  } else if (!clean.startsWith("+") && clean.length >= 10) {
+    clean = "+" + clean;
+  }
+  return /^\+[1-9]\d{9,14}$/.test(clean) ? clean : null;
+}
+
 window.addFriend = function() {
   if (profile.friends.length >= 3) {
-    showToast("Max 3 friends allowed!");
+    showToast("Adhik-tam 3 dost allow hain!");
     return;
   }
   const name = prompt("Dost ka naam likhein:");
-  if (name && name.trim()) {
-    profile.friends.push({ id: Date.now(), name: name.trim() });
-    saveProfile();
-    renderHome();
+  if (!name || !name.trim()) return;
+
+  const rawPhone = prompt("Dost ka WhatsApp number (+91...):", "+91 ");
+  const phone = normalizePhoneNumber(rawPhone);
+  if (!phone) {
+    showToast("Invalid number! E.164 format dalein (jaise +919876543210)");
+    return;
   }
+
+  profile.friends.push({ id: Date.now(), name: name.trim(), phone });
+  saveProfile();
+  renderHome();
+  showToast(`${name.trim()} jud gaye!`);
+};
+
+window.editFriendPhone = function(id) {
+  const friend = profile.friends.find(f => f.id === id);
+  if (!friend) return;
+  const raw = prompt(`'${friend.name}' ka WhatsApp number update karein:`, friend.phone || "+91 ");
+  if (raw === null) return;
+  const phone = normalizePhoneNumber(raw);
+  if (!phone) {
+    showToast("Invalid number! (e.g. +919876543210)");
+    return;
+  }
+  friend.phone = phone;
+  saveProfile();
+  renderHome();
+  showToast("Number update ho gaya!");
 };
 
 window.removeFriend = function(id) {

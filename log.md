@@ -73,6 +73,14 @@ What: Integrated frontend state sync in `app.js` with Cloudflare Workers API (`s
 Test: Verified non-blocking async network calls, checked 0 syntax errors, verified localStorage fallback when offline.
 Result: PASS
 
+---
+
+## c4B.1 — 2026-10-10
+What: Upgraded Friends model in `app.js`: added E.164 phone normalization, validation, click-to-edit action, and phone badges in the Home Screen friend list.
+Test: Automated tests for 10-digit Indian numbers, +91 prefixes, international numbers, and invalid rejects; verified profile save & D1 sync.
+Result: PASS
+
+
 
 
 
