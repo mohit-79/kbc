@@ -2,6 +2,11 @@ name = "surkbc"
 main = "worker.js"
 compatibility_date = "2024-10-01"
 
+# Custom Domain Routing
+routes = [
+  { pattern = "kbc.harjani.me/*", zone_name = "harjani.me" }
+]
+
 # Cloudflare D1 Database Binding
 [[d1_databases]]
 binding = "DB"
@@ -36,12 +41,6 @@ class_name = "SessionRoom"
 tag = "v1"
 new_sqlite_classes = ["SessionRoom"]
 
-# Custom Domain Routing
-# Deploy Worker to handle /api/* and /ws* on kbc.harjani.me:
-# routes = [
-#   { pattern = "kbc.harjani.me/api/*", zone_name = "harjani.me" },
-#   { pattern = "kbc.harjani.me/ws*", zone_name = "harjani.me" }
-# ]
 
 # Optional Environment Variables for Automated WhatsApp
 [vars]
