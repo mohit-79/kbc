@@ -45,8 +45,8 @@ new_sqlite_classes = ["SessionRoom"]
 
 # Optional Environment Variables for Automated WhatsApp
 [vars]
-WHATSAPP_GATEWAY_URL = ""
-WHATSAPP_GATEWAY_TOKEN = ""
+WHATSAPP_GATEWAY_URL = "https://7107.api.greenapi.com/waInstance710722761539"
+WHATSAPP_GATEWAY_TOKEN = "7137ee063b2f4f23b6bfaff096bb168afca7b3498c70490294"
 TWILIO_ACCOUNT_SID = ""
 TWILIO_AUTH_TOKEN = ""
 TWILIO_FROM_PHONE = ""
