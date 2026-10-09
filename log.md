@@ -115,6 +115,14 @@ What: Integrated live Player Answer Modal (`#modal-friend-answer`) and Phone-a-F
 Test: Verified modal open/close actions, verified timer stays frozen throughout, verified `acceptFriendAnswer` locks option, and confirmed cancel-before-send frees the lifeline.
 Result: PASS
 
+---
+
+## c4B.7 — 2026-10-10
+What: Hardened Phone-a-Friend fallbacks: automatic switch to manual entry and deep-link when offline or when Worker API is unavailable; safeguarded empty friend rosters so lifelines are never consumed on cancellations.
+Test: Tested simulated network failures, verified seamless transition to manual answer buttons, and confirmed lifeline preservation.
+Result: PASS
+
+
 
 
 

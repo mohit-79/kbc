@@ -1107,6 +1107,15 @@ function fallbackDirectWhatsAppShare(friend, q) {
   const cleanPhone = (friend.phone || "").replace(/[\s\-\(\)\+]/g, "");
   const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
   window.open(waUrl, '_blank');
+
+  // Switch to manual input mode for reliable offline entry
+  const pickerArea = document.getElementById('phone-friend-picker-area');
+  const waitingArea = document.getElementById('phone-friend-waiting-area');
+  const manualArea = document.getElementById('phone-friend-manual-area');
+  if (pickerArea) pickerArea.style.display = 'none';
+  if (waitingArea) waitingArea.style.display = 'none';
+  if (manualArea) manualArea.style.display = 'block';
+  showToast("Offline fallback: Manual vikalp entry sakriya!");
 }
 
 function startFriendAnswerListener(friendName) {
