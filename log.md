@@ -45,3 +45,10 @@ PINNED Constraints: iOS WebKit Meta Tags, 180×180 touch icon, standalone manife
     4. Guarded `proceedToNextQuestion()` to immediately redirect to `screen-gameover` if `lastAnswerCorrect` is false, completely blocking advancement to the next question.
 - **Result**: **PASS** — Verified all onclick handlers match declarations, zero duplicate declarations, and wrong answers strictly terminate the game.
 
+---
+
+## c4A.1 — 2026-10-10
+What: Created `worker.js` scaffold with tiny router & `/api/health`, `wrangler.toml` (Pages + Workers + D1 bindings), and `schema.sql` (4 tables: `profiles`, `friends`, `game_sessions`, `friend_requests`).
+Test: Verified SQLite table creation with all 4 tables in memory; checked Worker syntax & CORS.
+Result: PASS
+
