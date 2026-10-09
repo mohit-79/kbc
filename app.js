@@ -1015,7 +1015,7 @@ window.usePhoneAFriend = function() {
   const listEl = document.getElementById('modal-friend-picker-list');
   if (listEl) {
     listEl.innerHTML = profile.friends.map(f => `
-      <button class="friend-picker-btn" onclick="triggerPhoneAFriendDispatch(${f.id})">
+      <button class="friend-picker-btn" onclick="triggerPhoneAFriendDispatch('${String(f.id)}')">
         <div style="display: flex; flex-direction: column; text-align: left;">
           <span style="font-weight: 800;">👤 ${escapeHtml(f.name)}</span>
           <span style="font-size: 10px; color: var(--neon-cyan);">${escapeHtml(f.phone || '⚠️ No number')}</span>
@@ -1030,7 +1030,7 @@ window.usePhoneAFriend = function() {
 };
 
 window.triggerPhoneAFriendDispatch = async function(friendId) {
-  const friend = profile.friends.find(f => f.id === friendId);
+  const friend = profile.friends.find(f => String(f.id) === String(friendId));
   if (!friend) return;
 
   if (!friend.phone) {
