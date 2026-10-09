@@ -87,6 +87,14 @@ What: Implemented `POST /api/phone-friend/send` in `worker.js`: generates single
 Test: Verified DB insertion, validated token generation, 5-minute expiration calculation, and URL link structure.
 Result: PASS
 
+---
+
+## c4B.3 — 2026-10-10
+What: Added multi-provider WhatsApp message dispatcher in `worker.js`: formats message with question, 4 choices, and all 3 action links; implements QR gateway adapter (REST), Twilio adapter, and `wa.me` deep-link fallback.
+Test: Validated message payload formatting, tested URL encoding for `wa.me` link, and verified graceful fallback when gateway credentials are unconfigured.
+Result: PASS
+
+
 
 
 

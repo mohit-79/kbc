@@ -214,6 +214,72 @@ export default {
         const audioUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}#config.startWithVideoMuted=true`;
         const videoUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}`;
 
+        // Owner's Exact Message Template
+        const optA = options[0] || "";
+        const optB = options[1] || "";
+        const optC = options[2] || "";
+        const optD = options[3] || "";
+        const messageText = `🎵 SurKBC — Aapke dost ${playerName} ko aapki madad chahiye!\n\nSawaal: ${question}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}\n\n👉 Uttar dene ke liye link:\n${answerUrl}\n\n🎙️ Audio call:\n${audioUrl}\n\n📹 Video call:\n${videoUrl}`;
+
+        // Clean phone for WhatsApp
+        const cleanPhone = friendPhone.replace(/[\s\-\(\)]/g, "");
+        const waLink = `https://wa.me/${cleanPhone.replace(/^\+/, "")}?text=${encodeURIComponent(messageText)}`;
+
+        let delivered = false;
+        let gatewayResponse = null;
+
+        // 1. QR Gateway REST Adapter (GreenAPI / Whapi / UltraMsg)
+        if (env.WHATSAPP_GATEWAY_URL && env.WHATSAPP_GATEWAY_TOKEN) {
+          try {
+            const gwRes = await fetch(env.WHATSAPP_GATEWAY_URL, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${env.WHATSAPP_GATEWAY_TOKEN}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                chatId: `${cleanPhone.replace(/^\+/, "")}@c.us`,
+                to: cleanPhone,
+                message: messageText,
+                body: messageText
+              })
+            });
+            if (gwRes.ok) {
+              delivered = true;
+              gatewayResponse = "gw-sent";
+            }
+          } catch (e) {
+            console.warn("WhatsApp gateway error:", e);
+          }
+        }
+
+        // 2. Twilio WhatsApp Adapter
+        if (!delivered && env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM_PHONE) {
+          try {
+            const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`;
+            const creds = btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`);
+            const bodyParams = new URLSearchParams({
+              From: `whatsapp:${env.TWILIO_FROM_PHONE}`,
+              To: `whatsapp:${cleanPhone}`,
+              Body: messageText
+            });
+            const twRes = await fetch(twilioUrl, {
+              method: "POST",
+              headers: {
+                "Authorization": `Basic ${creds}`,
+                "Content-Type": "application/x-www-form-urlencoded"
+              },
+              body: bodyParams.toString()
+            });
+            if (twRes.ok) {
+              delivered = true;
+              gatewayResponse = "twilio-sent";
+            }
+          } catch (e) {
+            console.warn("Twilio error:", e);
+          }
+        }
+
         return new Response(JSON.stringify({
           success: true,
           requestId,
@@ -221,6 +287,10 @@ export default {
           answerUrl,
           audioUrl,
           videoUrl,
+          messageText,
+          waLink,
+          delivered,
+          gateway: gatewayResponse || "wa-me-fallback",
           expiresAt
         }), { status: 200, headers: corsHeaders });
       }
