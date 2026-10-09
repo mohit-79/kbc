@@ -1,0 +1,17 @@
+{
+  "name": "SurKBC — Bollywood Music Quiz",
+  "short_name": "SurKBC",
+  "description": "Kaun Banega Crorepati Bollywood Singers & Music Quiz",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b132b",
+  "theme_color": "#0b132b",
+  "icons": [
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

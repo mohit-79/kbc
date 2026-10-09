@@ -1,0 +1,980 @@
+// ==========================================================================
+// SurKBC — app.js (Phase 2B Integrated — Real Lifelines Logic)
+// Screens: screen-home, screen-intro, screen-question, screen-result, screen-gameover, screen-settings
+// ==========================================================================
+
+// --- CONFIG & CONSTANTS ---
+const PADAAV = [4, 9]; // 0-based indices for guaranteed levels: Level 5 (₹10,000) & Level 10 (₹3,20,000)
+
+const KBC_LADDER = [
+  { level: 1, prize: "₹ 1,000", amount: 1000 },
+  { level: 2, prize: "₹ 2,000", amount: 2000 },
+  { level: 3, prize: "₹ 3,000", amount: 3000 },
+  { level: 4, prize: "₹ 5,000", amount: 5000 },
+  { level: 5, prize: "₹ 10,000", amount: 10000, padaav: true },
+  { level: 6, prize: "₹ 20,000", amount: 20000 },
+  { level: 7, prize: "₹ 40,000", amount: 40000 },
+  { level: 8, prize: "₹ 80,000", amount: 80000 },
+  { level: 9, prize: "₹ 1,60,000", amount: 160000 },
+  { level: 10, prize: "₹ 3,20,000", amount: 320000, padaav: true },
+  { level: 11, prize: "₹ 6,40,000", amount: 640000 },
+  { level: 12, prize: "₹ 12,50,000", amount: 1250000 },
+  { level: 13, prize: "₹ 25,00,000", amount: 2500000 },
+  { level: 14, prize: "₹ 50,00,000", amount: 5000000 },
+  { level: 15, prize: "₹ 1,00,00,000", amount: 10000000, padaav: true }
+];
+
+const TIMER_PRESETS = {
+  easy: 45,
+  medium: 30,
+  hard: 20
+};
+
+// --- STATE MANAGEMENT ---
+let profile = loadProfile();
+let musicFactsData = null;
+
+fetch('musicFacts.json')
+  .then(res => res.json())
+  .then(data => { musicFactsData = data; })
+  .catch(err => console.warn('Could not load musicFacts.json:', err));
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem('surkbc_profile');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {
+    name: "Contestant",
+    highScore: "₹ 0",
+    gamesPlayed: 0,
+    difficulty: "easy",
+    friends: [
+      { id: 1, name: "Rahul", phone: "" },
+      { id: 2, name: "Priya", phone: "" }
+    ]
+  };
+}
+
+function saveProfile() {
+  try {
+    localStorage.setItem('surkbc_profile', JSON.stringify(profile));
+  } catch (e) {}
+}
+
+function getQuestionsForGame() {
+  if (typeof SAMPLE_QUESTIONS === 'undefined' || !SAMPLE_QUESTIONS.length) {
+    return [];
+  }
+  const diff = profile.difficulty || 'easy';
+  if (diff === 'easy') {
+    return SAMPLE_QUESTIONS.slice(0, 15);
+  } else if (diff === 'medium') {
+    const medBank = SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium' || q.difficulty === 'hard');
+    return medBank.concat(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy')).slice(0, 15);
+  } else {
+    const hardBank = SAMPLE_QUESTIONS.filter(q => q.difficulty === 'hard');
+    return hardBank.concat(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium')).slice(0, 15);
+  }
+}
+
+function createNewGameState() {
+  return {
+    qIndex: 0,
+    currentPrize: "₹ 0",
+    guaranteedPrize: "₹ 0",
+    selectedOption: null,
+    locked: false,
+    timerSeconds: TIMER_PRESETS[profile?.difficulty || 'easy'] || 45,
+    timerId: null,
+    questions: getQuestionsForGame(),
+    lastAnswerCorrect: null,
+    used: {
+      fifty: false,
+      phone: false,
+      poll: false,
+      flip: false
+    }
+  };
+}
+
+// --- PERSISTENCE: SURVIVE SOFT RELOADS ---
+function saveGameState() {
+  try {
+    const toSave = {
+      qIndex: game.qIndex,
+      currentPrize: game.currentPrize,
+      guaranteedPrize: game.guaranteedPrize,
+      selectedOption: game.selectedOption,
+      locked: game.locked,
+      timerSeconds: game.timerSeconds,
+      used: game.used,
+      lastAnswerCorrect: game.lastAnswerCorrect,
+      activeScreen: document.querySelector('.screen.active') ? document.querySelector('.screen.active').id : 'screen-home'
+    };
+    sessionStorage.setItem('surkbc_session_state', JSON.stringify(toSave));
+  } catch (e) {}
+}
+
+function loadGameState() {
+  const fresh = createNewGameState();
+  try {
+    const raw = sessionStorage.getItem('surkbc_session_state');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...fresh,
+        ...parsed,
+        questions: fresh.questions,
+        used: {
+          ...fresh.used,
+          ...(parsed.used || {})
+        }
+      };
+    }
+  } catch (e) {}
+  return fresh;
+}
+
+function clearGameState() {
+  try {
+    sessionStorage.removeItem('surkbc_session_state');
+  } catch (e) {}
+}
+
+let game = loadGameState();
+
+// --- ROUTER: show(id) toggles .active ---
+window.show = function(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(screenId);
+  if (target) {
+    target.classList.add('active');
+    renderScreen(screenId);
+    saveGameState();
+  }
+};
+const show = window.show;
+
+// --- TOAST HELPER ---
+window.showToast = function(msg) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+};
+const showToast = window.showToast;
+
+// --- RENDER DISPATCHER ---
+function renderScreen(screenId) {
+  if (screenId === 'screen-home') renderHome();
+  if (screenId === 'screen-intro') renderIntro();
+  if (screenId === 'screen-question') renderQuestion();
+  if (screenId === 'screen-result') renderResult();
+  if (screenId === 'screen-gameover') renderGameOver();
+  if (screenId === 'screen-settings') renderSettings();
+}
+
+// --- SCREEN 1: HOME ---
+function renderHome() {
+  const nameInput = document.getElementById('home-player-name');
+  if (nameInput) nameInput.value = profile.name;
+
+  const statsHigh = document.getElementById('home-stat-high');
+  if (statsHigh) statsHigh.textContent = profile.highScore;
+
+  const statsGames = document.getElementById('home-stat-games');
+  if (statsGames) statsGames.textContent = profile.gamesPlayed;
+
+  const friendsList = document.getElementById('home-friends-list');
+  if (friendsList) {
+    friendsList.innerHTML = profile.friends.map(f => `
+      <div class="friend-row">
+        <span>👤 ${escapeHtml(f.name)}</span>
+        <button class="btn-remove-friend" onclick="removeFriend(${f.id})">✕</button>
+      </div>
+    `).join('');
+  }
+}
+
+window.onPlayerNameChange = function(name) {
+  profile.name = name.trim() || "Contestant";
+  saveProfile();
+};
+
+window.addFriend = function() {
+  if (profile.friends.length >= 3) {
+    showToast("Max 3 friends allowed!");
+    return;
+  }
+  const name = prompt("Dost ka naam likhein:");
+  if (name && name.trim()) {
+    profile.friends.push({ id: Date.now(), name: name.trim() });
+    saveProfile();
+    renderHome();
+  }
+};
+
+window.removeFriend = function(id) {
+  profile.friends = profile.friends.filter(f => f.id !== id);
+  saveProfile();
+  renderHome();
+};
+
+// --- SCREEN 2: HOT-SEAT INTRO ---
+function renderIntro() {
+  const ladderEl = document.getElementById('intro-ladder-list');
+  if (ladderEl) {
+    ladderEl.innerHTML = KBC_LADDER.slice().reverse().map((t, revIdx) => {
+      const idx = 14 - revIdx;
+      const isCurrent = idx === game.qIndex;
+      const isPadaav = PADAAV.includes(idx) || idx === 14;
+      return `
+        <div class="ladder-row ${isCurrent ? 'active' : ''} ${isPadaav ? 'padaav' : ''}">
+          <span class="ladder-idx">${t.level} ${isCurrent ? '▶' : ''}</span>
+          <span class="ladder-val">${t.prize}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Update lifeline chips HUD in intro
+  updateLifelineChips();
+
+  const factEl = document.getElementById('intro-music-fact');
+  if (factEl) {
+    const today = new Date();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateKey = `${mm}-${dd}`;
+
+    if (musicFactsData && musicFactsData[dateKey]) {
+      factEl.textContent = musicFactsData[dateKey];
+    } else if (musicFactsData && musicFactsData["DEFAULT"]) {
+      factEl.textContent = musicFactsData["DEFAULT"];
+    } else {
+      factEl.textContent = "Aaj Ka Sangeet Fact: Indian cinema blends emotional micro-tonal vocals that resonate across generations.";
+    }
+  }
+}
+
+// --- SCREEN 3: QUESTION ---
+function renderQuestion() {
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const qNum = document.getElementById('q-num-badge');
+  const qPrize = document.getElementById('q-prize-badge');
+  const qText = document.getElementById('q-text');
+
+  if (qNum) qNum.textContent = `Prashn ${game.qIndex + 1}`;
+  if (qPrize) qPrize.textContent = KBC_LADDER[game.qIndex].prize;
+  if (qText) qText.textContent = q.question;
+
+  // c3A.3: Mini Ladder on Question Screen
+  const miniLadder = document.getElementById('q-mini-ladder');
+  if (miniLadder) {
+    miniLadder.innerHTML = KBC_LADDER.map((t, idx) => {
+      let cls = 'mini-step-dot';
+      if (idx < game.qIndex) cls += ' passed';
+      else if (idx === game.qIndex) cls += ' current';
+      if (PADAAV.includes(idx)) cls += ' padaav';
+      return `<span class="${cls}"></span>`;
+    }).join('');
+  }
+
+  // c2C.3: Bind real canvas visualizer
+  const canvas = document.getElementById('question-visualizer-canvas');
+  if (canvas && window.audioEngine) {
+    window.audioEngine.bindVisualizer(canvas);
+  }
+
+  // Option cards
+  const optsContainer = document.getElementById('question-options-grid');
+  if (optsContainer) {
+    optsContainer.innerHTML = q.options.map((optText, optIdx) => {
+      const letter = ["A", "B", "C", "D"][optIdx];
+      const initial = optText.charAt(0);
+      const photoSrc = q.photo || `images/singers/${optText.toLowerCase().replace(/[^a-z]/g, '')}.jpg`;
+      return `
+        <button class="option-card" id="opt-btn-${optIdx}" onclick="onOptionSelect(${optIdx})">
+          <div class="opt-avatar-badge">
+            <img src="${photoSrc}" alt="${optText}" class="opt-photo-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="opt-fallback-initial" style="display: none;">${initial}</span>
+          </div>
+          <div class="opt-content">
+            <span class="opt-letter">${letter}:</span>
+            <span class="opt-name">${optText}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+  }
+
+  updateLifelineHUD();
+  startTimer();
+
+  if (window.audioEngine) {
+    window.audioEngine.playClip(q.clip);
+    window.audioEngine.speak(`${q.question}`);
+  }
+}
+
+window.playQuestionClip = function() {
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  if (window.audioEngine) {
+    window.audioEngine.playClip(q.clip);
+  }
+};
+
+function startTimer() {
+  stopTimer();
+  const timerDisplay = document.getElementById('q-timer-display');
+  const ringProgress = document.getElementById('timer-ring-progress');
+  const maxSec = TIMER_PRESETS[profile.difficulty || 'easy'];
+  game.timerSeconds = maxSec;
+
+  if (timerDisplay) timerDisplay.textContent = game.timerSeconds;
+  updateTimerRing(game.timerSeconds, maxSec);
+
+  game.timerId = setInterval(() => {
+    game.timerSeconds--;
+    if (timerDisplay) timerDisplay.textContent = game.timerSeconds;
+    updateTimerRing(game.timerSeconds, maxSec);
+
+    // c2C.4: Tension loop under last 10s of timer
+    if (game.timerSeconds <= 10 && game.timerSeconds > 0) {
+      if (window.audioEngine) window.audioEngine.startTensionLoop();
+    }
+
+    if (game.timerSeconds <= 0) {
+      stopTimer();
+      onTimeout();
+    }
+  }, 1000);
+}
+
+// c3A.1: Update Circular Countdown SVG Ring
+function updateTimerRing(currentSec, totalSec) {
+  const ring = document.getElementById('timer-ring-progress');
+  if (!ring) return;
+  const circumference = 2 * Math.PI * 19; // ~119.38
+  const pct = Math.max(0, currentSec / totalSec);
+  const offset = circumference * (1 - pct);
+  ring.style.strokeDashoffset = offset;
+
+  if (currentSec <= 10) {
+    ring.classList.add('danger');
+  } else {
+    ring.classList.remove('danger');
+  }
+}
+
+function stopTimer() {
+  if (game.timerId) {
+    clearInterval(game.timerId);
+    game.timerId = null;
+  }
+  if (window.audioEngine) {
+    window.audioEngine.stopTensionLoop();
+  }
+}
+
+function onTimeout() {
+  showToast("Samay Samapt!");
+  if (window.audioEngine) {
+    window.audioEngine.playWrongSting();
+    window.audioEngine.speak("Samay samapt!");
+  }
+  evaluateAnswer(null);
+}
+
+// --- LOCK FLOW ---
+window.onOptionSelect = function(idx) {
+  if (game.locked) return;
+  game.selectedOption = idx;
+
+  document.querySelectorAll('.option-card').forEach((el, i) => {
+    el.classList.toggle('selected', i === idx);
+  });
+
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const optName = q.options[idx];
+  const letter = ["A", "B", "C", "D"][idx];
+
+  const modal = document.getElementById('modal-lock-confirm');
+  const textEl = document.getElementById('lock-confirm-text');
+  if (textEl) textEl.textContent = `Option ${letter}: ${optName} ko lock kiya jaye?`;
+  if (modal) modal.classList.add('active');
+
+  stopTimer();
+  if (window.audioEngine) {
+    window.audioEngine.stopClip();
+    window.audioEngine.speak(`Option ${letter}: ${optName} ko lock kiya jaye?`);
+  }
+};
+
+window.declineLock = function() {
+  const modal = document.getElementById('modal-lock-confirm');
+  if (modal) modal.classList.remove('active');
+  game.selectedOption = null;
+  document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+  startTimer();
+};
+
+window.confirmLock = function() {
+  const confirmModal = document.getElementById('modal-lock-confirm');
+  if (confirmModal) confirmModal.classList.remove('active');
+
+  game.locked = true;
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const letter = ["A", "B", "C", "D"][game.selectedOption];
+  const optName = q.options[game.selectedOption];
+
+  const suspenseModal = document.getElementById('modal-suspense');
+  const suspText = document.getElementById('suspense-text');
+  if (suspText) suspText.textContent = `Computer ji, Option ${letter}: ${optName} lock kiya jaye!`;
+  if (suspenseModal) suspenseModal.classList.add('active');
+
+  // c2C.1 & c2C.4: Amitabh computer ji line + intense tension loop
+  if (window.audioEngine) {
+    window.audioEngine.startTensionLoop();
+    window.audioEngine.speak(`Computer ji, Option ${letter}: ${optName} lock kiya jaye!`);
+  }
+
+  setTimeout(() => {
+    if (suspenseModal) suspenseModal.classList.remove('active');
+    if (window.audioEngine) window.audioEngine.stopTensionLoop();
+    evaluateAnswer(game.selectedOption);
+  }, 2400);
+};
+
+// --- RESULT INTERSTITIAL ---
+function evaluateAnswer(chosenIdx) {
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const isCorrect = (chosenIdx === q.answer);
+  game.lastAnswerCorrect = isCorrect;
+
+  // c3A.2: 3D Flip Card Effect on Options
+  const correctCard = document.getElementById(`opt-btn-${q.answer}`);
+  if (correctCard) {
+    correctCard.classList.add('flip-reveal-correct');
+  }
+  if (!isCorrect && chosenIdx !== null) {
+    const wrongCard = document.getElementById(`opt-btn-${chosenIdx}`);
+    if (wrongCard) wrongCard.classList.add('flip-reveal-wrong');
+  }
+
+  // c3A.6: Guarded Haptics (navigator.vibrate)
+  if ('vibrate' in navigator) {
+    try {
+      if (isCorrect) {
+        navigator.vibrate([60, 40, 100]); // Victory pattern
+      } else {
+        navigator.vibrate(300); // Long buzz
+      }
+    } catch (e) {}
+  }
+
+  if (isCorrect) {
+    game.currentPrize = KBC_LADDER[game.qIndex].prize;
+    
+    // Padaav reached check
+    if (PADAAV.includes(game.qIndex)) {
+      game.guaranteedPrize = KBC_LADDER[game.qIndex].prize;
+      showPadaavBanner();
+    }
+
+    // c3A.5: Victory confetti on level 10+
+    if (game.qIndex >= 9) {
+      launchConfetti();
+    }
+
+    if (window.audioEngine) {
+      window.audioEngine.playVictorySting();
+      window.audioEngine.speak("Bilkul sahi jawab! Adbhut!");
+    }
+  } else {
+    // Wrong answer drops winnings to guaranteed padaav prize
+    game.currentPrize = game.guaranteedPrize || "₹ 0";
+    if (window.audioEngine) {
+      window.audioEngine.playWrongSting();
+      window.audioEngine.speak(`Galat jawab! Sahi uttar tha Option ${["A","B","C","D"][q.answer]}: ${q.options[q.answer]}`);
+    }
+  }
+
+  // Brief delay to let user see the 3D card flip animation before showing result interstitial
+  setTimeout(() => {
+    show('screen-result');
+  }, 1200);
+}
+
+// SCREEN 4: RESULT RENDERER
+function renderResult() {
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const isCorrect = (game.lastAnswerCorrect === true);
+
+  const banner = document.getElementById('result-banner');
+  if (banner) {
+    banner.textContent = isCorrect ? "🎉 Sahi Jawab! Adbhut!" : "❌ Galat Jawab!";
+    banner.className = `result-banner ${isCorrect ? 'correct' : 'wrong'}`;
+  }
+
+  const songCard = document.getElementById('result-song-info');
+  if (songCard) {
+    songCard.innerHTML = `
+      <h3>🎵 ${escapeHtml(q.song)} (${escapeHtml(q.movie)})</h3>
+      <p><strong>Gayak:</strong> ${escapeHtml(q.singer)}</p>
+      <p><strong>Sangeetkar:</strong> ${escapeHtml(q.music)}</p>
+      <p class="trivia-p">${escapeHtml(q.trivia)}</p>
+    `;
+  }
+
+  const nextBtn = document.getElementById('result-btn-next');
+  const quitBtn = document.getElementById('result-btn-quit');
+
+  if (isCorrect) {
+    if (nextBtn) {
+      nextBtn.style.display = 'block';
+      if (game.qIndex < 14) {
+        nextBtn.innerHTML = '<span>Agla Prashn ▶</span>';
+      } else {
+        nextBtn.innerHTML = '<span>🏆 Mahavijeta Nateeja Dekhein ▶</span>';
+      }
+    }
+    if (quitBtn) quitBtn.style.display = 'block';
+  } else {
+    // WRONG ANSWER: No Agla Prashn, direct to Game Over only
+    if (nextBtn) {
+      nextBtn.style.display = 'block';
+      nextBtn.innerHTML = '<span>Khel Samapt — Nateeja Dekhein 🏆</span>';
+    }
+    if (quitBtn) quitBtn.style.display = 'none';
+  }
+}
+
+window.handleResultNextClick = function() {
+  if (game.lastAnswerCorrect === false) {
+    show('screen-gameover');
+    return;
+  }
+  if (game.qIndex >= 14) {
+    show('screen-gameover');
+    return;
+  }
+  proceedToNextQuestion();
+};
+
+// c3A.5: Confetti & Padaav Helpers
+function showPadaavBanner() {
+  const b = document.getElementById('padaav-banner');
+  if (b) {
+    b.style.display = 'block';
+    setTimeout(() => { b.style.display = 'none'; }, 3200);
+  }
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = Array.from({ length: 45 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -10,
+    w: Math.random() * 8 + 4,
+    h: Math.random() * 6 + 3,
+    color: ['#ffd700', '#00d2ff', '#ff007f', '#2ecc71'][Math.floor(Math.random() * 4)],
+    vy: Math.random() * 3 + 2,
+    vx: (Math.random() - 0.5) * 2,
+    rot: Math.random() * 360
+  }));
+
+  const startTime = Date.now();
+  function renderConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.y += p.vy;
+      p.x += p.vx;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.w, p.h);
+    });
+
+    if (Date.now() - startTime < 2200) {
+      requestAnimationFrame(renderConfetti);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'none';
+    }
+  }
+  renderConfetti();
+}
+
+// Next question advancement
+window.proceedToNextQuestion = function() {
+  if (game.lastAnswerCorrect === false) {
+    show('screen-gameover');
+    return;
+  }
+  game.qIndex++;
+  game.locked = false;
+  game.selectedOption = null;
+  game.lastAnswerCorrect = null;
+  show('screen-intro');
+};
+
+// ==========================================================================
+// PHASE 2D: FLOW HARDENING & MODAL AUDITS
+// ==========================================================================
+
+// c2D.1: Quit Confirmation Modal ("₹X lekar quit?")
+window.promptQuit = function() {
+  const isResultScreen = document.getElementById('screen-result') && document.getElementById('screen-result').classList.contains('active');
+  if (game.locked && !isResultScreen) return;
+  stopTimer(); // Pause timer in quit modal
+
+  // Calculate current winnings (last completed question prize)
+  const lastWon = game.qIndex > 0 ? KBC_LADDER[game.qIndex - 1].prize : "₹ 0";
+  const prizeText = document.getElementById('quit-modal-prize-text');
+  if (prizeText) prizeText.textContent = `${lastWon} lekar quit karein?`;
+
+  const modal = document.getElementById('modal-quit-confirm');
+  if (modal) modal.classList.add('active');
+};
+
+window.cancelQuit = function() {
+  const modal = document.getElementById('modal-quit-confirm');
+  if (modal) modal.classList.remove('active');
+  startTimer(); // Resume timer
+};
+
+window.confirmQuit = function() {
+  const modal = document.getElementById('modal-quit-confirm');
+  if (modal) modal.classList.remove('active');
+  
+  // Player keeps last completed prize
+  const lastWon = game.qIndex > 0 ? KBC_LADDER[game.qIndex - 1].prize : "₹ 0";
+  game.guaranteedPrize = lastWon;
+  game.currentPrize = lastWon;
+  show('screen-gameover');
+};
+
+// c2D.2: Option Double-Tap Race Prevention (already verified in onOptionSelect via game.locked & modal active)
+function isAnyModalOpen() {
+  return document.querySelector('.modal-overlay.active') !== null;
+}
+
+// c2D.4: Empty State & Graceful Exhaustion Handling
+window.checkFriendsState = function() {
+  if (!profile.friends || profile.friends.length === 0) {
+    showToast("Pehle Home screen par dost add karo!");
+    show('screen-home');
+    return false;
+  }
+  return true;
+};
+
+// --- SCREEN 5: GAME OVER ---
+function renderGameOver() {
+  stopTimer();
+  profile.gamesPlayed++;
+
+  const finalAmount = game.guaranteedPrize || "₹ 0";
+  const finalEl = document.getElementById('gameover-prize-text');
+  if (finalEl) finalEl.textContent = `Aapne jeete: ${finalAmount}`;
+
+  profile.highScore = game.currentPrize;
+  saveProfile();
+}
+
+window.restartGame = function() {
+  clearGameState();
+  game = createNewGameState();
+  show('screen-home');
+};
+
+// --- SCREEN 6: SETTINGS ---
+function renderSettings() {
+  const diffSelect = document.getElementById('settings-difficulty-select');
+  if (diffSelect) diffSelect.value = profile.difficulty || 'easy';
+}
+
+window.saveSettings = function() {
+  const diffSelect = document.getElementById('settings-difficulty-select');
+  if (diffSelect) {
+    profile.difficulty = diffSelect.value;
+    saveProfile();
+    game = createNewGameState();
+    showToast("Settings Save Ho Gayi!");
+    show('screen-home');
+  }
+};
+
+// ==========================================================================
+// PHASE 2B: REAL LIFELINE IMPLEMENTATIONS
+// ==========================================================================
+
+// c2B.1: 50:50 Lifeline
+window.useFiftyFifty = function() {
+  if (game.used.fifty) {
+    showToast("Ye lifeline use ho chuki hai!");
+    return;
+  }
+  if (game.locked) return;
+
+  game.used.fifty = true;
+  updateLifelineHUD();
+
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const correctIdx = q.answer;
+
+  // Find incorrect option indices
+  const wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIdx);
+  // Randomly pick 2 wrong to eliminate
+  const shuffled = wrongIndices.sort(() => 0.5 - Math.random());
+  const toHide = shuffled.slice(0, 2);
+
+  toHide.forEach(idx => {
+    const btn = document.getElementById(`opt-btn-${idx}`);
+    if (btn) {
+      btn.style.visibility = 'hidden';
+      btn.disabled = true;
+    }
+  });
+
+  showToast("50:50: Do galat vikalp mita diye gaye!");
+};
+
+// c2B.2: Audience Poll Lifeline
+window.useAudiencePoll = function() {
+  if (game.used.poll) {
+    showToast("Ye lifeline use ho chuki hai!");
+    return;
+  }
+  if (game.locked) return;
+
+  stopTimer(); // Pause timer during poll modal
+  game.used.poll = true;
+  updateLifelineHUD();
+
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const correctIdx = q.answer;
+
+  // Weight correct option based on difficulty
+  const diff = profile.difficulty || 'easy';
+  let correctWeight = diff === 'easy' ? 70 : (diff === 'medium' ? 55 : 40);
+
+  // Distribute remaining % among other 3 options
+  let remaining = 100 - correctWeight;
+  const r1 = Math.floor(Math.random() * (remaining - 10)) + 3;
+  remaining -= r1;
+  const r2 = Math.floor(Math.random() * (remaining - 5)) + 2;
+  const r3 = remaining - r2;
+
+  const otherPercents = [r1, r2, r3].sort(() => 0.5 - Math.random());
+  let otherIdx = 0;
+
+  const percentages = [0, 1, 2, 3].map(i => {
+    if (i === correctIdx) return correctWeight;
+    return otherPercents[otherIdx++];
+  });
+
+  // Render Poll Modal
+  const pollContainer = document.getElementById('audience-poll-bars');
+  if (pollContainer) {
+    const letters = ["A", "B", "C", "D"];
+    pollContainer.innerHTML = percentages.map((pct, i) => `
+      <div class="poll-bar-col">
+        <span class="poll-pct-label">${pct}%</span>
+        <div class="poll-bar-track">
+          <div class="poll-bar-fill" style="height: ${pct}%;"></div>
+        </div>
+        <span class="poll-letter-label">${letters[i]}</span>
+      </div>
+    `).join('');
+  }
+
+  const pollModal = document.getElementById('modal-audience-poll');
+  if (pollModal) pollModal.classList.add('active');
+};
+
+window.closeAudiencePoll = function() {
+  const pollModal = document.getElementById('modal-audience-poll');
+  if (pollModal) pollModal.classList.remove('active');
+  startTimer(); // Resume timer
+};
+
+// c2B.3: Phone a Friend (WhatsApp Share + Manual A/B/C/D entry)
+window.usePhoneAFriend = function() {
+  if (game.used.phone) {
+    showToast("Ye lifeline use ho chuki hai!");
+    return;
+  }
+  if (game.locked) return;
+
+  if (!profile.friends || profile.friends.length === 0) {
+    showToast("Pehle Home par dost add karo!");
+    return;
+  }
+
+  stopTimer();
+  const listEl = document.getElementById('modal-friend-picker-list');
+  if (listEl) {
+    listEl.innerHTML = profile.friends.map(f => `
+      <button class="friend-picker-btn" onclick="openWhatsAppForFriend('${escapeHtml(f.name)}')">
+        <span>👤 ${escapeHtml(f.name)}</span>
+        <span>WhatsApp ↗</span>
+      </button>
+    `).join('');
+  }
+
+  const modal = document.getElementById('modal-phone-friend');
+  if (modal) modal.classList.add('active');
+};
+
+window.openWhatsAppForFriend = function(friendName) {
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+
+  // Owner's Exact WhatsApp Template:
+  // 🎵 SurKBC — dost ki madad chahiye!\nSawaal: <question>\nA) <opt1>\nB) <opt2>\nC) <opt3>\nD) <opt4>\n\nSahi option ka letter reply karo!
+  const text = `🎵 SurKBC — dost ki madad chahiye!\nSawaal: ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\n\nSahi option ka letter reply karo!`;
+
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(waUrl, '_blank');
+
+  // Switch friend modal view to manual entry prompt
+  const pickerArea = document.getElementById('phone-friend-picker-area');
+  const manualArea = document.getElementById('phone-friend-manual-area');
+  if (pickerArea) pickerArea.style.display = 'none';
+  if (manualArea) manualArea.style.display = 'block';
+};
+
+window.submitFriendManualAnswer = function(optLetter) {
+  const modal = document.getElementById('modal-phone-friend');
+  if (modal) modal.classList.remove('active');
+
+  // Reset modal display for future use
+  const pickerArea = document.getElementById('phone-friend-picker-area');
+  const manualArea = document.getElementById('phone-friend-manual-area');
+  if (pickerArea) pickerArea.style.display = 'block';
+  if (manualArea) manualArea.style.display = 'none';
+
+  game.used.phone = true;
+  updateLifelineHUD();
+
+  const letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
+  const optIdx = letterMap[optLetter];
+
+  // That option gets locked directly (skip re-confirm)
+  game.selectedOption = optIdx;
+  document.querySelectorAll('.option-card').forEach((el, i) => {
+    el.classList.toggle('selected', i === optIdx);
+  });
+  confirmLock();
+};
+
+window.closePhoneAFriendModal = function() {
+  const modal = document.getElementById('modal-phone-friend');
+  if (modal) modal.classList.remove('active');
+  startTimer();
+};
+
+// c2B.4: Flip the Question Lifeline
+window.useFlipQuestion = function() {
+  if (game.used.flip) {
+    showToast("Ye lifeline use ho chuki hai!");
+    return;
+  }
+  if (game.locked) return;
+
+  game.used.flip = true;
+  updateLifelineHUD();
+
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const currentQ = qList[game.qIndex % qList.length];
+
+  // Find unused backup question with matching difficulty
+  const backup = SAMPLE_QUESTIONS.find(q => q.id !== currentQ.id && q.difficulty === currentQ.difficulty);
+
+  if (backup) {
+    game.questions[game.qIndex] = backup;
+  } else {
+    // If no exact difficulty match, pick any other question
+    const anyBackup = SAMPLE_QUESTIONS.find(q => q.id !== currentQ.id);
+    if (anyBackup) game.questions[game.qIndex] = anyBackup;
+  }
+
+  showToast("Prashn Badal Diya Gaya!");
+  // Restart timer & render new question
+  renderQuestion();
+};
+
+// Lifeline Dispatcher
+window.useLifeline = function(type) {
+  if (type === 'fifty') useFiftyFifty();
+  else if (type === 'phone') usePhoneAFriend();
+  else if (type === 'poll') useAudiencePoll();
+  else if (type === 'flip') useFlipQuestion();
+};
+
+// c2B.5: Lifeline HUD Update (dims used buttons across all screens)
+function updateLifelineHUD() {
+  const keys = ['fifty', 'phone', 'poll', 'flip'];
+  keys.forEach(k => {
+    const btn = document.getElementById(`lifeline-btn-${k}`);
+    if (btn) {
+      if (game.used[k]) {
+        btn.classList.add('used');
+      } else {
+        btn.classList.remove('used');
+      }
+    }
+  });
+}
+
+function updateLifelineChips() {
+  const keys = ['fifty', 'phone', 'poll', 'flip'];
+  keys.forEach(k => {
+    const chip = document.getElementById(`intro-chip-${k}`);
+    if (chip) {
+      if (game.used[k]) {
+        chip.classList.add('used');
+      } else {
+        chip.classList.remove('used');
+      }
+    }
+  });
+}
+
+// --- HELPER ---
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+}
+
+// Initializer
+document.addEventListener('DOMContentLoaded', () => {
+  // Check if a saved session was active
+  let restoreScreen = 'screen-home';
+  try {
+    const raw = sessionStorage.getItem('surkbc_session_state');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.activeScreen) {
+        restoreScreen = parsed.activeScreen;
+      }
+    }
+  } catch (e) {}
+
+  show(restoreScreen);
+});

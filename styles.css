@@ -1,0 +1,613 @@
+/* ==========================================================================
+   SurKBC — styles.css
+   KBC Dark-Navy & Gold Theme + Pinned iOS Native WebKit Rules
+   ========================================================================== */
+
+:root {
+  /* Pinned iOS Safe Area Insets (Notch + Dynamic Island + Home Bar) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* KBC Dark-Navy & Gold Palette */
+  --bg-navy-deep: #070d1e;
+  --bg-navy-card: #0e1a38;
+  --bg-navy-surface: #14244d;
+  --gold-primary: #f5c518;
+  --gold-secondary: #d4af37;
+  --gold-muted: #9c7333;
+  --gold-border: linear-gradient(135deg, #ffd700 0%, #b8860b 50%, #fff2a3 100%);
+  --text-primary: #ffffff;
+  --text-muted: #8ea3cc;
+  --neon-cyan: #00d2ff;
+  --color-green: #2ecc71;
+  --color-red: #e74c3c;
+  --color-amber: #f39c12;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Pinned iOS Native Feel: Body Fixed, Zero Rubber-Band */
+html, body {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  overflow: hidden;
+  background-color: var(--bg-navy-deep);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  
+  /* Prevent context menus, elastic bouncing, and text selection */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* Allow text input interaction */
+input, textarea, select {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* App Container filling viewport with safe area padding */
+#app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--sat);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+  position: relative;
+}
+
+/* Router Screen Hierarchy */
+.screen {
+  display: none;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* Subtle Stage Background Glow */
+.stage-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: 
+    radial-gradient(circle at 50% 15%, rgba(0, 210, 255, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 50% 85%, rgba(20, 36, 77, 0.6) 0%, transparent 70%),
+    var(--bg-navy-deep);
+}
+
+/* KBC Gold-Trimmed Glass Card */
+.kbc-card {
+  background: var(--bg-navy-card);
+  border: 1.5px solid var(--gold-secondary);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(245, 197, 24, 0.08);
+}
+
+.card-header-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Standard KBC Input Field */
+.kbc-input {
+  width: 100%;
+  background: var(--bg-navy-deep);
+  border: 1px solid var(--gold-muted);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.kbc-input:focus {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 8px rgba(245, 197, 24, 0.4);
+}
+
+/* KBC Hexagonal Action Buttons */
+.kbc-btn-gold {
+  width: 100%;
+  height: 52px;
+  background: linear-gradient(180deg, #ffd700 0%, #d4af37 50%, #9c7333 100%);
+  color: #070d1e;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.kbc-btn-gold:active {
+  transform: scale(0.98);
+}
+
+.kbc-btn-secondary {
+  width: 100%;
+  height: 42px;
+  background: var(--bg-navy-surface);
+  border: 1px solid var(--gold-muted);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* Floating Modals */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-navy-card);
+  border: 2px solid var(--gold-primary);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+}
+
+/* Toast Notification */
+#toast {
+  position: fixed;
+  bottom: calc(var(--sab) + 20px);
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(14, 26, 56, 0.95);
+  border: 1px solid var(--gold-primary);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  transition: transform 0.3s ease;
+  z-index: 200;
+  pointer-events: none;
+}
+
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+
+/* Additional Option Card, Ladder, & Banner Styles */
+
+/* 15-Level Ladder Rows */
+.ladder-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.ladder-row.padaav {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.ladder-row.active {
+  background: linear-gradient(90deg, #ffd700 0%, #ff9900 100%);
+  color: #070d1e !important;
+  font-weight: 900;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+}
+
+/* 4 Option Cards Grid */
+.option-card {
+  background: var(--bg-navy-surface);
+  border: 1.5px solid var(--gold-muted);
+  border-radius: 8px;
+  padding: 10px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.option-card:active {
+  transform: scale(0.98);
+}
+
+.opt-avatar-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg-navy-deep);
+  border: 1.5px solid var(--gold-primary);
+  color: var(--gold-primary);
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.opt-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.opt-letter {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold-primary);
+}
+
+.opt-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+/* Selected Option State (Amber / Yellow) */
+.option-card.selected {
+  background: linear-gradient(180deg, #ffcc00 0%, #e6a100 100%) !important;
+  border-color: #fff !important;
+  box-shadow: 0 0 14px rgba(255, 204, 0, 0.9);
+}
+
+.option-card.selected .opt-letter,
+.option-card.selected .opt-name {
+  color: #070d1e !important;
+}
+
+/* Result Banners */
+.result-banner.correct {
+  background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+}
+
+.result-banner.wrong {
+  background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
+}
+
+.friend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-navy-deep);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.btn-remove-friend {
+  background: none;
+  border: none;
+  color: var(--color-red);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+@keyframes bounceBar {
+  0%, 100% { height: 14px; }
+  50% { height: 48px; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+/* Option Photo Styling for c2A.5 */
+.opt-photo-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.opt-fallback-initial {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Phase 2B Lifelines Styling */
+.kbc-btn-secondary.used, .lifeline-chip.used {
+  opacity: 0.35 !important;
+  filter: grayscale(1) !important;
+  pointer-events: none !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+
+/* Audience Poll Bar Charts */
+.poll-bars-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 140px;
+  background: var(--bg-navy-deep);
+  border: 1px solid var(--gold-muted);
+  border-radius: 8px;
+  padding: 10px 8px 6px;
+}
+
+.poll-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  width: 44px;
+}
+
+.poll-pct-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold-primary);
+  margin-bottom: 4px;
+}
+
+.poll-bar-track {
+  flex: 1;
+  width: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.poll-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--gold-primary) 0%, #d4af37 100%);
+  border-radius: 4px 4px 0 0;
+  transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.poll-letter-label {
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  margin-top: 4px;
+}
+
+/* Friend Picker in Modal */
+.friend-picker-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-navy-surface);
+  border: 1px solid var(--gold-secondary);
+  border-radius: 6px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.friend-picker-btn:active {
+  background: var(--bg-navy-deep);
+}
+
+
+/* ==========================================================================
+   PHASE 3A: BROADCAST POLISH STYLES (60fps on iPhone)
+   ========================================================================== */
+
+/* c3A.1: Circular Countdown Timer Ring */
+.timer-crest-wrapper {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.timer-ring-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg);
+}
+
+.timer-ring-bg {
+  fill: #070d1e;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 3.5;
+}
+
+.timer-ring-bar {
+  fill: none;
+  stroke: var(--gold-primary);
+  stroke-width: 3.5;
+  stroke-dasharray: 119.38;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+
+.timer-ring-bar.danger {
+  stroke: var(--color-red) !important;
+  filter: drop-shadow(0 0 6px var(--color-red));
+}
+
+.timer-val-text {
+  font-size: 14px;
+  font-weight: 900;
+  color: #ffffff;
+  z-index: 2;
+  text-shadow: 0 1px 4px #000;
+}
+
+/* c3A.2: 3D Option Card Flip */
+.option-card {
+  perspective: 800px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, border-color 0.3s ease;
+}
+
+.option-card.flip-reveal-correct {
+  transform: rotateY(360deg);
+  background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(46, 204, 113, 0.9) !important;
+}
+
+.option-card.flip-reveal-correct .opt-letter,
+.option-card.flip-reveal-correct .opt-name {
+  color: #ffffff !important;
+}
+
+.option-card.flip-reveal-wrong {
+  transform: rotateY(360deg);
+  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%) !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.9) !important;
+}
+
+.option-card.flip-reveal-wrong .opt-letter,
+.option-card.flip-reveal-wrong .opt-name {
+  color: #ffffff !important;
+}
+
+/* c3A.3: Mini Ladder on Question Screen */
+.mini-ladder-strip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(7, 13, 30, 0.6);
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.mini-step-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.mini-step-dot.passed {
+  background: var(--gold-secondary);
+}
+
+.mini-step-dot.current {
+  background: #ffd700;
+  box-shadow: 0 0 6px #ffd700;
+  transform: scale(1.4);
+}
+
+.mini-step-dot.padaav {
+  border: 1px solid #fff;
+}
+
+/* c3A.4: Suspense Spotlight Lighting */
+#modal-suspense.active {
+  animation: suspenseSpotlightPulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes suspenseSpotlightPulse {
+  0% {
+    background: rgba(5, 8, 20, 0.88);
+  }
+  100% {
+    background: radial-gradient(circle at 50% 50%, rgba(20, 36, 77, 0.95) 0%, rgba(3, 5, 12, 0.95) 100%);
+  }
+}
+
+/* c3A.5: Padaav Reached Banner */
+.padaav-banner {
+  position: fixed;
+  top: calc(var(--sat) + 50px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #ffd700 0%, #ff9900 100%);
+  color: #070d1e;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+  z-index: 160;
+  animation: slideDownFade 3s ease forwards;
+}
+
+@keyframes slideDownFade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}

@@ -1,0 +1,290 @@
+// ==========================================================================
+// SurKBC — audio.js (Phase 2C Voice & Audio Engine)
+// Synthesizer, Real-Time Canvas Visualizer & Hindi TTS Engine
+// ==========================================================================
+
+const VOICE_ENABLED = true;
+
+class AudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.analyser = null;
+    this.dataArray = null;
+    this.canvas = null;
+    this.canvasCtx = null;
+    this.animId = null;
+    this.tensionOsc = null;
+    this.tensionGain = null;
+    this.currentAudio = null;
+  }
+
+  // Resume / Initialize Web Audio Context on user gesture
+  init() {
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+      return;
+    }
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        this.ctx = new AudioCtx();
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 64;
+        this.analyser.smoothingTimeConstant = 0.8;
+        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+      }
+    } catch (e) {
+      console.warn("AudioContext init error:", e);
+    }
+  }
+
+  // c2C.3: Bind Real Canvas Visualizer
+  bindVisualizer(canvasEl) {
+    if (!canvasEl) return;
+    this.canvas = canvasEl;
+    this.canvasCtx = canvasEl.getContext('2d');
+    this.startVisualizer();
+  }
+
+  startVisualizer() {
+    if (!this.canvas || !this.canvasCtx) return;
+    if (this.animId) cancelAnimationFrame(this.animId);
+
+    const canvas = this.canvas;
+    const ctx = this.canvasCtx;
+    const bufferLength = this.analyser ? this.analyser.frequencyBinCount : 32;
+    const data = this.dataArray || new Uint8Array(bufferLength);
+
+    const draw = () => {
+      this.animId = requestAnimationFrame(draw);
+      const w = canvas.width || 340;
+      const h = canvas.height || 60;
+
+      ctx.clearRect(0, 0, w, h);
+
+      if (this.analyser && this.ctx && this.ctx.state === 'running') {
+        this.analyser.getByteFrequencyData(data);
+      } else {
+        // Idle breathing state
+        const t = Date.now() * 0.003;
+        for (let i = 0; i < bufferLength; i++) {
+          data[i] = Math.sin(t + i * 0.4) * 16 + 22;
+        }
+      }
+
+      const barWidth = (w / bufferLength) * 0.7;
+      const gap = (w / bufferLength) * 0.3;
+      let x = gap / 2;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const val = data[i];
+        const barH = Math.max(4, (val / 255) * h * 0.85);
+
+        // Neon Gold to Cyan Gradient
+        const grad = ctx.createLinearGradient(0, h - barH, 0, h);
+        grad.addColorStop(0, '#ffd700');
+        grad.addColorStop(0.5, '#00d2ff');
+        grad.addColorStop(1, '#0e1a38');
+
+        ctx.fillStyle = grad;
+        const y = (h - barH) / 2;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(x, y, barWidth, barH, 2);
+        } else {
+          ctx.rect(x, y, barWidth, barH);
+        }
+        ctx.fill();
+
+        x += barWidth + gap;
+      }
+    };
+
+    draw();
+  }
+
+  // c2C.2: Clip Playback with Stop on Lock/Timeout/Quit
+  playClip(clipName) {
+    this.init();
+    this.stopClip();
+
+    // Synthesized melodic signature hook connected to analyser
+    if (this.ctx) {
+      const melodyChords = [261.63, 329.63, 392.00, 523.25, 440.00, 392.00];
+      melodyChords.forEach((freq, idx) => {
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.3);
+
+          gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.3);
+          gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + idx * 0.3 + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.3 + 0.35);
+
+          osc.connect(gain);
+          if (this.analyser) {
+            gain.connect(this.analyser);
+            this.analyser.connect(this.ctx.destination);
+          } else {
+            gain.connect(this.ctx.destination);
+          }
+
+          osc.start(this.ctx.currentTime + idx * 0.3);
+          osc.stop(this.ctx.currentTime + idx * 0.3 + 0.4);
+        } catch (e) {}
+      });
+    }
+  }
+
+  stopClip() {
+    if (this.currentAudio) {
+      try {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+      } catch (e) {}
+      this.currentAudio = null;
+    }
+  }
+
+  // c2C.4: Tension Loop & Stings
+  startTensionLoop() {
+    this.init();
+    this.stopTensionLoop();
+
+    if (!this.ctx) return;
+    try {
+      this.tensionOsc = this.ctx.createOscillator();
+      this.tensionGain = this.ctx.createGain();
+
+      this.tensionOsc.type = 'sawtooth';
+      this.tensionOsc.frequency.setValueAtTime(55, this.ctx.currentTime);
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(140, this.ctx.currentTime);
+
+      this.tensionGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+      this.tensionGain.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 1.2);
+
+      this.tensionOsc.connect(filter);
+      filter.connect(this.tensionGain);
+      if (this.analyser) {
+        this.tensionGain.connect(this.analyser);
+        this.analyser.connect(this.ctx.destination);
+      } else {
+        this.tensionGain.connect(this.ctx.destination);
+      }
+
+      this.tensionOsc.start();
+    } catch (e) {}
+  }
+
+  stopTensionLoop() {
+    if (this.tensionOsc) {
+      try {
+        this.tensionOsc.stop();
+        this.tensionOsc.disconnect();
+      } catch (e) {}
+      this.tensionOsc = null;
+    }
+  }
+
+  playVictorySting() {
+    this.init();
+    if (!this.ctx) return;
+
+    const chords = [523.25, 659.25, 783.99, 1046.50];
+    chords.forEach((freq, idx) => {
+      try {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(0, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.2);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(this.ctx.currentTime + idx * 0.05);
+        osc.stop(this.ctx.currentTime + 1.3);
+      } catch (e) {}
+    });
+  }
+
+  playWrongSting() {
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(55, this.ctx.currentTime + 0.8);
+
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.8);
+    } catch (e) {}
+  }
+
+  // c2C.1: Hindi TTS with Kannada-rate tuning (rate: 0.92) & cancel on screen change
+  speak(text, onDone = null) {
+    if (!VOICE_ENABLED || !('speechSynthesis' in window)) {
+      if (onDone) onDone();
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel(); // Cancel any queued speech
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.92; // Pinned Kannada-rate tuning
+      utterance.pitch = 0.78; // Amitabh deep baritone
+
+      // Pick Hindi / Indian English voice
+      const voices = window.speechSynthesis.getVoices();
+      const hiVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN')) || voices[0];
+      if (hiVoice) utterance.voice = hiVoice;
+
+      let called = false;
+      const finish = () => {
+        if (!called) {
+          called = true;
+          if (onDone) onDone();
+        }
+      };
+
+      utterance.onend = finish;
+      utterance.onerror = finish;
+      // 3.5s safety timeout so game flow never hangs
+      setTimeout(finish, 3500);
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      if (onDone) onDone();
+    }
+  }
+
+  cancelVoice() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
+}
+
+window.audioEngine = new AudioEngine();
