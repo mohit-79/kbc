@@ -366,12 +366,73 @@ export default {
           "UPDATE friend_requests SET answer = ?, note = ?, status = 'answered' WHERE id = ?"
         ).bind(String(selectedOption), note, reqRow.id).run();
 
+        // Broadcast to player via Durable Object if bound
+        if (env.SESSION_ROOM) {
+          try {
+            const roomId = env.SESSION_ROOM.idFromName(sessionId);
+            const room = env.SESSION_ROOM.get(roomId);
+            await room.fetch(new Request("https://internal/broadcast", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "friend_answered",
+                sessionId,
+                answer: selectedOption,
+                note,
+                friendName: reqRow.friend_name
+              })
+            }));
+          } catch (e) {
+            console.warn("Durable Object broadcast warning:", e);
+          }
+        }
+
         return new Response(JSON.stringify({
           success: true,
           answer: selectedOption,
           note,
           status: "answered"
         }), { status: 200, headers: corsHeaders });
+      }
+
+      // 10. Polling Fallback: GET /api/phone-friend/poll?session=<sessionId>
+      if (url.pathname === "/api/phone-friend/poll" && method === "GET") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
+        }
+        const sessionId = url.searchParams.get("session");
+        if (!sessionId) {
+          return new Response(JSON.stringify({ error: "Missing session" }), { status: 400, headers: corsHeaders });
+        }
+
+        const reqRow = await env.DB.prepare(
+          "SELECT friend_name, answer, note, status FROM friend_requests WHERE session_id = ? ORDER BY created_at DESC LIMIT 1"
+        ).bind(sessionId).first();
+
+        if (!reqRow) {
+          return new Response(JSON.stringify({ status: "none" }), { status: 200, headers: corsHeaders });
+        }
+
+        return new Response(JSON.stringify({
+          status: reqRow.status,
+          answer: reqRow.answer,
+          note: reqRow.note,
+          friendName: reqRow.friend_name
+        }), { status: 200, headers: corsHeaders });
+      }
+
+      // 11. Real-Time WebSocket Endpoint: /ws?session=<sessionId>
+      if (url.pathname === "/ws") {
+        const sessionId = url.searchParams.get("session");
+        if (!sessionId) {
+          return new Response("Missing session query param", { status: 400 });
+        }
+        if (env.SESSION_ROOM) {
+          const roomId = env.SESSION_ROOM.idFromName(sessionId);
+          const room = env.SESSION_ROOM.get(roomId);
+          return room.fetch(request);
+        }
+        return new Response("Durable Objects not enabled in this environment", { status: 501 });
       }
 
       // Fallback 404 for unknown API routes
@@ -393,3 +454,64 @@ export default {
     }
   }
 };
+
+// ==========================================================================
+// Cloudflare Durable Object: SessionRoom
+// Handles Real-Time Friend Answer Pushes (< 3s) & WebRTC Signaling
+// ==========================================================================
+export class SessionRoom {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+    this.sockets = new Set();
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    // Internal broadcast trigger from Worker
+    if (url.pathname === "/broadcast") {
+      const data = await request.text();
+      for (const ws of this.sockets) {
+        try {
+          ws.send(data);
+        } catch (e) {
+          this.sockets.delete(ws);
+        }
+      }
+      return new Response(JSON.stringify({ broadcasted: this.sockets.size }), { status: 200 });
+    }
+
+    // WebSocket Upgrade
+    if (request.headers.get("Upgrade") === "websocket") {
+      const pair = new WebSocketPair();
+      const client = pair[0];
+      const server = pair[1];
+
+      server.accept();
+      this.sockets.add(server);
+
+      server.addEventListener("close", () => {
+        this.sockets.delete(server);
+      });
+
+      server.addEventListener("error", () => {
+        this.sockets.delete(server);
+      });
+
+      server.addEventListener("message", (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "ping") {
+            server.send(JSON.stringify({ type: "pong" }));
+          }
+        } catch (e) {}
+      });
+
+      return new Response(null, { status: 101, webSocket: client });
+    }
+
+    return new Response("Not found", { status: 404 });
+  }
+}
+
