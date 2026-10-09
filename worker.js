@@ -231,7 +231,15 @@ export default {
         // 1. QR Gateway REST Adapter (GreenAPI / Whapi / UltraMsg)
         if (env.WHATSAPP_GATEWAY_URL && env.WHATSAPP_GATEWAY_TOKEN) {
           try {
-            const gwRes = await fetch(env.WHATSAPP_GATEWAY_URL, {
+            let gwUrl = env.WHATSAPP_GATEWAY_URL.trim();
+            // If Green-API instance URL format (e.g. https://.../waInstance12345/ or https://...):
+            if (gwUrl.includes("greenapi.com") || gwUrl.includes("green-api.com")) {
+              if (!gwUrl.includes("sendMessage")) {
+                gwUrl = `${gwUrl.replace(/\/+$/, "")}/sendMessage/${env.WHATSAPP_GATEWAY_TOKEN}`;
+              }
+            }
+
+            const gwRes = await fetch(gwUrl, {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${env.WHATSAPP_GATEWAY_TOKEN}`,
