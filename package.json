@@ -11,6 +11,6 @@
     "d1:migrate:local": "wrangler d1 migrations apply surkbc-db --local"
   },
   "devDependencies": {
-    "wrangler": "^3.80.0"
+    "wrangler": "^4.149.0"
   }
 }

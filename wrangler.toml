@@ -6,7 +6,7 @@ compatibility_date = "2024-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "surkbc-db"
-database_id = "surkbc-d1-local"
+database_id = "21ef8058-bbc7-4cf0-b728-849e467704e0"
 
 # Cloudflare Pages Routing (Serves kbc-game frontend directly)
 [site]
