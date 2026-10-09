@@ -108,6 +108,14 @@ What: Added Cloudflare Durable Object `SessionRoom` and `/ws` route in `worker.j
 Test: Verified Durable Object class export and bindings, tested syntax and bracket matching, and verified HTTP polling fallback route.
 Result: PASS
 
+---
+
+## c4B.6 — 2026-10-10
+What: Integrated live Player Answer Modal (`#modal-friend-answer`) and Phone-a-Friend waiting flow with auto-push WebSocket listener + HTTP polling fallback in `index.html` and `app.js`.
+Test: Verified modal open/close actions, verified timer stays frozen throughout, verified `acceptFriendAnswer` locks option, and confirmed cancel-before-send frees the lifeline.
+Result: PASS
+
+
 
 
 

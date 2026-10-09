@@ -985,7 +985,11 @@ window.closeAudiencePoll = function() {
   startTimer(); // Resume timer
 };
 
-// c2B.3: Phone a Friend (WhatsApp Share + Manual A/B/C/D entry)
+// c2B.3 & c4B.6: Phone a Friend v2 (Cloud-Driven WhatsApp Dispatch + Live Modal Push)
+let friendAnswerPollTimer = null;
+let friendAnswerWs = null;
+let currentFriendPendingAnswer = null;
+
 window.usePhoneAFriend = function() {
   if (game.used.phone) {
     showToast("Ye lifeline use ho chuki hai!");
@@ -998,13 +1002,25 @@ window.usePhoneAFriend = function() {
     return;
   }
 
-  stopTimer();
+  stopTimer(); // Pause timer while lifeline modal is active
+
+  // Reset modal display areas
+  const pickerArea = document.getElementById('phone-friend-picker-area');
+  const waitingArea = document.getElementById('phone-friend-waiting-area');
+  const manualArea = document.getElementById('phone-friend-manual-area');
+  if (pickerArea) pickerArea.style.display = 'block';
+  if (waitingArea) waitingArea.style.display = 'none';
+  if (manualArea) manualArea.style.display = 'none';
+
   const listEl = document.getElementById('modal-friend-picker-list');
   if (listEl) {
     listEl.innerHTML = profile.friends.map(f => `
-      <button class="friend-picker-btn" onclick="openWhatsAppForFriend('${escapeHtml(f.name)}')">
-        <span>👤 ${escapeHtml(f.name)}</span>
-        <span>WhatsApp ↗</span>
+      <button class="friend-picker-btn" onclick="triggerPhoneAFriendDispatch(${f.id})">
+        <div style="display: flex; flex-direction: column; text-align: left;">
+          <span style="font-weight: 800;">👤 ${escapeHtml(f.name)}</span>
+          <span style="font-size: 10px; color: var(--neon-cyan);">${escapeHtml(f.phone || '⚠️ No number')}</span>
+        </div>
+        <span style="font-size: 11px; background: rgba(0, 210, 255, 0.2); padding: 4px 8px; border-radius: 4px;">WhatsApp ↗</span>
       </button>
     `).join('');
   }
@@ -1013,52 +1029,213 @@ window.usePhoneAFriend = function() {
   if (modal) modal.classList.add('active');
 };
 
-window.openWhatsAppForFriend = function(friendName) {
+window.triggerPhoneAFriendDispatch = async function(friendId) {
+  const friend = profile.friends.find(f => f.id === friendId);
+  if (!friend) return;
+
+  if (!friend.phone) {
+    const raw = prompt(`'${friend.name}' ka WhatsApp number likhein (+91...):`);
+    const valid = normalizePhoneNumber(raw);
+    if (!valid) {
+      showToast("Sahi WhatsApp number dalein!");
+      return;
+    }
+    friend.phone = valid;
+    saveProfile();
+  }
+
+  const pickerArea = document.getElementById('phone-friend-picker-area');
+  const waitingArea = document.getElementById('phone-friend-waiting-area');
+  const manualArea = document.getElementById('phone-friend-manual-area');
+  if (pickerArea) pickerArea.style.display = 'none';
+  if (waitingArea) waitingArea.style.display = 'block';
+  if (manualArea) manualArea.style.display = 'none';
+
+  const waitMsg = document.getElementById('phone-friend-wait-msg');
+  if (waitMsg) waitMsg.textContent = `${friend.name} ko WhatsApp bhej diya gaya!`;
+
+  // Set Jitsi call links
+  const activeSess = game.sessionId || 'game';
+  const playerAudio = document.getElementById('btn-player-jitsi-audio');
+  const playerVideo = document.getElementById('btn-player-jitsi-video');
+  if (playerAudio) playerAudio.href = `https://meet.jit.si/surkbc-${encodeURIComponent(activeSess)}#config.startWithVideoMuted=true`;
+  if (playerVideo) playerVideo.href = `https://meet.jit.si/surkbc-${encodeURIComponent(activeSess)}`;
+
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
   const q = qList[game.qIndex % qList.length];
 
-  // Owner's Exact WhatsApp Template:
-  // 🎵 SurKBC — dost ki madad chahiye!\nSawaal: <question>\nA) <opt1>\nB) <opt2>\nC) <opt3>\nD) <opt4>\n\nSahi option ka letter reply karo!
-  const text = `🎵 SurKBC — dost ki madad chahiye!\nSawaal: ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\n\nSahi option ka letter reply karo!`;
+  try {
+    const res = await fetch(`${API_BASE}/api/phone-friend/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Token': getDeviceToken()
+      },
+      body: JSON.stringify({
+        sessionId: game.sessionId,
+        friendName: friend.name,
+        friendPhone: friend.phone,
+        question: q.question,
+        options: q.options,
+        playerName: profile.name
+      })
+    });
 
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.gateway === 'wa-me-fallback' && data.waLink) {
+        window.open(data.waLink, '_blank');
+      }
+    } else {
+      fallbackDirectWhatsAppShare(friend, q);
+    }
+  } catch (e) {
+    fallbackDirectWhatsAppShare(friend, q);
+  }
+
+  startFriendAnswerListener(friend.name);
+};
+
+function fallbackDirectWhatsAppShare(friend, q) {
+  const origin = window.location.origin.includes("localhost") ? window.location.origin : "https://kbc.harjani.me";
+  const sId = game.sessionId || 'game';
+  const ansUrl = `${origin}/friend.html?session=${encodeURIComponent(sId)}&token=manual`;
+  const audioUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sId)}#config.startWithVideoMuted=true`;
+  const videoUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sId)}`;
+
+  const text = `🎵 SurKBC — Aapke dost ${profile.name} ko aapki madad chahiye!\n\nSawaal: ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\n\n👉 Uttar dene ke liye link:\n${ansUrl}\n\n🎙️ Audio call:\n${audioUrl}\n\n📹 Video call:\n${videoUrl}`;
+  const cleanPhone = (friend.phone || "").replace(/[\s\-\(\)\+]/g, "");
+  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
   window.open(waUrl, '_blank');
+}
 
-  // Switch friend modal view to manual entry prompt
-  const pickerArea = document.getElementById('phone-friend-picker-area');
+function startFriendAnswerListener(friendName) {
+  stopFriendAnswerListener();
+
+  // 1. Try WebSocket connection to /ws
+  try {
+    const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProto}//${location.host}/ws?session=${encodeURIComponent(game.sessionId || 'game')}`;
+    friendAnswerWs = new WebSocket(wsUrl);
+
+    friendAnswerWs.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'friend_answered' && msg.answer) {
+          onFriendAnswerReceived(msg.answer, msg.note, msg.friendName || friendName);
+        }
+      } catch (e) {}
+    };
+  } catch (e) {}
+
+  // 2. HTTP Polling Fallback every 2.5 seconds
+  friendAnswerPollTimer = setInterval(async () => {
+    if (!game.sessionId) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/phone-friend/poll?session=${encodeURIComponent(game.sessionId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'answered' && data.answer) {
+          onFriendAnswerReceived(data.answer, data.note, data.friendName || friendName);
+        }
+      }
+    } catch (e) {}
+  }, 2500);
+}
+
+function stopFriendAnswerListener() {
+  if (friendAnswerPollTimer) {
+    clearInterval(friendAnswerPollTimer);
+    friendAnswerPollTimer = null;
+  }
+  if (friendAnswerWs) {
+    try { friendAnswerWs.close(); } catch (e) {}
+    friendAnswerWs = null;
+  }
+}
+
+function onFriendAnswerReceived(optLetter, note, friendName) {
+  stopFriendAnswerListener();
+
+  // Close waiting modal
+  const phoneModal = document.getElementById('modal-phone-friend');
+  if (phoneModal) phoneModal.classList.remove('active');
+
+  // Mark lifeline used
+  game.used.phone = true;
+  updateLifelineHUD();
+  syncServerSession();
+
+  const letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
+  const optIdx = letterMap[String(optLetter).toUpperCase()] ?? 0;
+  currentFriendPendingAnswer = optIdx;
+
+  // Highlight option card on stage
+  document.querySelectorAll('.option-card').forEach((el, i) => {
+    el.classList.toggle('selected', i === optIdx);
+  });
+
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const optName = q.options[optIdx];
+
+  // Open Friend Answer Prompt Modal
+  const ansModal = document.getElementById('modal-friend-answer');
+  const titleEl = document.getElementById('friend-answer-title');
+  const textEl = document.getElementById('friend-answer-text');
+  const noteEl = document.getElementById('friend-answer-note');
+
+  if (titleEl) titleEl.textContent = `📞 ${friendName} Ne Uttar Diya!`;
+  if (textEl) textEl.textContent = `Option ${optLetter}: ${optName}`;
+  if (noteEl) {
+    noteEl.textContent = note ? `Salah: "${note}"` : "Dost ne ye option chuna hai.";
+  }
+
+  if (ansModal) ansModal.classList.add('active');
+
+  if (window.audioEngine) {
+    window.audioEngine.speak(`${friendName} ne kaha: Option ${optLetter}, ${optName}`);
+  }
+}
+
+window.acceptFriendAnswer = function() {
+  const ansModal = document.getElementById('modal-friend-answer');
+  if (ansModal) ansModal.classList.remove('active');
+
+  if (currentFriendPendingAnswer !== null) {
+    game.selectedOption = currentFriendPendingAnswer;
+    confirmLock();
+  }
+};
+
+window.dismissFriendAnswer = function() {
+  const ansModal = document.getElementById('modal-friend-answer');
+  if (ansModal) ansModal.classList.remove('active');
+  game.selectedOption = null;
+  document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+  startTimer(); // Resume timer
+};
+
+window.switchToManualFriendAnswer = function() {
+  const waitingArea = document.getElementById('phone-friend-waiting-area');
   const manualArea = document.getElementById('phone-friend-manual-area');
-  if (pickerArea) pickerArea.style.display = 'none';
+  if (waitingArea) waitingArea.style.display = 'none';
   if (manualArea) manualArea.style.display = 'block';
 };
 
 window.submitFriendManualAnswer = function(optLetter) {
+  stopFriendAnswerListener();
   const modal = document.getElementById('modal-phone-friend');
   if (modal) modal.classList.remove('active');
 
-  // Reset modal display for future use
-  const pickerArea = document.getElementById('phone-friend-picker-area');
-  const manualArea = document.getElementById('phone-friend-manual-area');
-  if (pickerArea) pickerArea.style.display = 'block';
-  if (manualArea) manualArea.style.display = 'none';
-
-  game.used.phone = true;
-  updateLifelineHUD();
-
-  const letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
-  const optIdx = letterMap[optLetter];
-
-  // That option gets locked directly (skip re-confirm)
-  game.selectedOption = optIdx;
-  document.querySelectorAll('.option-card').forEach((el, i) => {
-    el.classList.toggle('selected', i === optIdx);
-  });
-  confirmLock();
+  onFriendAnswerReceived(optLetter, "", "Dost");
 };
 
 window.closePhoneAFriendModal = function() {
+  stopFriendAnswerListener();
   const modal = document.getElementById('modal-phone-friend');
   if (modal) modal.classList.remove('active');
-  startTimer();
+  startTimer(); // Resume timer without consuming lifeline if cancelled before send
 };
 
 // c2B.4: Flip the Question Lifeline
