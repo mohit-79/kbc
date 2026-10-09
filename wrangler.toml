@@ -14,24 +14,12 @@ binding = "DB"
 database_name = "surkbc-db"
 database_id = "21ef8058-bbc7-4cf0-b728-849e467704e0"
 
-# Cloudflare Pages Routing (Serves kbc-game frontend directly)
-[site]
-bucket = "./"
-include = [
-  "index.html",
-  "styles.css",
-  "app.js",
-  "questions.js",
-  "audio.js",
-  "musicFacts.json",
-  "manifest.webmanifest",
-  "icon-180.png",
-  "apple-touch-icon.png",
-  "friend.html",
-  "friend.js",
-  "images/**",
-  "icons/**"
-]
+# Static Assets configuration (Cloudflare Workers Static Assets)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+html_handling = "auto-trailing-slash"
+not_found_handling = "single-page-application"
 
 # Cloudflare Durable Objects Binding for Real-time Push & Signaling
 [[durable_objects.bindings]]

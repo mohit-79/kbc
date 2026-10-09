@@ -452,6 +452,9 @@ export default {
       }
 
       // Static fallback when serving through worker
+      if (env.ASSETS) {
+        return env.ASSETS.fetch(request);
+      }
       return new Response("SurKBC Worker Active", { status: 200 });
 
     } catch (err) {
