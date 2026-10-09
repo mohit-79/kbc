@@ -56,10 +56,128 @@ function loadProfile() {
   };
 }
 
-function saveProfile() {
+// --- CLOUDFLARE WORKERS REST API CLIENT ---
+const API_BASE = "";
+
+function getDeviceToken() {
+  try {
+    let token = localStorage.getItem('surkbc_device_token');
+    if (!token) {
+      token = 'dev-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('surkbc_device_token', token);
+    }
+    return token;
+  } catch (e) {
+    return 'dev-fallback';
+  }
+}
+
+async function syncProfileFromServer() {
+  try {
+    const res = await fetch(`${API_BASE}/api/profile?name=${encodeURIComponent(profile.name || 'Contestant')}`, {
+      headers: { 'X-Device-Token': getDeviceToken() }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.profile) {
+      if (data.profile.highScore && data.profile.highScore !== '₹ 0') {
+        profile.highScore = data.profile.highScore;
+      }
+      if (typeof data.profile.gamesPlayed === 'number' && data.profile.gamesPlayed > profile.gamesPlayed) {
+        profile.gamesPlayed = data.profile.gamesPlayed;
+      }
+      if (Array.isArray(data.profile.friends) && data.profile.friends.length > 0) {
+        profile.friends = data.profile.friends;
+      }
+      saveProfile(false);
+      renderHome();
+    }
+  } catch (e) {}
+}
+
+async function pushProfileToServer() {
+  try {
+    await fetch(`${API_BASE}/api/profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Token': getDeviceToken()
+      },
+      body: JSON.stringify({
+        name: profile.name,
+        highScore: profile.highScore,
+        gamesPlayed: profile.gamesPlayed,
+        friends: profile.friends
+      })
+    });
+  } catch (e) {}
+}
+
+async function startServerSession() {
+  try {
+    const res = await fetch(`${API_BASE}/api/session/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Token': getDeviceToken()
+      },
+      body: JSON.stringify({ playerName: profile.name })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.sessionId) {
+        game.sessionId = data.sessionId;
+        saveGameState();
+      }
+    }
+  } catch (e) {}
+}
+
+async function syncServerSession() {
+  if (!game.sessionId) return;
+  try {
+    await fetch(`${API_BASE}/api/session/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Token': getDeviceToken()
+      },
+      body: JSON.stringify({
+        sessionId: game.sessionId,
+        qIndex: game.qIndex,
+        currentPrize: game.currentPrize,
+        guaranteedPrize: game.guaranteedPrize,
+        usedLifelines: game.used
+      })
+    });
+  } catch (e) {}
+}
+
+async function endServerSession(status = 'ended') {
+  if (!game.sessionId) return;
+  try {
+    await fetch(`${API_BASE}/api/session/end`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Token': getDeviceToken()
+      },
+      body: JSON.stringify({
+        sessionId: game.sessionId,
+        finalPrize: game.guaranteedPrize,
+        status
+      })
+    });
+  } catch (e) {}
+}
+
+function saveProfile(shouldPush = true) {
   try {
     localStorage.setItem('surkbc_profile', JSON.stringify(profile));
   } catch (e) {}
+  if (shouldPush) {
+    pushProfileToServer();
+  }
 }
 
 function getQuestionsForGame() {
@@ -80,6 +198,7 @@ function getQuestionsForGame() {
 
 function createNewGameState() {
   return {
+    sessionId: null,
     qIndex: 0,
     currentPrize: "₹ 0",
     guaranteedPrize: "₹ 0",
@@ -102,6 +221,7 @@ function createNewGameState() {
 function saveGameState() {
   try {
     const toSave = {
+      sessionId: game.sessionId,
       qIndex: game.qIndex,
       currentPrize: game.currentPrize,
       guaranteedPrize: game.guaranteedPrize,
@@ -224,6 +344,10 @@ window.removeFriend = function(id) {
 
 // --- SCREEN 2: HOT-SEAT INTRO ---
 function renderIntro() {
+  if (!game.sessionId) {
+    startServerSession();
+  }
+
   const ladderEl = document.getElementById('intro-ladder-list');
   if (ladderEl) {
     ladderEl.innerHTML = KBC_LADDER.slice().reverse().map((t, revIdx) => {
@@ -507,6 +631,8 @@ function evaluateAnswer(chosenIdx) {
     }
   }
 
+  syncServerSession();
+
   // Brief delay to let user see the 3D card flip animation before showing result interstitial
   setTimeout(() => {
     show('screen-result');
@@ -664,6 +790,7 @@ window.confirmQuit = function() {
   const lastWon = game.qIndex > 0 ? KBC_LADDER[game.qIndex - 1].prize : "₹ 0";
   game.guaranteedPrize = lastWon;
   game.currentPrize = lastWon;
+  endServerSession('quit');
   show('screen-gameover');
 };
 
@@ -693,6 +820,7 @@ function renderGameOver() {
 
   profile.highScore = game.currentPrize;
   saveProfile();
+  endServerSession(game.lastAnswerCorrect === false ? 'lost' : 'won');
 }
 
 window.restartGame = function() {
@@ -977,4 +1105,5 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {}
 
   show(restoreScreen);
+  syncProfileFromServer();
 });
