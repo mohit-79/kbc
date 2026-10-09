@@ -52,3 +52,11 @@ What: Created `worker.js` scaffold with tiny router & `/api/health`, `wrangler.t
 Test: Verified SQLite table creation with all 4 tables in memory; checked Worker syntax & CORS.
 Result: PASS
 
+---
+
+## c4A.2 — 2026-10-10
+What: Implemented Profile REST API in `worker.js`: `GET /api/profile?name=<name>` (with auto-provisioning) and `POST /api/profile` (updates high score, games played, and syncs friends roster with phone numbers).
+Test: Verified full round-trip CRUD operations on D1 schema tables; validated input sanitization.
+Result: PASS
+
+
