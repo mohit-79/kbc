@@ -239,17 +239,17 @@ export default {
               }
             }
 
+            const headers = { "Content-Type": "application/json" };
+            if (!gwUrl.includes("greenapi.com") && !gwUrl.includes("green-api.com")) {
+              headers["Authorization"] = `Bearer ${env.WHATSAPP_GATEWAY_TOKEN}`;
+            }
+
             const gwRes = await fetch(gwUrl, {
               method: "POST",
-              headers: {
-                "Authorization": `Bearer ${env.WHATSAPP_GATEWAY_TOKEN}`,
-                "Content-Type": "application/json"
-              },
+              headers: headers,
               body: JSON.stringify({
                 chatId: `${cleanPhone.replace(/^\+/, "")}@c.us`,
-                to: cleanPhone,
-                message: messageText,
-                body: messageText
+                message: messageText
               })
             });
             if (gwRes.ok) {
