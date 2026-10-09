@@ -295,6 +295,85 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
+      // 8. Friend Portal API: GET /api/phone-friend/question?session=&token=
+      if (url.pathname === "/api/phone-friend/question" && method === "GET") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
+        }
+        const sessionId = url.searchParams.get("session");
+        const token = url.searchParams.get("token");
+
+        if (!sessionId || !token) {
+          return new Response(JSON.stringify({ error: "Missing session or token" }), { status: 400, headers: corsHeaders });
+        }
+
+        const reqRow = await env.DB.prepare(
+          "SELECT * FROM friend_requests WHERE session_id = ? AND token = ?"
+        ).bind(sessionId, token).first();
+
+        if (!reqRow) {
+          return new Response(JSON.stringify({ error: "Invalid link or request not found" }), { status: 404, headers: corsHeaders });
+        }
+
+        const now = new Date().toISOString();
+        if (reqRow.expires_at && reqRow.expires_at < now) {
+          return new Response(JSON.stringify({ error: "Token expired", status: "expired" }), { status: 410, headers: corsHeaders });
+        }
+
+        return new Response(JSON.stringify({
+          question: reqRow.question_text,
+          options: JSON.parse(reqRow.options_json || "[]"),
+          friendName: reqRow.friend_name,
+          status: reqRow.status,
+          answer: reqRow.answer,
+          note: reqRow.note
+        }), { status: 200, headers: corsHeaders });
+      }
+
+      // 9. Friend Portal API: POST /api/phone-friend/submit
+      if (url.pathname === "/api/phone-friend/submit" && method === "POST") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
+        }
+        const body = await request.json().catch(() => ({}));
+        const sessionId = body.sessionId;
+        const token = body.token;
+        const selectedOption = body.selectedOption; // 0, 1, 2, 3 or letter "A", "B", "C", "D"
+        const note = (body.note || "").trim();
+
+        if (!sessionId || !token || selectedOption === undefined || selectedOption === null) {
+          return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400, headers: corsHeaders });
+        }
+
+        const reqRow = await env.DB.prepare(
+          "SELECT * FROM friend_requests WHERE session_id = ? AND token = ?"
+        ).bind(sessionId, token).first();
+
+        if (!reqRow) {
+          return new Response(JSON.stringify({ error: "Invalid token" }), { status: 404, headers: corsHeaders });
+        }
+
+        if (reqRow.status === "answered") {
+          return new Response(JSON.stringify({ error: "Already submitted", status: "answered" }), { status: 409, headers: corsHeaders });
+        }
+
+        const now = new Date().toISOString();
+        if (reqRow.expires_at && reqRow.expires_at < now) {
+          return new Response(JSON.stringify({ error: "Token expired" }), { status: 410, headers: corsHeaders });
+        }
+
+        await env.DB.prepare(
+          "UPDATE friend_requests SET answer = ?, note = ?, status = 'answered' WHERE id = ?"
+        ).bind(String(selectedOption), note, reqRow.id).run();
+
+        return new Response(JSON.stringify({
+          success: true,
+          answer: selectedOption,
+          note,
+          status: "answered"
+        }), { status: 200, headers: corsHeaders });
+      }
+
       // Fallback 404 for unknown API routes
       if (url.pathname.startsWith("/api/")) {
         return new Response(JSON.stringify({ error: "Endpoint not found" }), {

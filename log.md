@@ -94,6 +94,14 @@ What: Added multi-provider WhatsApp message dispatcher in `worker.js`: formats m
 Test: Validated message payload formatting, tested URL encoding for `wa.me` link, and verified graceful fallback when gateway credentials are unconfigured.
 Result: PASS
 
+---
+
+## c4B.4 — 2026-10-10
+What: Created mobile Phone-a-Friend answer portal (`friend.html` & `friend.js`) and added backend endpoints `GET /api/phone-friend/question` & `POST /api/phone-friend/submit` in `worker.js`.
+Test: Verified token validation, expiration enforcement, single-use submit constraint, and 4-option card UI rendering.
+Result: PASS
+
+
 
 
 
