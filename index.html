@@ -15,6 +15,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
+  <script src="peerjs.min.js"></script>
 </head>
 <body>
   <!-- Ambient KBC Glow -->
@@ -347,13 +348,16 @@
       <div id="call-video-stage" class="call-video-stage" style="display: none;">
         <div class="video-tile" id="tile-player-container">
           <div class="video-tile-label">👤 Aap (Player)</div>
-          <div id="jitsi-player-mount" style="width: 100%; height: 100%;"></div>
+          <video id="player-local-video" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
         </div>
         <div class="video-tile friend-tile" id="tile-friend-container">
           <div class="video-tile-label" id="label-friend-tile">👤 Dost</div>
-          <div id="jitsi-friend-mount" style="width: 100%; height: 100%;"></div>
+          <video id="player-remote-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
         </div>
       </div>
+
+      <!-- Native Remote Audio Playback Element for Audio Mode -->
+      <audio id="player-remote-audio" autoplay playsinline></audio>
 
       <!-- In-Call Control Footer -->
       <div class="call-actions-bar">

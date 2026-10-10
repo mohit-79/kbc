@@ -1056,12 +1056,13 @@ window.triggerPhoneAFriendDispatch = async function(friendId) {
   const waitMsg = document.getElementById('phone-friend-wait-msg');
   if (waitMsg) waitMsg.textContent = `${friend.name} ko WhatsApp bhej diya gaya!`;
 
-  // Set Jitsi call links
+  // Set Call links & Init PeerJS
   const activeSess = game.sessionId || 'game';
+  initPlayerPeerSession();
   const playerAudio = document.getElementById('btn-player-jitsi-audio');
   const playerVideo = document.getElementById('btn-player-jitsi-video');
-  if (playerAudio) playerAudio.href = `https://meet.jit.si/surkbc-${encodeURIComponent(activeSess)}#config.startWithVideoMuted=true`;
-  if (playerVideo) playerVideo.href = `https://meet.jit.si/surkbc-${encodeURIComponent(activeSess)}`;
+  if (playerAudio) playerAudio.href = `/friend-call.html?session=${encodeURIComponent(activeSess)}&mode=audio`;
+  if (playerVideo) playerVideo.href = `/friend-call.html?session=${encodeURIComponent(activeSess)}&mode=video`;
 
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
   const q = qList[game.qIndex % qList.length];
@@ -1143,7 +1144,7 @@ function startFriendAnswerListener(friendName) {
     };
   } catch (e) {}
 
-  // 2. HTTP Polling Fallback every 2.5 seconds
+  // 2. HTTP Polling Fallback every 2 seconds (Both Answer AND WhatsApp Chat)
   friendAnswerPollTimer = setInterval(async () => {
     if (!game.sessionId) return;
     try {
@@ -1154,8 +1155,17 @@ function startFriendAnswerListener(friendName) {
           onFriendAnswerReceived(data.answer, data.note, data.friendName || friendName);
         }
       }
+
+      // Sync chat messages
+      const chatRes = await fetch(`${API_BASE}/api/phone-friend/messages?session=${encodeURIComponent(game.sessionId)}`);
+      if (chatRes.ok) {
+        const chatData = await chatRes.json();
+        if (Array.isArray(chatData.messages)) {
+          chatData.messages.forEach(m => onWhatsAppChatMessageReceived(m));
+        }
+      }
     } catch (e) {}
-  }, 2500);
+  }, 2000);
 }
 
 function stopFriendAnswerListener() {
@@ -1259,8 +1269,13 @@ window.closePhoneAFriendModal = function() {
 // ==========================================================================
 let lastDetectedOptionFromChat = null;
 let currentChatFriendPhone = null;
+const seenChatMsgIds = new Set();
 
 function onWhatsAppChatMessageReceived(msg) {
+  const msgKey = msg.id || `${msg.sender}_${msg.text}_${msg.created_at || msg.timestamp || ''}`;
+  if (seenChatMsgIds.has(msgKey)) return;
+  seenChatMsgIds.add(msgKey);
+
   const container = document.getElementById('wa-chat-messages');
   if (!container) return;
 
@@ -1333,25 +1348,104 @@ window.lockSuggestedOption = function() {
 // ==========================================================================
 // CUSTOM IN-APP KBC CALL ENGINE (AUDIO VISUALIZER & DUAL VIDEO TILES)
 // ==========================================================================
+// PURE NATIVE P2P WEBRTC CALL ENGINE (PEERJS — ZERO LOGIN, ZERO CHROME)
+// ==========================================================================
 let activeCallMode = null;
 let callVisualizerInterval = null;
-let jitsiPlayerIframe = null;
-let jitsiFriendIframe = null;
+let playerPeer = null;
+let activePeerCall = null;
+let playerLocalMediaStream = null;
 let isCallMuted = false;
 
-window.startCustomCall = function(mode) {
+function initPlayerPeerSession() {
   const sId = game.sessionId || 'game';
-  const roomName = `surkbc-${encodeURIComponent(sId)}`;
-  launchCustomCallModal(mode, roomName);
+  const playerPeerId = `surkbc-player-${sId}`;
+
+  if (playerPeer) {
+    try { playerPeer.destroy(); } catch (e) {}
+  }
+
+  if (typeof Peer === 'undefined') return;
+
+  try {
+    playerPeer = new Peer(playerPeerId, { debug: 1 });
+
+    playerPeer.on('open', () => {
+      console.log('Player PeerJS Ready:', playerPeerId);
+    });
+
+    playerPeer.on('call', async (call) => {
+      // Incoming call from friend!
+      const callMode = call.metadata?.mode === 'video' ? 'video' : 'audio';
+      activeCallMode = callMode;
+      activePeerCall = call;
+
+      showToast(`Dost se ${callMode === 'video' ? 'Video' : 'Audio'} Call jud rahi hai!`);
+      launchCustomCallModal(callMode);
+
+      try {
+        // Capture local microphone (and camera if video mode)
+        playerLocalMediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: (callMode === 'video')
+        });
+
+        if (callMode === 'video') {
+          const localVid = document.getElementById('player-local-video');
+          if (localVid) localVid.srcObject = playerLocalMediaStream;
+        }
+
+        call.answer(playerLocalMediaStream);
+
+        call.on('stream', (remoteStream) => {
+          attachRemoteMediaStream(remoteStream, callMode);
+        });
+
+        call.on('close', () => {
+          endCustomCall();
+        });
+
+      } catch (err) {
+        console.warn('Microphone/Camera permission error:', err);
+        // Answer audio-only or empty if permission denied
+        call.answer();
+        call.on('stream', (remoteStream) => {
+          attachRemoteMediaStream(remoteStream, callMode);
+        });
+      }
+    });
+
+    playerPeer.on('error', (err) => {
+      console.warn('Player PeerJS error:', err);
+    });
+  } catch (err) {
+    console.warn('PeerJS init error:', err);
+  }
+}
+
+function attachRemoteMediaStream(remoteStream, mode) {
+  if (mode === 'video') {
+    const remoteVid = document.getElementById('player-remote-video');
+    if (remoteVid) remoteVid.srcObject = remoteStream;
+  } else {
+    const remoteAud = document.getElementById('player-remote-audio');
+    if (remoteAud) {
+      remoteAud.srcObject = remoteStream;
+      remoteAud.play().catch(() => {});
+    }
+  }
+}
+
+window.startCustomCall = function(mode) {
+  launchCustomCallModal(mode);
 };
 
 function onIncomingCallTriggered(msg) {
-  // Automatically start call when friend joins/clicks link!
   showToast(`Dost ne ${msg.mode === 'video' ? 'Video' : 'Audio'} Call shuru ki!`);
-  launchCustomCallModal(msg.mode, msg.roomName);
+  launchCustomCallModal(msg.mode);
 }
 
-function launchCustomCallModal(mode, roomName) {
+function launchCustomCallModal(mode) {
   activeCallMode = mode;
   const modal = document.getElementById('modal-kbc-call');
   const audioStage = document.getElementById('call-audio-stage');
@@ -1359,7 +1453,7 @@ function launchCustomCallModal(mode, roomName) {
   const statusLabel = document.getElementById('call-status-label');
   const friendNameAudio = document.getElementById('call-friend-name-audio');
 
-  const activeFriend = profile.friends[0];
+  const activeFriend = profile.friends && profile.friends[0];
   if (friendNameAudio) {
     friendNameAudio.textContent = activeFriend ? activeFriend.name : "Dost";
   }
@@ -1370,19 +1464,38 @@ function launchCustomCallModal(mode, roomName) {
 
   if (modal) modal.classList.add('active');
 
-  // Hide the phone-a-friend picker/waiting modal behind it
-  const phoneModal = document.getElementById('modal-phone-friend');
-  if (phoneModal) phoneModal.classList.remove('active');
-
   if (mode === 'audio') {
     if (audioStage) audioStage.style.display = 'flex';
     if (videoStage) videoStage.style.display = 'none';
     startAudioVisualizerLoop();
-    mountJitsiHeadlessAudio(roomName);
   } else {
     if (audioStage) audioStage.style.display = 'none';
     if (videoStage) videoStage.style.display = 'grid';
-    mountJitsiDualVideoTiles(roomName);
+  }
+
+  // Request contestant's camera/mic
+  acquirePlayerMediaStream(mode);
+}
+
+async function acquirePlayerMediaStream(mode) {
+  if (playerLocalMediaStream) return;
+  try {
+    playerLocalMediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: (mode === 'video')
+    });
+
+    if (mode === 'video') {
+      const localVid = document.getElementById('player-local-video');
+      if (localVid) localVid.srcObject = playerLocalMediaStream;
+    }
+
+    // If an incoming call is waiting, answer it with stream
+    if (activePeerCall && !activePeerCall.open) {
+      activePeerCall.answer(playerLocalMediaStream);
+    }
+  } catch (err) {
+    console.warn("Player media permission denied or not available:", err);
   }
 }
 
@@ -1393,7 +1506,6 @@ function startAudioVisualizerLoop() {
 
   callVisualizerInterval = setInterval(() => {
     bars.forEach(bar => {
-      // Simulate live voice modulation wave
       const height = Math.floor(Math.random() * 42) + 6;
       bar.style.height = `${height}px`;
     });
@@ -1407,51 +1519,11 @@ function stopAudioVisualizerLoop() {
   }
 }
 
-function mountJitsiHeadlessAudio(roomName) {
-  // Clear any existing mount
-  const mount = document.getElementById('jitsi-player-mount');
-  if (!mount) return;
-  mount.innerHTML = '';
-
-  const iframe = document.createElement('iframe');
-  iframe.src = `https://meet.jit.si/${roomName}#config.startWithVideoMuted=true&config.prejoinPageEnabled=false&interfaceConfig.TOOLBAR_BUTTONS=['microphone','hangup']`;
-  iframe.allow = 'camera; microphone; autoplay; display-capture';
-  iframe.style.width = '1px';
-  iframe.style.height = '1px';
-  iframe.style.position = 'absolute';
-  iframe.style.opacity = '0.01';
-  mount.appendChild(iframe);
-  jitsiPlayerIframe = iframe;
-}
-
-function mountJitsiDualVideoTiles(roomName) {
-  const playerMount = document.getElementById('jitsi-player-mount');
-  const friendMount = document.getElementById('jitsi-friend-mount');
-
-  if (playerMount) {
-    playerMount.innerHTML = '';
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&interfaceConfig.TOOLBAR_BUTTONS=['camera','microphone','hangup']`;
-    iframe.allow = 'camera; microphone; autoplay; display-capture';
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = 'none';
-    playerMount.appendChild(iframe);
-    jitsiPlayerIframe = iframe;
-  }
-
-  if (friendMount) {
-    friendMount.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--neon-cyan);">
-        <div style="font-size: 32px; margin-bottom: 6px;">📹</div>
-        <p style="font-size: 11px; font-weight: 700;">Dost ka camera view sync ho raha hai</p>
-      </div>
-    `;
-  }
-}
-
 window.toggleCallMute = function() {
   isCallMuted = !isCallMuted;
+  if (playerLocalMediaStream) {
+    playerLocalMediaStream.getAudioTracks().forEach(track => track.enabled = !isCallMuted);
+  }
   const btn = document.getElementById('btn-call-mute');
   if (btn) {
     btn.textContent = isCallMuted ? "🔇 Mic Muted" : "🎙️ Mic On";
@@ -1461,7 +1533,6 @@ window.toggleCallMute = function() {
 
 window.lockFromCall = function() {
   endCustomCall();
-  // Open answer manual or detected modal
   if (lastDetectedOptionFromChat) {
     onFriendAnswerReceived(lastDetectedOptionFromChat, "Call ke dauraan chuna", "Dost");
   } else {
@@ -1476,14 +1547,23 @@ window.endCustomCall = function() {
   const modal = document.getElementById('modal-kbc-call');
   if (modal) modal.classList.remove('active');
 
-  const playerMount = document.getElementById('jitsi-player-mount');
-  const friendMount = document.getElementById('jitsi-friend-mount');
-  if (playerMount) playerMount.innerHTML = '';
-  if (friendMount) friendMount.innerHTML = '';
-  jitsiPlayerIframe = null;
-  jitsiFriendIframe = null;
+  if (playerLocalMediaStream) {
+    playerLocalMediaStream.getTracks().forEach(track => track.stop());
+    playerLocalMediaStream = null;
+  }
 
-  // Re-open Phone-a-Friend waiting modal if lifeline is still in progress
+  if (activePeerCall) {
+    try { activePeerCall.close(); } catch (e) {}
+    activePeerCall = null;
+  }
+
+  const localVid = document.getElementById('player-local-video');
+  const remoteVid = document.getElementById('player-remote-video');
+  const remoteAud = document.getElementById('player-remote-audio');
+  if (localVid) localVid.srcObject = null;
+  if (remoteVid) remoteVid.srcObject = null;
+  if (remoteAud) remoteAud.srcObject = null;
+
   if (!game.used.phone) {
     const phoneModal = document.getElementById('modal-phone-friend');
     if (phoneModal) phoneModal.classList.add('active');

@@ -429,6 +429,25 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
+      // 10B. Chat Messages Polling: GET /api/phone-friend/messages?session=<sessionId>
+      if (url.pathname === "/api/phone-friend/messages" && method === "GET") {
+        if (!env.DB) {
+          return new Response(JSON.stringify({ messages: [] }), { status: 200, headers: corsHeaders });
+        }
+        const sessionId = url.searchParams.get("session");
+        if (!sessionId) {
+          return new Response(JSON.stringify({ messages: [] }), { status: 200, headers: corsHeaders });
+        }
+
+        const msgs = await env.DB.prepare(
+          "SELECT id, session_id, sender, friend_name, friend_phone, text, detected_option, created_at FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC LIMIT 30"
+        ).bind(sessionId).all();
+
+        return new Response(JSON.stringify({
+          messages: msgs.results || []
+        }), { status: 200, headers: corsHeaders });
+      }
+
       // 11. Call Auto-Connect Trigger: GET /call?session=&mode=
       if (url.pathname === "/call" && method === "GET") {
         const sessionId = url.searchParams.get("session");
@@ -455,11 +474,9 @@ export default {
           }
         }
 
-        // Direct friend to Jitsi room
-        const jitsiTarget = mode === "video"
-          ? `https://meet.jit.si/${roomName}`
-          : `https://meet.jit.si/${roomName}#config.startWithVideoMuted=true`;
-        return Response.redirect(jitsiTarget, 302);
+        // Direct friend to native PeerJS call client
+        const callTarget = `/friend-call.html?session=${encodeURIComponent(sessionId || "game")}&mode=${mode}`;
+        return Response.redirect(new URL(callTarget, url.origin).toString(), 302);
       }
 
       // 12. Green-API Incoming Webhook: POST /api/webhook/greenapi
@@ -468,24 +485,30 @@ export default {
           const payload = await request.json().catch(() => ({}));
           const typeWebhook = payload.typeWebhook;
 
-          // Process incoming WhatsApp text message
-          if (typeWebhook === "incomingMessageReceived") {
+          // Accept incoming messages AND outgoing messages typed directly on phone (sendByApi: false)
+          const isIncoming = (typeWebhook === "incomingMessageReceived");
+          const isPhoneReply = (typeWebhook === "outgoingMessageReceived" && payload.messageData && payload.messageData.sendByApi === false);
+
+          if (isIncoming || isPhoneReply) {
             const senderData = payload.senderData || {};
             const messageData = payload.messageData || {};
-            let senderPhone = (senderData.sender || senderData.chatId || "").replace(/@.*$/, "").replace(/^\+/, "");
-            let textMessage = "";
 
+            // In incoming: senderData.sender or senderData.chatId is friend. In outgoing phone reply: senderData.chatId is recipient friend
+            let rawPhone = (isPhoneReply ? senderData.chatId : (senderData.sender || senderData.chatId)) || "";
+            let cleanPhoneDigits = rawPhone.replace(/@.*$/, "").replace(/\D/g, "");
+            let last10Digits = cleanPhoneDigits.slice(-10);
+
+            let textMessage = "";
             if (messageData.typeMessage === "textMessage") {
               textMessage = messageData.textMessageData?.textMessage || "";
             } else if (messageData.typeMessage === "extendedTextMessage") {
               textMessage = messageData.extendedTextMessageData?.text || "";
             }
 
-            if (textMessage && env.DB && env.SESSION_ROOM) {
-              // Normalize phone for search
-              const searchPattern = `%${senderPhone.slice(-10)}%`;
+            if (textMessage && last10Digits && env.DB && env.SESSION_ROOM) {
+              const searchPattern = `%${last10Digits}%`;
               const reqRow = await env.DB.prepare(
-                "SELECT session_id, friend_name, friend_phone FROM friend_requests WHERE friend_phone LIKE ? ORDER BY created_at DESC LIMIT 1"
+                "SELECT session_id, friend_name, friend_phone FROM friend_requests WHERE REPLACE(REPLACE(friend_phone, '+', ''), ' ', '') LIKE ? ORDER BY created_at DESC LIMIT 1"
               ).bind(searchPattern).first();
 
               if (reqRow && reqRow.session_id) {
@@ -496,6 +519,13 @@ export default {
                   detectedOption = optMatch[1].toUpperCase();
                 }
 
+                // 1. Save message to D1 chat_messages table
+                const msgId = crypto.randomUUID();
+                await env.DB.prepare(
+                  "INSERT INTO chat_messages (id, session_id, sender, friend_name, friend_phone, text, detected_option) VALUES (?, ?, 'friend', ?, ?, ?, ?)"
+                ).bind(msgId, reqRow.session_id, reqRow.friend_name, reqRow.friend_phone, textMessage, detectedOption).run().catch(e => console.warn("Chat insert err:", e));
+
+                // 2. Broadcast via Durable Object
                 const roomId = env.SESSION_ROOM.idFromName(reqRow.session_id);
                 const room = env.SESSION_ROOM.get(roomId);
                 await room.fetch(new Request("https://internal/broadcast", {
@@ -511,7 +541,7 @@ export default {
                     detectedOption,
                     timestamp: Date.now()
                   })
-                }));
+                })).catch(e => console.warn("Broadcast err:", e));
               }
             }
           }

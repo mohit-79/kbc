@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>SurKBC — Direct Helpline Call</title>
+
+  <!-- Pinned iOS WebKit Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SurKBC Call">
+  <meta name="theme-color" content="#070d1e">
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="peerjs.min.js"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at 50% 30%, #0d1e44 0%, #050a18 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .call-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 440px;
+      margin: 0 auto;
+      width: 100%;
+      text-align: center;
+    }
+    .call-video-grid {
+      flex: 1;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      margin: 12px 0;
+    }
+    .call-video-box {
+      background: #000;
+      border: 1.5px solid var(--neon-cyan);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .call-video-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .call-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(7, 13, 30, 0.8);
+      color: var(--neon-cyan);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 210, 255, 0.4);
+    }
+    .join-prompt-card {
+      background: rgba(7, 13, 30, 0.9);
+      border: 2px solid var(--gold-primary);
+      border-radius: 16px;
+      padding: 24px 18px;
+      margin: auto 0;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="call-container">
+    <header style="margin-bottom: 12px;">
+      <div style="font-size: 11px; color: var(--gold-primary); font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">
+        🎵 SurKBC Helpline
+      </div>
+      <h2 id="call-headline" style="font-size: 18px; margin: 4px 0; font-weight: 900; color: #fff;">
+        Khiladi Se Call
+      </h2>
+      <p id="call-subtext" style="font-size: 12px; color: var(--neon-cyan); margin: 0;">
+        P2P Secure Audio/Video • Koi Login Nahi
+      </p>
+    </header>
+
+    <!-- 1. EXPLICIT USER GESTURE CARD (Fixes mobile browser permission prompt requirement) -->
+    <div id="join-prompt" class="join-prompt-card">
+      <div style="font-size: 42px; margin-bottom: 10px;" id="join-icon">🎙️</div>
+      <h3 style="font-size: 17px; font-weight: 900; color: #ffd700; margin-bottom: 6px;">Call Shuru Karein</h3>
+      <p style="font-size: 12px; color: #e0e0e0; margin-bottom: 18px; line-height: 1.4;">
+        Aapke dost ko sawaal par aapki zaroorat hai. Tap karte hi microphone aur camera connect ho jayega.
+      </p>
+      <button id="btn-start-call" class="kbc-btn-gold" style="height: 52px; font-size: 15px; border-radius: 26px;" onclick="userInitiateCall()">
+        <span id="btn-start-call-txt">🎙️ Call Me Shamil Hon</span>
+      </button>
+    </div>
+
+    <!-- 2. ACTIVE CALL STAGE -->
+    <div id="active-call-stage" style="display: none; flex: 1; flex-direction: column;">
+      <!-- Audio Mode Stage -->
+      <div id="friend-audio-stage" class="call-audio-stage" style="display: none;">
+        <div class="call-avatar-wrap">
+          <div class="call-avatar">🎙️</div>
+          <div class="call-avatar-ring"></div>
+        </div>
+        <h3 style="font-size: 17px; font-weight: 900; color: #ffd700; margin-bottom: 4px;">Khiladi (Contestant)</h3>
+        <p id="audio-status-txt" style="font-size: 12px; color: #fff;">Connecting...</p>
+
+        <div class="call-visualizer-container" id="friend-vbars">
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+        </div>
+      </div>
+
+      <!-- Video Mode Stage -->
+      <div id="friend-video-stage" class="call-video-grid" style="display: none;">
+        <div class="call-video-box">
+          <span class="call-badge">👤 Khiladi (Contestant)</span>
+          <video id="remote-video" autoplay playsinline></video>
+        </div>
+        <div class="call-video-box" style="border-color: var(--gold-primary);">
+          <span class="call-badge" style="color: var(--gold-primary); border-color: rgba(255, 215, 0, 0.4);">👤 Aap (Friend)</span>
+          <video id="local-video" autoplay muted playsinline></video>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="call-actions-bar">
+        <button id="btn-toggle-mic" class="kbc-btn-secondary" style="height: 46px; border-radius: 23px; padding: 0 16px;" onclick="toggleMic()">🎙️ Mic On</button>
+        <button class="call-btn-hangup" onclick="hangupCall()">🔴 Kaatein</button>
+      </div>
+    </div>
+
+    <!-- Hidden Remote Audio Playback Element -->
+    <audio id="remote-audio" autoplay playsinline></audio>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session') || 'game';
+    const mode = params.get('mode') === 'video' ? 'video' : 'audio';
+
+    const playerPeerId = `surkbc-player-${sessionId}`;
+    const myPeerId = `surkbc-friend-${sessionId}-${Math.random().toString(36).substring(2, 6)}`;
+
+    let peer = null;
+    let localStream = null;
+    let currentCall = null;
+    let isMuted = false;
+    let animInterval = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const joinIcon = document.getElementById('join-icon');
+      const btnTxt = document.getElementById('btn-start-call-txt');
+      const headline = document.getElementById('call-headline');
+
+      if (mode === 'video') {
+        joinIcon.textContent = "📹";
+        btnTxt.textContent = "📹 Video Call Shuru Karein";
+        headline.textContent = "📹 Live Video Helpline";
+      } else {
+        joinIcon.textContent = "🎙️";
+        btnTxt.textContent = "🎙️ Audio Call Shuru Karein";
+        headline.textContent = "🎙️ Live Audio Helpline";
+      }
+    });
+
+    // Explicit User Tap Action to satisfy Mobile Safari / Android Chrome security model
+    async function userInitiateCall() {
+      const promptCard = document.getElementById('join-prompt');
+      const activeStage = document.getElementById('active-call-stage');
+      const audioStage = document.getElementById('friend-audio-stage');
+      const videoStage = document.getElementById('friend-video-stage');
+      const btn = document.getElementById('btn-start-call');
+
+      btn.disabled = true;
+      btn.textContent = "Connecting...";
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: (mode === 'video')
+        });
+
+        promptCard.style.display = 'none';
+        activeStage.style.display = 'flex';
+
+        if (mode === 'video') {
+          audioStage.style.display = 'none';
+          videoStage.style.display = 'grid';
+          const localVid = document.getElementById('local-video');
+          if (localVid) localVid.srcObject = localStream;
+        } else {
+          audioStage.style.display = 'flex';
+          videoStage.style.display = 'none';
+          startVisualizerAnimation();
+        }
+
+        const statusTxt = document.getElementById('audio-status-txt');
+        if (statusTxt) statusTxt.textContent = "Connecting with Khiladi...";
+
+        peer = new Peer(myPeerId, { debug: 1 });
+
+        peer.on('open', () => {
+          if (statusTxt) statusTxt.textContent = "Dialing Khiladi...";
+          dialPlayer();
+        });
+
+        peer.on('error', (err) => {
+          console.warn("Peer error:", err);
+          setTimeout(dialPlayer, 2000);
+        });
+
+      } catch (err) {
+        console.error("Media permission error:", err);
+        alert("Permission Error: Kripya browser me Microphone/Camera allow karein taaki call jud sake.");
+        btn.disabled = false;
+        btn.textContent = (mode === 'video') ? "📹 Dobara Koshish Karein" : "🎙️ Dobara Koshish Karein";
+      }
+    }
+
+    function dialPlayer() {
+      if (!peer || !localStream) return;
+      const call = peer.call(playerPeerId, localStream, {
+        metadata: { mode: mode, friendId: myPeerId }
+      });
+
+      if (!call) return;
+      currentCall = call;
+
+      call.on('stream', (remoteStream) => {
+        const statusTxt = document.getElementById('audio-status-txt');
+        if (statusTxt) statusTxt.textContent = "✅ Call Jud Chuki Hai!";
+
+        if (mode === 'video') {
+          const remoteVid = document.getElementById('remote-video');
+          if (remoteVid) remoteVid.srcObject = remoteStream;
+        } else {
+          const remoteAud = document.getElementById('remote-audio');
+          if (remoteAud) {
+            remoteAud.srcObject = remoteStream;
+            remoteAud.play().catch(() => {});
+          }
+        }
+      });
+
+      call.on('close', () => {
+        hangupCall(false);
+      });
+    }
+
+    function toggleMic() {
+      if (!localStream) return;
+      isMuted = !isMuted;
+      localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+      const btn = document.getElementById('btn-toggle-mic');
+      if (btn) {
+        btn.textContent = isMuted ? "🔇 Mic Muted" : "🎙️ Mic On";
+        btn.style.color = isMuted ? "var(--color-red)" : "#fff";
+      }
+    }
+
+    function startVisualizerAnimation() {
+      const bars = document.querySelectorAll('#friend-vbars .call-vbar');
+      if (!bars.length) return;
+      animInterval = setInterval(() => {
+        bars.forEach(bar => {
+          const h = Math.floor(Math.random() * 38) + 6;
+          bar.style.height = `${h}px`;
+        });
+      }, 90);
+    }
+
+    function hangupCall(redirect = true) {
+      if (animInterval) clearInterval(animInterval);
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+      }
+      if (currentCall) currentCall.close();
+      if (peer) peer.destroy();
+      if (redirect) {
+        window.location.href = `/friend.html?session=${encodeURIComponent(sessionId)}&token=manual`;
+      }
+    }
+  </script>
+</body>
+</html>
