@@ -429,7 +429,7 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
-      // 10B. Chat Messages Polling: GET /api/phone-friend/messages?session=<sessionId>
+      // 10B. Chat Messages Polling & Direct Green-API Sync: GET /api/phone-friend/messages?session=<sessionId>
       if (url.pathname === "/api/phone-friend/messages" && method === "GET") {
         if (!env.DB) {
           return new Response(JSON.stringify({ messages: [] }), { status: 200, headers: corsHeaders });
@@ -439,9 +439,90 @@ export default {
           return new Response(JSON.stringify({ messages: [] }), { status: 200, headers: corsHeaders });
         }
 
+        // Look up friend for this session
+        let reqRow = await env.DB.prepare(
+          "SELECT session_id, friend_name, friend_phone FROM friend_requests WHERE session_id = ? ORDER BY created_at DESC LIMIT 1"
+        ).bind(sessionId).first();
+
+        // Fallback: if session ID mismatch, get most recent pending friend request
+        if (!reqRow) {
+          reqRow = await env.DB.prepare(
+            "SELECT session_id, friend_name, friend_phone FROM friend_requests ORDER BY created_at DESC LIMIT 1"
+          ).first();
+        }
+
+        // Active pull from Green-API to ensure zero-delay synchronization
+        if (reqRow && reqRow.friend_phone && env.WHATSAPP_GATEWAY_URL && env.WHATSAPP_GATEWAY_TOKEN) {
+          try {
+            const cleanDigits = String(reqRow.friend_phone).replace(/\D/g, "");
+            const last10 = cleanDigits.slice(-10);
+            if (last10) {
+              const baseGw = env.WHATSAPP_GATEWAY_URL.trim().replace(/\/+$/, "");
+              const syncUrl = `${baseGw}/lastIncomingMessages/${env.WHATSAPP_GATEWAY_TOKEN}?minutes=5`;
+              const gwResp = await fetch(syncUrl, { signal: AbortSignal.timeout(2000) });
+              if (gwResp.ok) {
+                const incomingArr = await gwResp.json().catch(() => []);
+                if (Array.isArray(incomingArr)) {
+                  for (const item of incomingArr) {
+                    const chatTarget = item.chatId || item.senderId || "";
+                    const targetDigits = chatTarget.replace(/@.*$/, "").replace(/\D/g, "");
+                    if (targetDigits.includes(last10) || targetDigits.endsWith(last10)) {
+                      const msgText = (
+                        item.textMessage ||
+                        item.messageData?.textMessageData?.textMessage ||
+                        item.messageData?.extendedTextMessageData?.text ||
+                        item.messageData?.textMessage ||
+                        item.caption ||
+                        ""
+                      ).trim();
+
+                      if (msgText) {
+                        const mId = item.idMessage || `wa_${item.timestamp}_${last10}`;
+                        const existing = await env.DB.prepare("SELECT id FROM chat_messages WHERE id = ?").bind(mId).first();
+                        if (!existing) {
+                          let detectedOption = null;
+                          const optMatch = msgText.match(/\b(?:option\s*)?([A-Da-d])\b/i);
+                          if (optMatch) detectedOption = optMatch[1].toUpperCase();
+
+                          await env.DB.prepare(
+                            "INSERT INTO chat_messages (id, session_id, sender, friend_name, friend_phone, text, detected_option) VALUES (?, ?, 'friend', ?, ?, ?, ?)"
+                          ).bind(mId, reqRow.session_id, reqRow.friend_name || "Dost", reqRow.friend_phone, msgText, detectedOption).run().catch(() => {});
+
+                          if (env.SESSION_ROOM) {
+                            try {
+                              const roomId = env.SESSION_ROOM.idFromName(reqRow.session_id);
+                              const room = env.SESSION_ROOM.get(roomId);
+                              await room.fetch(new Request("https://internal/broadcast", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  type: "whatsapp_chat",
+                                  id: mId,
+                                  sessionId: reqRow.session_id,
+                                  sender: "friend",
+                                  friendName: reqRow.friend_name || "Dost",
+                                  phone: reqRow.friend_phone,
+                                  text: msgText,
+                                  detectedOption,
+                                  timestamp: (item.timestamp ? item.timestamp * 1000 : Date.now())
+                                })
+                              }));
+                            } catch (e) {}
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch (e) {}
+        }
+
+        const effectiveSessionId = reqRow?.session_id || sessionId;
         const msgs = await env.DB.prepare(
-          "SELECT id, session_id, sender, friend_name, friend_phone, text, detected_option, created_at FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC LIMIT 30"
-        ).bind(sessionId).all();
+          "SELECT id, session_id, sender, friend_name, friend_phone, text, detected_option, created_at FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC LIMIT 40"
+        ).bind(effectiveSessionId).all();
 
         return new Response(JSON.stringify({
           messages: msgs.results || []
@@ -493,55 +574,64 @@ export default {
             const senderData = payload.senderData || {};
             const messageData = payload.messageData || {};
 
-            // In incoming: senderData.sender or senderData.chatId is friend. In outgoing phone reply: senderData.chatId is recipient friend
-            let rawPhone = (isPhoneReply ? senderData.chatId : (senderData.sender || senderData.chatId)) || "";
+            let rawPhone = (isPhoneReply ? senderData.chatId : (senderData.sender || senderData.chatId || payload.chatId || payload.senderId)) || "";
             let cleanPhoneDigits = rawPhone.replace(/@.*$/, "").replace(/\D/g, "");
             let last10Digits = cleanPhoneDigits.slice(-10);
 
-            let textMessage = "";
-            if (messageData.typeMessage === "textMessage") {
-              textMessage = messageData.textMessageData?.textMessage || "";
-            } else if (messageData.typeMessage === "extendedTextMessage") {
-              textMessage = messageData.extendedTextMessageData?.text || "";
-            }
+            let textMessage = (
+              messageData.textMessageData?.textMessage ||
+              messageData.extendedTextMessageData?.text ||
+              messageData.quotedMessage?.extendedTextMessageData?.text ||
+              messageData.quotedMessage?.textMessage ||
+              messageData.textMessage ||
+              payload.textMessage ||
+              messageData.fileMessageData?.caption ||
+              ""
+            ).trim();
 
-            if (textMessage && last10Digits && env.DB && env.SESSION_ROOM) {
+            if (textMessage && last10Digits && env.DB) {
               const searchPattern = `%${last10Digits}%`;
               const reqRow = await env.DB.prepare(
                 "SELECT session_id, friend_name, friend_phone FROM friend_requests WHERE REPLACE(REPLACE(friend_phone, '+', ''), ' ', '') LIKE ? ORDER BY created_at DESC LIMIT 1"
               ).bind(searchPattern).first();
 
               if (reqRow && reqRow.session_id) {
-                // Auto-detect option if friend simply said "A", "Option B", etc.
-                let detectedOption = null;
-                const optMatch = textMessage.match(/\b(?:option\s*)?([A-Da-d])\b/i);
-                if (optMatch) {
-                  detectedOption = optMatch[1].toUpperCase();
+                const msgId = payload.idMessage || crypto.randomUUID();
+
+                const exists = await env.DB.prepare("SELECT id FROM chat_messages WHERE id = ?").bind(msgId).first();
+                if (!exists) {
+                  let detectedOption = null;
+                  const optMatch = textMessage.match(/\b(?:option\s*)?([A-Da-d])\b/i);
+                  if (optMatch) {
+                    detectedOption = optMatch[1].toUpperCase();
+                  }
+
+                  // 1. Save message to D1 chat_messages table
+                  await env.DB.prepare(
+                    "INSERT INTO chat_messages (id, session_id, sender, friend_name, friend_phone, text, detected_option) VALUES (?, ?, 'friend', ?, ?, ?, ?)"
+                  ).bind(msgId, reqRow.session_id, reqRow.friend_name, reqRow.friend_phone, textMessage, detectedOption).run().catch(e => console.warn("Chat insert err:", e));
+
+                  // 2. Broadcast via Durable Object
+                  if (env.SESSION_ROOM) {
+                    const roomId = env.SESSION_ROOM.idFromName(reqRow.session_id);
+                    const room = env.SESSION_ROOM.get(roomId);
+                    await room.fetch(new Request("https://internal/broadcast", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        type: "whatsapp_chat",
+                        id: msgId,
+                        sessionId: reqRow.session_id,
+                        sender: "friend",
+                        friendName: reqRow.friend_name,
+                        phone: reqRow.friend_phone,
+                        text: textMessage,
+                        detectedOption,
+                        timestamp: Date.now()
+                      })
+                    })).catch(e => console.warn("Broadcast err:", e));
+                  }
                 }
-
-                // 1. Save message to D1 chat_messages table
-                const msgId = crypto.randomUUID();
-                await env.DB.prepare(
-                  "INSERT INTO chat_messages (id, session_id, sender, friend_name, friend_phone, text, detected_option) VALUES (?, ?, 'friend', ?, ?, ?, ?)"
-                ).bind(msgId, reqRow.session_id, reqRow.friend_name, reqRow.friend_phone, textMessage, detectedOption).run().catch(e => console.warn("Chat insert err:", e));
-
-                // 2. Broadcast via Durable Object
-                const roomId = env.SESSION_ROOM.idFromName(reqRow.session_id);
-                const room = env.SESSION_ROOM.get(roomId);
-                await room.fetch(new Request("https://internal/broadcast", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    type: "whatsapp_chat",
-                    sessionId: reqRow.session_id,
-                    sender: "friend",
-                    friendName: reqRow.friend_name,
-                    phone: reqRow.friend_phone,
-                    text: textMessage,
-                    detectedOption,
-                    timestamp: Date.now()
-                  })
-                })).catch(e => console.warn("Broadcast err:", e));
               }
             }
           }
@@ -586,6 +676,14 @@ export default {
           }
         }
 
+        // Save player message to D1 chat_messages table
+        const playerMsgId = crypto.randomUUID();
+        if (env.DB) {
+          await env.DB.prepare(
+            "INSERT INTO chat_messages (id, session_id, sender, friend_name, friend_phone, text, detected_option) VALUES (?, ?, 'player', 'Aap', ?, ?, NULL)"
+          ).bind(playerMsgId, sessionId, friendPhone, messageText).run().catch(e => console.warn("Player chat DB insert error:", e));
+        }
+
         // Broadcast to player UI so outgoing bubble displays immediately
         if (env.SESSION_ROOM) {
           try {
@@ -596,6 +694,7 @@ export default {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 type: "whatsapp_chat",
+                id: playerMsgId,
                 sessionId,
                 sender: "player",
                 friendName: "Khiladi",

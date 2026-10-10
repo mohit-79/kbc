@@ -1145,11 +1145,11 @@ function startFriendAnswerListener(friendName) {
     };
   } catch (e) {}
 
-  // 2. HTTP Polling Fallback every 2 seconds (Both Answer AND WhatsApp Chat)
-  friendAnswerPollTimer = setInterval(async () => {
-    if (!game.sessionId) return;
+  // 2. HTTP Polling Fallback every 1.2 seconds (Both Answer AND WhatsApp Chat)
+  const pollSync = async () => {
+    const sId = game.sessionId || 'game';
     try {
-      const res = await fetch(`${API_BASE}/api/phone-friend/poll?session=${encodeURIComponent(game.sessionId)}`);
+      const res = await fetch(`${API_BASE}/api/phone-friend/poll?session=${encodeURIComponent(sId)}`);
       if (res.ok) {
         const data = await res.json();
         if (data.status === 'answered' && data.answer) {
@@ -1158,7 +1158,7 @@ function startFriendAnswerListener(friendName) {
       }
 
       // Sync chat messages
-      const chatRes = await fetch(`${API_BASE}/api/phone-friend/messages?session=${encodeURIComponent(game.sessionId)}`);
+      const chatRes = await fetch(`${API_BASE}/api/phone-friend/messages?session=${encodeURIComponent(sId)}`);
       if (chatRes.ok) {
         const chatData = await chatRes.json();
         if (Array.isArray(chatData.messages)) {
@@ -1166,7 +1166,11 @@ function startFriendAnswerListener(friendName) {
         }
       }
     } catch (e) {}
-  }, 2000);
+  };
+
+  // Immediate poll on open
+  pollSync();
+  friendAnswerPollTimer = setInterval(pollSync, 1200);
 }
 
 function stopFriendAnswerListener() {
