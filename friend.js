@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Setup Jitsi Audio & Video Call Links
+  // Setup Jitsi Audio & Video Call Links (Triggers auto-connect for player)
   const audioLink = document.getElementById('link-audio-call');
   const videoLink = document.getElementById('link-video-call');
   if (audioLink) {
-    audioLink.href = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}#config.startWithVideoMuted=true`;
+    audioLink.href = `/call?session=${encodeURIComponent(sessionId)}&mode=audio`;
   }
   if (videoLink) {
-    videoLink.href = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}`;
+    videoLink.href = `/call?session=${encodeURIComponent(sessionId)}&mode=video`;
   }
 
   try {

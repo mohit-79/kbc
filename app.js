@@ -1044,6 +1044,8 @@ window.triggerPhoneAFriendDispatch = async function(friendId) {
     saveProfile();
   }
 
+  currentChatFriendPhone = friend.phone;
+
   const pickerArea = document.getElementById('phone-friend-picker-area');
   const waitingArea = document.getElementById('phone-friend-waiting-area');
   const manualArea = document.getElementById('phone-friend-manual-area');
@@ -1132,6 +1134,10 @@ function startFriendAnswerListener(friendName) {
         const msg = JSON.parse(event.data);
         if (msg.type === 'friend_answered' && msg.answer) {
           onFriendAnswerReceived(msg.answer, msg.note, msg.friendName || friendName);
+        } else if (msg.type === 'whatsapp_chat') {
+          onWhatsAppChatMessageReceived(msg);
+        } else if (msg.type === 'call_started') {
+          onIncomingCallTriggered(msg);
         }
       } catch (e) {}
     };
@@ -1242,10 +1248,248 @@ window.submitFriendManualAnswer = function(optLetter) {
 
 window.closePhoneAFriendModal = function() {
   stopFriendAnswerListener();
+  endCustomCall();
   const modal = document.getElementById('modal-phone-friend');
   if (modal) modal.classList.remove('active');
   startTimer(); // Resume timer without consuming lifeline if cancelled before send
 };
+
+// ==========================================================================
+// TWO-WAY WHATSAPP IN-GAME CHAT ENGINE
+// ==========================================================================
+let lastDetectedOptionFromChat = null;
+let currentChatFriendPhone = null;
+
+function onWhatsAppChatMessageReceived(msg) {
+  const container = document.getElementById('wa-chat-messages');
+  if (!container) return;
+
+  const isPlayer = (msg.sender === 'player');
+  const senderTitle = isPlayer ? 'Aap' : (msg.friendName || 'Dost');
+  const bubbleClass = isPlayer ? 'wa-bubble player' : 'wa-bubble friend';
+
+  const bubble = document.createElement('div');
+  bubble.className = bubbleClass;
+  bubble.innerHTML = `
+    <div class="wa-bubble-sender">${escapeHtml(senderTitle)}</div>
+    <div>${escapeHtml(msg.text)}</div>
+  `;
+  container.appendChild(bubble);
+  container.scrollTop = container.scrollHeight;
+
+  // If friend suggested an option, highlight quick-lock bar
+  if (!isPlayer && msg.detectedOption) {
+    lastDetectedOptionFromChat = msg.detectedOption.toUpperCase();
+    const optBar = document.getElementById('wa-option-bar');
+    const optText = document.getElementById('wa-option-text');
+    if (optBar && optText) {
+      optText.textContent = `Dost ne kaha: Option ${lastDetectedOptionFromChat}`;
+      optBar.style.display = 'flex';
+    }
+  }
+
+  // Play audio chime if available
+  if (window.audioEngine && typeof window.audioEngine.playSfx === 'function') {
+    window.audioEngine.playSfx('ding');
+  }
+}
+
+window.sendPlayerChat = async function() {
+  const input = document.getElementById('wa-chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = "";
+  const sId = game.sessionId || 'game';
+  const friendPhone = currentChatFriendPhone || (profile.friends[0]?.phone) || "";
+
+  try {
+    await fetch(`${API_BASE}/api/phone-friend/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Token': getDeviceToken()
+      },
+      body: JSON.stringify({
+        sessionId: sId,
+        friendPhone,
+        messageText: text
+      })
+    });
+  } catch (e) {
+    showToast("Chat message send nahi ho saka");
+  }
+};
+
+window.lockSuggestedOption = function() {
+  if (!lastDetectedOptionFromChat) return;
+  const modal = document.getElementById('modal-phone-friend');
+  if (modal) modal.classList.remove('active');
+  endCustomCall();
+  onFriendAnswerReceived(lastDetectedOptionFromChat, "WhatsApp chat se prapt", "Dost");
+};
+
+// ==========================================================================
+// CUSTOM IN-APP KBC CALL ENGINE (AUDIO VISUALIZER & DUAL VIDEO TILES)
+// ==========================================================================
+let activeCallMode = null;
+let callVisualizerInterval = null;
+let jitsiPlayerIframe = null;
+let jitsiFriendIframe = null;
+let isCallMuted = false;
+
+window.startCustomCall = function(mode) {
+  const sId = game.sessionId || 'game';
+  const roomName = `surkbc-${encodeURIComponent(sId)}`;
+  launchCustomCallModal(mode, roomName);
+};
+
+function onIncomingCallTriggered(msg) {
+  // Automatically start call when friend joins/clicks link!
+  showToast(`Dost ne ${msg.mode === 'video' ? 'Video' : 'Audio'} Call shuru ki!`);
+  launchCustomCallModal(msg.mode, msg.roomName);
+}
+
+function launchCustomCallModal(mode, roomName) {
+  activeCallMode = mode;
+  const modal = document.getElementById('modal-kbc-call');
+  const audioStage = document.getElementById('call-audio-stage');
+  const videoStage = document.getElementById('call-video-stage');
+  const statusLabel = document.getElementById('call-status-label');
+  const friendNameAudio = document.getElementById('call-friend-name-audio');
+
+  const activeFriend = profile.friends[0];
+  if (friendNameAudio) {
+    friendNameAudio.textContent = activeFriend ? activeFriend.name : "Dost";
+  }
+
+  if (statusLabel) {
+    statusLabel.textContent = (mode === 'video') ? "📹 Video Call Connected" : "🎙️ Audio Call Connected";
+  }
+
+  if (modal) modal.classList.add('active');
+
+  // Hide the phone-a-friend picker/waiting modal behind it
+  const phoneModal = document.getElementById('modal-phone-friend');
+  if (phoneModal) phoneModal.classList.remove('active');
+
+  if (mode === 'audio') {
+    if (audioStage) audioStage.style.display = 'flex';
+    if (videoStage) videoStage.style.display = 'none';
+    startAudioVisualizerLoop();
+    mountJitsiHeadlessAudio(roomName);
+  } else {
+    if (audioStage) audioStage.style.display = 'none';
+    if (videoStage) videoStage.style.display = 'grid';
+    mountJitsiDualVideoTiles(roomName);
+  }
+}
+
+function startAudioVisualizerLoop() {
+  stopAudioVisualizerLoop();
+  const bars = document.querySelectorAll('#call-vbars .call-vbar');
+  if (!bars.length) return;
+
+  callVisualizerInterval = setInterval(() => {
+    bars.forEach(bar => {
+      // Simulate live voice modulation wave
+      const height = Math.floor(Math.random() * 42) + 6;
+      bar.style.height = `${height}px`;
+    });
+  }, 90);
+}
+
+function stopAudioVisualizerLoop() {
+  if (callVisualizerInterval) {
+    clearInterval(callVisualizerInterval);
+    callVisualizerInterval = null;
+  }
+}
+
+function mountJitsiHeadlessAudio(roomName) {
+  // Clear any existing mount
+  const mount = document.getElementById('jitsi-player-mount');
+  if (!mount) return;
+  mount.innerHTML = '';
+
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://meet.jit.si/${roomName}#config.startWithVideoMuted=true&config.prejoinPageEnabled=false&interfaceConfig.TOOLBAR_BUTTONS=['microphone','hangup']`;
+  iframe.allow = 'camera; microphone; autoplay; display-capture';
+  iframe.style.width = '1px';
+  iframe.style.height = '1px';
+  iframe.style.position = 'absolute';
+  iframe.style.opacity = '0.01';
+  mount.appendChild(iframe);
+  jitsiPlayerIframe = iframe;
+}
+
+function mountJitsiDualVideoTiles(roomName) {
+  const playerMount = document.getElementById('jitsi-player-mount');
+  const friendMount = document.getElementById('jitsi-friend-mount');
+
+  if (playerMount) {
+    playerMount.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&interfaceConfig.TOOLBAR_BUTTONS=['camera','microphone','hangup']`;
+    iframe.allow = 'camera; microphone; autoplay; display-capture';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    playerMount.appendChild(iframe);
+    jitsiPlayerIframe = iframe;
+  }
+
+  if (friendMount) {
+    friendMount.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--neon-cyan);">
+        <div style="font-size: 32px; margin-bottom: 6px;">📹</div>
+        <p style="font-size: 11px; font-weight: 700;">Dost ka camera view sync ho raha hai</p>
+      </div>
+    `;
+  }
+}
+
+window.toggleCallMute = function() {
+  isCallMuted = !isCallMuted;
+  const btn = document.getElementById('btn-call-mute');
+  if (btn) {
+    btn.textContent = isCallMuted ? "🔇 Mic Muted" : "🎙️ Mic On";
+    btn.style.color = isCallMuted ? "var(--color-red)" : "#fff";
+  }
+};
+
+window.lockFromCall = function() {
+  endCustomCall();
+  // Open answer manual or detected modal
+  if (lastDetectedOptionFromChat) {
+    onFriendAnswerReceived(lastDetectedOptionFromChat, "Call ke dauraan chuna", "Dost");
+  } else {
+    const modal = document.getElementById('modal-phone-friend');
+    if (modal) modal.classList.add('active');
+    switchToManualFriendAnswer();
+  }
+};
+
+window.endCustomCall = function() {
+  stopAudioVisualizerLoop();
+  const modal = document.getElementById('modal-kbc-call');
+  if (modal) modal.classList.remove('active');
+
+  const playerMount = document.getElementById('jitsi-player-mount');
+  const friendMount = document.getElementById('jitsi-friend-mount');
+  if (playerMount) playerMount.innerHTML = '';
+  if (friendMount) friendMount.innerHTML = '';
+  jitsiPlayerIframe = null;
+  jitsiFriendIframe = null;
+
+  // Re-open Phone-a-Friend waiting modal if lifeline is still in progress
+  if (!game.used.phone) {
+    const phoneModal = document.getElementById('modal-phone-friend');
+    if (phoneModal) phoneModal.classList.add('active');
+  }
+};
+
 
 // c2B.4: Flip the Question Lifeline
 window.useFlipQuestion = function() {

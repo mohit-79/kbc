@@ -250,7 +250,7 @@
 
     <!-- c2B.3 & c4B.6: PHONE A FRIEND MODAL -->
     <div id="modal-phone-friend" class="modal-overlay">
-      <div class="modal-content">
+      <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
         <div style="font-size: 24px; margin-bottom: 4px;">📞</div>
         <h3 style="font-size: 15px; color: var(--gold-primary); font-weight: 800; text-transform: uppercase;">Phone a Friend</h3>
         
@@ -259,19 +259,44 @@
           <div id="modal-friend-picker-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
 
-        <div id="phone-friend-waiting-area" style="display: none;">
-          <div style="font-size: 24px; animation: spin 2s linear infinite; margin-bottom: 8px;">⏳</div>
-          <p id="phone-friend-wait-msg" style="font-size: 13px; color: #fff; font-weight: 700; margin-bottom: 6px;">WhatsApp bhej diya gaya!</p>
-          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Dost ke uttar ka intezaar hai (auto-push)...</p>
-          <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
-            <a id="btn-player-jitsi-audio" href="#" target="_blank" class="kbc-btn-secondary" style="margin: 0; text-decoration: none; padding: 4px 10px; font-size: 11px;">🎙️ Audio Call</a>
-            <a id="btn-player-jitsi-video" href="#" target="_blank" class="kbc-btn-secondary" style="margin: 0; text-decoration: none; padding: 4px 10px; font-size: 11px;">📹 Video Call</a>
+        <div id="phone-friend-waiting-area" style="display: none; flex: 1; flex-direction: column; overflow: hidden;">
+          <p id="phone-friend-wait-msg" style="font-size: 13px; color: #fff; font-weight: 700; margin-bottom: 4px;">WhatsApp bhej diya gaya!</p>
+          <p style="font-size: 11px; color: var(--neon-cyan); margin-bottom: 8px;">Dost call ya WhatsApp reply karega toh yahan aayega:</p>
+          
+          <!-- In-Game Call Launch Buttons (Integrated) -->
+          <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 8px;">
+            <button class="kbc-btn-secondary" style="margin: 0; padding: 5px 12px; font-size: 11px;" onclick="startCustomCall('audio')">🎙️ Audio Call Shuru Karein</button>
+            <button class="kbc-btn-secondary" style="margin: 0; padding: 5px 12px; font-size: 11px;" onclick="startCustomCall('video')">📹 Video Call Shuru Karein</button>
           </div>
-          <button class="kbc-btn-secondary" style="height: 34px; font-size: 11px;" onclick="switchToManualFriendAnswer()">✍️ Manual Entry (WhatsApp Reply Aaya)</button>
+
+          <!-- WhatsApp Live Chat Tray -->
+          <div class="wa-chat-container">
+            <div style="font-size: 10px; font-weight: 800; color: #25d366; text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between;">
+              <span>💬 Live WhatsApp Chat</span>
+              <span style="color: var(--text-muted);">Syncing live...</span>
+            </div>
+            <div id="wa-chat-messages" class="wa-chat-messages">
+              <div class="wa-bubble friend">
+                <div class="wa-bubble-sender">SurKBC Bot</div>
+                Dost ko question bhej diya hai. Unka reply yahan aayega!
+              </div>
+            </div>
+            <!-- Auto-detected option suggestion bar -->
+            <div id="wa-option-bar" style="display: none;" class="wa-opt-suggestion">
+              <span id="wa-option-text" style="font-size: 11px; color: #fff; font-weight: 800;">Dost ne kaha: Option B</span>
+              <button class="kbc-btn-gold" style="height: 28px; padding: 0 10px; font-size: 11px; margin: 0;" onclick="lockSuggestedOption()">🔒 Lock Karein</button>
+            </div>
+            <div class="wa-input-row">
+              <input type="text" id="wa-chat-input" class="wa-chat-input" placeholder="Dost ko reply karein..." onkeydown="if(event.key==='Enter') sendPlayerChat()">
+              <button class="wa-chat-send-btn" onclick="sendPlayerChat()">Send ↗</button>
+            </div>
+          </div>
+
+          <button class="kbc-btn-secondary" style="height: 32px; font-size: 11px; margin-top: 4px;" onclick="switchToManualFriendAnswer()">✍️ Manual Option Select Karein</button>
         </div>
 
         <div id="phone-friend-manual-area" style="display: none;">
-          <p style="font-size: 12px; color: var(--neon-cyan); margin-bottom: 12px; font-weight: 700;">Dost ne WhatsApp par kya uttar diya?</p>
+          <p style="font-size: 12px; color: var(--neon-cyan); margin-bottom: 12px; font-weight: 700;">Dost ne kya uttar diya?</p>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
             <button class="kbc-btn-secondary" style="margin: 0;" onclick="submitFriendManualAnswer('A')">Option A</button>
             <button class="kbc-btn-secondary" style="margin: 0;" onclick="submitFriendManualAnswer('B')">Option B</button>
@@ -280,7 +305,61 @@
           </div>
         </div>
 
-        <button class="kbc-btn-secondary" style="height: 38px; font-size: 12px; margin-top: 10px;" onclick="closePhoneAFriendModal()">Radd Karein (Cancel)</button>
+        <button class="kbc-btn-secondary" style="height: 36px; font-size: 12px; margin-top: 8px;" onclick="closePhoneAFriendModal()">Radd Karein (Cancel)</button>
+      </div>
+    </div>
+
+    <!-- CUSTOM IN-APP KBC CALL MODAL (AUDIO VISUALIZER & DUAL VIDEO TILES) -->
+    <div id="modal-kbc-call" class="kbc-call-modal">
+      <div class="call-header">
+        <div class="call-status-badge">
+          <span class="call-pulse-dot"></span>
+          <span id="call-status-label">Live Call</span>
+        </div>
+        <div style="font-size: 12px; font-weight: 800; color: var(--gold-primary);">⏱️ Samay Ruka Hua Hai</div>
+      </div>
+
+      <!-- 1. AUDIO MODE: Pulsating Avatar + Live Visualizer Bars -->
+      <div id="call-audio-stage" class="call-audio-stage" style="display: none;">
+        <div class="call-avatar-wrap">
+          <div class="call-avatar">👤</div>
+          <div class="call-avatar-ring"></div>
+        </div>
+        <h3 id="call-friend-name-audio" style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 4px;">Dost</h3>
+        <p style="font-size: 12px; color: var(--neon-cyan); letter-spacing: 1px;">KBC Audio Helpline</p>
+
+        <!-- Live Audio Visualizer Bars -->
+        <div class="call-visualizer-container" id="call-vbars">
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+          <div class="call-vbar"></div>
+        </div>
+      </div>
+
+      <!-- 2. VIDEO MODE: Dual Video Tiles (Player + Friend) -->
+      <div id="call-video-stage" class="call-video-stage" style="display: none;">
+        <div class="video-tile" id="tile-player-container">
+          <div class="video-tile-label">👤 Aap (Player)</div>
+          <div id="jitsi-player-mount" style="width: 100%; height: 100%;"></div>
+        </div>
+        <div class="video-tile friend-tile" id="tile-friend-container">
+          <div class="video-tile-label" id="label-friend-tile">👤 Dost</div>
+          <div id="jitsi-friend-mount" style="width: 100%; height: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- In-Call Control Footer -->
+      <div class="call-actions-bar">
+        <button id="btn-call-mute" class="kbc-btn-secondary" style="height: 46px; margin: 0; padding: 0 16px; border-radius: 23px;" onclick="toggleCallMute()">🎙️ Mic On</button>
+        <button class="kbc-btn-gold" style="height: 46px; margin: 0; padding: 0 18px; border-radius: 23px;" onclick="lockFromCall()">🔒 Uttar Lock Karein</button>
+        <button class="call-btn-hangup" onclick="endCustomCall()">🔴 Call Kaatein</button>
       </div>
     </div>
 

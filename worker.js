@@ -211,8 +211,8 @@ export default {
         // Target URL links
         const origin = url.origin.includes("localhost") || url.origin.includes("127.0.0.1") ? url.origin : "https://kbc.harjani.me";
         const answerUrl = `${origin}/friend.html?session=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}`;
-        const audioUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}#config.startWithVideoMuted=true`;
-        const videoUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sessionId)}`;
+        const audioUrl = `${origin}/call?session=${encodeURIComponent(sessionId)}&mode=audio`;
+        const videoUrl = `${origin}/call?session=${encodeURIComponent(sessionId)}&mode=video`;
 
         // Owner's Exact Message Template
         const optA = options[0] || "";
@@ -429,7 +429,158 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
-      // 11. Real-Time WebSocket Endpoint: /ws?session=<sessionId>
+      // 11. Call Auto-Connect Trigger: GET /call?session=&mode=
+      if (url.pathname === "/call" && method === "GET") {
+        const sessionId = url.searchParams.get("session");
+        const mode = url.searchParams.get("mode") === "video" ? "video" : "audio";
+        const roomName = `surkbc-${encodeURIComponent(sessionId || "game")}`;
+
+        if (sessionId && env.SESSION_ROOM) {
+          try {
+            const roomId = env.SESSION_ROOM.idFromName(sessionId);
+            const room = env.SESSION_ROOM.get(roomId);
+            await room.fetch(new Request("https://internal/broadcast", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "call_started",
+                sessionId,
+                mode,
+                roomName,
+                timestamp: Date.now()
+              })
+            }));
+          } catch (e) {
+            console.warn("Call broadcast warning:", e);
+          }
+        }
+
+        // Direct friend to Jitsi room
+        const jitsiTarget = mode === "video"
+          ? `https://meet.jit.si/${roomName}`
+          : `https://meet.jit.si/${roomName}#config.startWithVideoMuted=true`;
+        return Response.redirect(jitsiTarget, 302);
+      }
+
+      // 12. Green-API Incoming Webhook: POST /api/webhook/greenapi
+      if (url.pathname === "/api/webhook/greenapi" && method === "POST") {
+        try {
+          const payload = await request.json().catch(() => ({}));
+          const typeWebhook = payload.typeWebhook;
+
+          // Process incoming WhatsApp text message
+          if (typeWebhook === "incomingMessageReceived") {
+            const senderData = payload.senderData || {};
+            const messageData = payload.messageData || {};
+            let senderPhone = (senderData.sender || senderData.chatId || "").replace(/@.*$/, "").replace(/^\+/, "");
+            let textMessage = "";
+
+            if (messageData.typeMessage === "textMessage") {
+              textMessage = messageData.textMessageData?.textMessage || "";
+            } else if (messageData.typeMessage === "extendedTextMessage") {
+              textMessage = messageData.extendedTextMessageData?.text || "";
+            }
+
+            if (textMessage && env.DB && env.SESSION_ROOM) {
+              // Normalize phone for search
+              const searchPattern = `%${senderPhone.slice(-10)}%`;
+              const reqRow = await env.DB.prepare(
+                "SELECT session_id, friend_name, friend_phone FROM friend_requests WHERE friend_phone LIKE ? ORDER BY created_at DESC LIMIT 1"
+              ).bind(searchPattern).first();
+
+              if (reqRow && reqRow.session_id) {
+                // Auto-detect option if friend simply said "A", "Option B", etc.
+                let detectedOption = null;
+                const optMatch = textMessage.match(/\b(?:option\s*)?([A-Da-d])\b/i);
+                if (optMatch) {
+                  detectedOption = optMatch[1].toUpperCase();
+                }
+
+                const roomId = env.SESSION_ROOM.idFromName(reqRow.session_id);
+                const room = env.SESSION_ROOM.get(roomId);
+                await room.fetch(new Request("https://internal/broadcast", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    type: "whatsapp_chat",
+                    sessionId: reqRow.session_id,
+                    sender: "friend",
+                    friendName: reqRow.friend_name,
+                    phone: reqRow.friend_phone,
+                    text: textMessage,
+                    detectedOption,
+                    timestamp: Date.now()
+                  })
+                }));
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Green-API Webhook error:", e);
+        }
+
+        return new Response(JSON.stringify({ status: "received" }), { status: 200, headers: corsHeaders });
+      }
+
+      // 13. Player Reply Endpoint: POST /api/phone-friend/chat
+      if (url.pathname === "/api/phone-friend/chat" && method === "POST") {
+        const body = await request.json().catch(() => ({}));
+        const { sessionId, friendPhone, messageText } = body;
+
+        if (!sessionId || !friendPhone || !messageText) {
+          return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400, headers: corsHeaders });
+        }
+
+        const cleanPhone = String(friendPhone).replace(/[\s\-\(\)\+]/g, "");
+        let delivered = false;
+
+        if (env.WHATSAPP_GATEWAY_URL && env.WHATSAPP_GATEWAY_TOKEN) {
+          try {
+            let gwUrl = env.WHATSAPP_GATEWAY_URL.trim();
+            if (gwUrl.includes("greenapi.com") || gwUrl.includes("green-api.com")) {
+              if (!gwUrl.includes("sendMessage")) {
+                gwUrl = `${gwUrl.replace(/\/+$/, "")}/sendMessage/${env.WHATSAPP_GATEWAY_TOKEN}`;
+              }
+            }
+            const gwRes = await fetch(gwUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chatId: `${cleanPhone}@c.us`,
+                message: messageText
+              })
+            });
+            if (gwRes.ok) delivered = true;
+          } catch (e) {
+            console.warn("Error sending chat via Green-API:", e);
+          }
+        }
+
+        // Broadcast to player UI so outgoing bubble displays immediately
+        if (env.SESSION_ROOM) {
+          try {
+            const roomId = env.SESSION_ROOM.idFromName(sessionId);
+            const room = env.SESSION_ROOM.get(roomId);
+            await room.fetch(new Request("https://internal/broadcast", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "whatsapp_chat",
+                sessionId,
+                sender: "player",
+                friendName: "Khiladi",
+                phone: friendPhone,
+                text: messageText,
+                timestamp: Date.now()
+              })
+            }));
+          } catch (e) {}
+        }
+
+        return new Response(JSON.stringify({ success: true, delivered }), { status: 200, headers: corsHeaders });
+      }
+
+      // 14. Real-Time WebSocket Endpoint: /ws?session=<sessionId>
       if (url.pathname === "/ws") {
         const sessionId = url.searchParams.get("session");
         if (!sessionId) {

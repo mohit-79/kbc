@@ -611,3 +611,304 @@ input, textarea, select {
   85% { opacity: 1; transform: translateX(-50%) translateY(0); }
   100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
 }
+
+/* ==========================================================================
+   CUSTOM KBC CALL OVERLAY & WHATSAPP CHAT STYLES
+   ========================================================================== */
+
+/* Fullscreen In-App Calling Screen */
+.kbc-call-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: radial-gradient(circle at 50% 30%, #0d1e44 0%, #050a18 100%);
+  display: none;
+  flex-direction: column;
+  padding: calc(var(--sat) + 12px) 16px calc(var(--sab) + 16px);
+  color: #fff;
+  overflow: hidden;
+}
+
+.kbc-call-modal.active {
+  display: flex;
+}
+
+.call-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.call-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 210, 255, 0.15);
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.call-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 8px #2ecc71;
+  animation: pulseGreen 1.5s infinite;
+}
+
+@keyframes pulseGreen {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Audio Mode Stage */
+.call-audio-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+.call-avatar-wrap {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  margin-bottom: 18px;
+}
+
+.call-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--bg-navy-surface);
+  border: 2.5px solid var(--gold-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46px;
+  box-shadow: 0 0 25px rgba(245, 197, 24, 0.4);
+}
+
+.call-avatar-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px dashed rgba(0, 210, 255, 0.6);
+  animation: rotateRing 8s linear infinite;
+}
+
+@keyframes rotateRing {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Audio Visualizer Bars in Call */
+.call-visualizer-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 54px;
+  margin-top: 14px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.call-vbar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--neon-cyan) 0%, var(--gold-primary) 100%);
+  border-radius: 4px;
+  height: 8px;
+  transition: height 0.08s ease;
+  min-height: 4px;
+}
+
+/* Video Mode Dual Tile Layout */
+.call-video-stage {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+@media (min-width: 600px) {
+  .call-video-stage {
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.video-tile {
+  background: #000;
+  border: 1.5px solid var(--gold-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+.video-tile.friend-tile {
+  border-color: var(--neon-cyan);
+}
+
+.video-tile-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(7, 13, 30, 0.75);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  z-index: 5;
+  border: 0.5px solid rgba(255,255,255,0.2);
+}
+
+.video-tile iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Call Control Footer */
+.call-actions-bar {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.call-btn-hangup {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  height: 46px;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(231, 76, 60, 0.4);
+}
+
+/* WhatsApp In-Game Chat Feed */
+.wa-chat-container {
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 20, 44, 0.95);
+  border: 1.5px solid rgba(0, 210, 255, 0.4);
+  border-radius: 12px;
+  padding: 10px;
+  margin: 10px 0;
+  max-height: 220px;
+  box-sizing: border-box;
+}
+
+.wa-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+  max-height: 140px;
+}
+
+.wa-bubble {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  word-break: break-word;
+  position: relative;
+}
+
+.wa-bubble.friend {
+  align-self: flex-start;
+  background: #1e3a5f;
+  color: #fff;
+  border-bottom-left-radius: 2px;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+}
+
+.wa-bubble.player {
+  align-self: flex-end;
+  background: #005c4b;
+  color: #e9edef;
+  border-bottom-right-radius: 2px;
+}
+
+.wa-bubble-sender {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.wa-bubble.player .wa-bubble-sender {
+  color: #25d366;
+}
+
+.wa-opt-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(245, 197, 24, 0.15);
+  border: 1px solid var(--gold-primary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-top: 6px;
+}
+
+.wa-input-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.wa-chat-input {
+  flex: 1;
+  height: 38px;
+  background: rgba(7, 13, 30, 0.85);
+  border: 1px solid var(--gold-muted);
+  border-radius: 8px;
+  color: #fff;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.wa-chat-send-btn {
+  height: 38px;
+  padding: 0 14px;
+  background: #25d366;
+  color: #070d1e;
+  font-weight: 800;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
