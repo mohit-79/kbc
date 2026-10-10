@@ -113,27 +113,11 @@ class AudioEngine {
     if (typeof clipUrlOrName === 'string' && (clipUrlOrName.startsWith('http://') || clipUrlOrName.startsWith('https://') || clipUrlOrName.endsWith('.mp3') || clipUrlOrName.endsWith('.m4a'))) {
       try {
         const audio = new Audio(clipUrlOrName);
-        audio.crossOrigin = "anonymous";
         audio.volume = 0.85;
         this.currentAudio = audio;
 
-        // Try connecting to Web Audio analyser for waveform visualizer if CORS allows
-        if (this.ctx) {
-          try {
-            const source = this.ctx.createMediaElementSource(audio);
-            if (this.analyser) {
-              source.connect(this.analyser);
-              this.analyser.connect(this.ctx.destination);
-            } else {
-              source.connect(this.ctx.destination);
-            }
-          } catch (corsErr) {
-            // If cross-origin restrictions block Web Audio node, native audio still plays cleanly
-          }
-        }
-
         audio.play().catch(e => {
-          console.warn("Stream preview play failed (user interaction required or network error):", e);
+          console.warn("Stream preview play error:", e);
         });
         return;
       } catch (e) {
