@@ -1052,6 +1052,7 @@ window.triggerPhoneAFriendDispatch = async function(friendId) {
   if (pickerArea) pickerArea.style.display = 'none';
   if (waitingArea) waitingArea.style.display = 'block';
   if (manualArea) manualArea.style.display = 'none';
+  resetInGameWhatsAppChat();
 
   const waitMsg = document.getElementById('phone-friend-wait-msg');
   if (waitMsg) waitMsg.textContent = `${friend.name} ko WhatsApp bhej diya gaya!`;
@@ -1271,6 +1272,22 @@ let lastDetectedOptionFromChat = null;
 let currentChatFriendPhone = null;
 const seenChatMsgIds = new Set();
 
+function resetInGameWhatsAppChat() {
+  seenChatMsgIds.clear();
+  lastDetectedOptionFromChat = null;
+  const container = document.getElementById('wa-chat-messages');
+  if (container) {
+    container.innerHTML = `
+      <div class="wa-bubble friend">
+        <div class="wa-bubble-sender">SurKBC Bot</div>
+        Dost ko WhatsApp bhej diya hai. Unka reply yahan aayega!
+      </div>
+    `;
+  }
+  const optBar = document.getElementById('wa-option-bar');
+  if (optBar) optBar.style.display = 'none';
+}
+
 function onWhatsAppChatMessageReceived(msg) {
   const msgKey = msg.id || `${msg.sender}_${msg.text}_${msg.created_at || msg.timestamp || ''}`;
   if (seenChatMsgIds.has(msgKey)) return;
@@ -1280,7 +1297,7 @@ function onWhatsAppChatMessageReceived(msg) {
   if (!container) return;
 
   const isPlayer = (msg.sender === 'player');
-  const senderTitle = isPlayer ? 'Aap' : (msg.friendName || 'Dost');
+  const senderTitle = isPlayer ? 'Aap' : (msg.friend_name || msg.friendName || 'Dost');
   const bubbleClass = isPlayer ? 'wa-bubble player' : 'wa-bubble friend';
 
   const bubble = document.createElement('div');
@@ -1293,8 +1310,9 @@ function onWhatsAppChatMessageReceived(msg) {
   container.scrollTop = container.scrollHeight;
 
   // If friend suggested an option, highlight quick-lock bar
-  if (!isPlayer && msg.detectedOption) {
-    lastDetectedOptionFromChat = msg.detectedOption.toUpperCase();
+  const detOpt = msg.detected_option || msg.detectedOption;
+  if (!isPlayer && detOpt) {
+    lastDetectedOptionFromChat = String(detOpt).toUpperCase();
     const optBar = document.getElementById('wa-option-bar');
     const optText = document.getElementById('wa-option-text');
     if (optBar && optText) {
