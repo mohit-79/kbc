@@ -1,0 +1,3270 @@
+[
+ {
+  "key": "welcome",
+  "text": "नमस्कार, देवियों और सज्जनों! सुरकेबीसी में आपका स्वागत है। चलिए, खेल शुरू करते हैं!"
+ },
+ {
+  "key": "hotseat",
+  "text": "तो आप आ गए हैं हॉट सीट पर। पंद्रह सवाल, एक करोड़ रुपये। शुभकामनाएं!"
+ },
+ {
+  "key": "correct_1",
+  "text": "बिल्कुल सही जवाब!"
+ },
+ {
+  "key": "correct_2",
+  "text": "क्या बात है! सही जवाब!"
+ },
+ {
+  "key": "correct_3",
+  "text": "वाह! एकदम सही!"
+ },
+ {
+  "key": "wrong_1",
+  "text": "अफ़सोस... ये ग़लत जवाब है।"
+ },
+ {
+  "key": "wrong_2",
+  "text": "नहीं... ये सही जवाब नहीं है।"
+ },
+ {
+  "key": "padaav_1",
+  "text": "पहला पड़ाव! दस हज़ार रुपये पक्के!"
+ },
+ {
+  "key": "padaav_2",
+  "text": "दूसरा पड़ाव! तीन लाख बीस हज़ार रुपये पक्के!"
+ },
+ {
+  "key": "jackpot",
+  "text": "एक करोड़ रुपये! आप सुरकेबीसी के विजेता हैं! बधाई हो!"
+ },
+ {
+  "key": "fifty",
+  "text": "कंप्यूटर जी, दो ग़लत विकल्प हटा दीजिए।"
+ },
+ {
+  "key": "audience",
+  "text": "ऑडियंस, अपने मीटर्स तैयार कर लीजिए!"
+ },
+ {
+  "key": "phone",
+  "text": "तो हम फ़ोन लगाते हैं आपके दोस्त को।"
+ },
+ {
+  "key": "flip",
+  "text": "सवाल बदल दिया जाए, कंप्यूटर जी!"
+ },
+ {
+  "key": "timeout",
+  "text": "समय समाप्त!"
+ },
+ {
+  "key": "tick_10",
+  "text": "सिर्फ़ दस सेकंड बचे हैं!"
+ },
+ {
+  "key": "quit_ask",
+  "text": "क्या आप क्विट करना चाहते हैं?"
+ },
+ {
+  "key": "quit_yes",
+  "text": "ठीक है, खेल यहीं समाप्त होता है। फिर मिलेंगे!"
+ },
+ {
+  "key": "gameover",
+  "text": "खेल समाप्त! आपने बहुत अच्छा खेला।"
+ },
+ {
+  "key": "paf_wait",
+  "text": "दोस्त को संदेश भेज दिया गया है। इंतज़ार कीजिए..."
+ },
+ {
+  "key": "paf_arrived",
+  "text": "आपके दोस्त का जवाब आ गया है!"
+ },
+ {
+  "key": "listen",
+  "text": "गाने की क्लिप ध्यान से सुनिए, फिर जवाब दीजिए!"
+ },
+ {
+  "key": "prize_1000",
+  "text": "बहुत खूब! आप एक हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_2000",
+  "text": "बहुत खूब! आप दो हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_3000",
+  "text": "बहुत खूब! आप तीन हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_5000",
+  "text": "बहुत खूब! आप पाँच हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_10000",
+  "text": "बहुत खूब! आप दस हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_20000",
+  "text": "बहुत खूब! आप बीस हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_40000",
+  "text": "बहुत खूब! आप चालीस हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_80000",
+  "text": "बहुत खूब! आप अस्सी हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_160000",
+  "text": "बहुत खूब! आप एक लाख साठ हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_320000",
+  "text": "बहुत खूब! आप तीन लाख बीस हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_640000",
+  "text": "बहुत खूब! आप छह लाख चालीस हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_1250000",
+  "text": "बहुत खूब! आप बारह लाख पचास हज़ार रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_2500000",
+  "text": "बहुत खूब! आप पच्चीस लाख रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_5000000",
+  "text": "बहुत खूब! आप पचास लाख रुपये जीत गए हैं!"
+ },
+ {
+  "key": "prize_10000000",
+  "text": "बहुत खूब! आप एक करोड़ रुपये जीत गए हैं!"
+ },
+ {
+  "key": "qintro_1000",
+  "text": "तो ये रहा पहला सवाल, एक हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_2000",
+  "text": "तो ये रहा दूसरा सवाल, दो हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_3000",
+  "text": "तो ये रहा तीसरा सवाल, तीन हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_5000",
+  "text": "तो ये रहा चौथा सवाल, पाँच हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_10000",
+  "text": "तो ये रहा पाँचवाँ सवाल, दस हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_20000",
+  "text": "तो ये रहा छठा सवाल, बीस हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_40000",
+  "text": "तो ये रहा सातवाँ सवाल, चालीस हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_80000",
+  "text": "तो ये रहा आठवाँ सवाल, अस्सी हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_160000",
+  "text": "तो ये रहा नौवाँ सवाल, एक लाख साठ हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_320000",
+  "text": "तो ये रहा दसवाँ सवाल, तीन लाख बीस हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_640000",
+  "text": "तो ये रहा ग्यारहवाँ सवाल, छह लाख चालीस हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_1250000",
+  "text": "तो ये रहा बारहवाँ सवाल, बारह लाख पचास हज़ार रुपये के लिए!"
+ },
+ {
+  "key": "qintro_2500000",
+  "text": "तो ये रहा तेरहवाँ सवाल, पच्चीस लाख रुपये के लिए!"
+ },
+ {
+  "key": "qintro_5000000",
+  "text": "तो ये रहा चौदहवाँ सवाल, पचास लाख रुपये के लिए!"
+ },
+ {
+  "key": "qintro_10000000",
+  "text": "तो ये रहा पंद्रहवाँ सवाल, एक करोड़ रुपये के लिए!"
+ },
+ {
+  "key": "lock_ask_A_ap_dhillon",
+  "text": "ऑप्शन A: एपी ढिल्लों को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_ap_dhillon",
+  "text": "कंप्यूटर जी, ऑप्शन A: एपी ढिल्लों लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_ap_dhillon",
+  "text": "ऑप्शन B: एपी ढिल्लों को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_ap_dhillon",
+  "text": "कंप्यूटर जी, ऑप्शन B: एपी ढिल्लों लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_ap_dhillon",
+  "text": "ऑप्शन C: एपी ढिल्लों को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_ap_dhillon",
+  "text": "कंप्यूटर जी, ऑप्शन C: एपी ढिल्लों लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_ap_dhillon",
+  "text": "ऑप्शन D: एपी ढिल्लों को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_ap_dhillon",
+  "text": "कंप्यूटर जी, ऑप्शन D: एपी ढिल्लों लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_ap_dhillon",
+  "text": "सही जवाब है — एपी ढिल्लों!"
+ },
+ {
+  "key": "lock_ask_A_abhijeet_bhattacharya",
+  "text": "ऑप्शन A: अभिजीत भट्टाचार्य को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_abhijeet_bhattacharya",
+  "text": "कंप्यूटर जी, ऑप्शन A: अभिजीत भट्टाचार्य लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_abhijeet_bhattacharya",
+  "text": "ऑप्शन B: अभिजीत भट्टाचार्य को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_abhijeet_bhattacharya",
+  "text": "कंप्यूटर जी, ऑप्शन B: अभिजीत भट्टाचार्य लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_abhijeet_bhattacharya",
+  "text": "ऑप्शन C: अभिजीत भट्टाचार्य को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_abhijeet_bhattacharya",
+  "text": "कंप्यूटर जी, ऑप्शन C: अभिजीत भट्टाचार्य लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_abhijeet_bhattacharya",
+  "text": "ऑप्शन D: अभिजीत भट्टाचार्य को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_abhijeet_bhattacharya",
+  "text": "कंप्यूटर जी, ऑप्शन D: अभिजीत भट्टाचार्य लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_abhijeet_bhattacharya",
+  "text": "सही जवाब है — अभिजीत भट्टाचार्य!"
+ },
+ {
+  "key": "lock_ask_A_adnan_sami",
+  "text": "ऑप्शन A: अदनान सामी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_adnan_sami",
+  "text": "कंप्यूटर जी, ऑप्शन A: अदनान सामी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_adnan_sami",
+  "text": "ऑप्शन B: अदनान सामी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_adnan_sami",
+  "text": "कंप्यूटर जी, ऑप्शन B: अदनान सामी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_adnan_sami",
+  "text": "ऑप्शन C: अदनान सामी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_adnan_sami",
+  "text": "कंप्यूटर जी, ऑप्शन C: अदनान सामी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_adnan_sami",
+  "text": "ऑप्शन D: अदनान सामी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_adnan_sami",
+  "text": "कंप्यूटर जी, ऑप्शन D: अदनान सामी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_adnan_sami",
+  "text": "सही जवाब है — अदनान सामी!"
+ },
+ {
+  "key": "lock_ask_A_alisha_chinai",
+  "text": "ऑप्शन A: अलीशा चिनॉय को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_alisha_chinai",
+  "text": "कंप्यूटर जी, ऑप्शन A: अलीशा चिनॉय लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_alisha_chinai",
+  "text": "ऑप्शन B: अलीशा चिनॉय को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_alisha_chinai",
+  "text": "कंप्यूटर जी, ऑप्शन B: अलीशा चिनॉय लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_alisha_chinai",
+  "text": "ऑप्शन C: अलीशा चिनॉय को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_alisha_chinai",
+  "text": "कंप्यूटर जी, ऑप्शन C: अलीशा चिनॉय लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_alisha_chinai",
+  "text": "ऑप्शन D: अलीशा चिनॉय को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_alisha_chinai",
+  "text": "कंप्यूटर जी, ऑप्शन D: अलीशा चिनॉय लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_alisha_chinai",
+  "text": "सही जवाब है — अलीशा चिनॉय!"
+ },
+ {
+  "key": "lock_ask_A_alka_yagnik",
+  "text": "ऑप्शन A: अलका याज्ञनिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_alka_yagnik",
+  "text": "कंप्यूटर जी, ऑप्शन A: अलका याज्ञनिक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_alka_yagnik",
+  "text": "ऑप्शन B: अलका याज्ञनिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_alka_yagnik",
+  "text": "कंप्यूटर जी, ऑप्शन B: अलका याज्ञनिक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_alka_yagnik",
+  "text": "ऑप्शन C: अलका याज्ञनिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_alka_yagnik",
+  "text": "कंप्यूटर जी, ऑप्शन C: अलका याज्ञनिक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_alka_yagnik",
+  "text": "ऑप्शन D: अलका याज्ञनिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_alka_yagnik",
+  "text": "कंप्यूटर जी, ऑप्शन D: अलका याज्ञनिक लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_alka_yagnik",
+  "text": "सही जवाब है — अलका याज्ञनिक!"
+ },
+ {
+  "key": "lock_ask_A_amit_kumar",
+  "text": "ऑप्शन A: अमित कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_amit_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन A: अमित कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_amit_kumar",
+  "text": "ऑप्शन B: अमित कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_amit_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन B: अमित कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_amit_kumar",
+  "text": "ऑप्शन C: अमित कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_amit_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन C: अमित कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_amit_kumar",
+  "text": "ऑप्शन D: अमित कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_amit_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन D: अमित कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_amit_kumar",
+  "text": "सही जवाब है — अमित कुमार!"
+ },
+ {
+  "key": "lock_ask_A_anuradha_paudwal",
+  "text": "ऑप्शन A: अनुराधा पौडवाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_anuradha_paudwal",
+  "text": "कंप्यूटर जी, ऑप्शन A: अनुराधा पौडवाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_anuradha_paudwal",
+  "text": "ऑप्शन B: अनुराधा पौडवाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_anuradha_paudwal",
+  "text": "कंप्यूटर जी, ऑप्शन B: अनुराधा पौडवाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_anuradha_paudwal",
+  "text": "ऑप्शन C: अनुराधा पौडवाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_anuradha_paudwal",
+  "text": "कंप्यूटर जी, ऑप्शन C: अनुराधा पौडवाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_anuradha_paudwal",
+  "text": "ऑप्शन D: अनुराधा पौडवाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_anuradha_paudwal",
+  "text": "कंप्यूटर जी, ऑप्शन D: अनुराधा पौडवाल लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_anuradha_paudwal",
+  "text": "सही जवाब है — अनुराधा पौडवाल!"
+ },
+ {
+  "key": "lock_ask_A_anuv_jain",
+  "text": "ऑप्शन A: अनुव जैन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_anuv_jain",
+  "text": "कंप्यूटर जी, ऑप्शन A: अनुव जैन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_anuv_jain",
+  "text": "ऑप्शन B: अनुव जैन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_anuv_jain",
+  "text": "कंप्यूटर जी, ऑप्शन B: अनुव जैन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_anuv_jain",
+  "text": "ऑप्शन C: अनुव जैन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_anuv_jain",
+  "text": "कंप्यूटर जी, ऑप्शन C: अनुव जैन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_anuv_jain",
+  "text": "ऑप्शन D: अनुव जैन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_anuv_jain",
+  "text": "कंप्यूटर जी, ऑप्शन D: अनुव जैन लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_anuv_jain",
+  "text": "सही जवाब है — अनुव जैन!"
+ },
+ {
+  "key": "lock_ask_A_arijit_singh",
+  "text": "ऑप्शन A: अरिजीत सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_arijit_singh",
+  "text": "कंप्यूटर जी, ऑप्शन A: अरिजीत सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_arijit_singh",
+  "text": "ऑप्शन B: अरिजीत सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_arijit_singh",
+  "text": "कंप्यूटर जी, ऑप्शन B: अरिजीत सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_arijit_singh",
+  "text": "ऑप्शन C: अरिजीत सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_arijit_singh",
+  "text": "कंप्यूटर जी, ऑप्शन C: अरिजीत सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_arijit_singh",
+  "text": "ऑप्शन D: अरिजीत सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_arijit_singh",
+  "text": "कंप्यूटर जी, ऑप्शन D: अरिजीत सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_arijit_singh",
+  "text": "सही जवाब है — अरिजीत सिंह!"
+ },
+ {
+  "key": "lock_ask_A_armaan_malik",
+  "text": "ऑप्शन A: अरमान मलिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_armaan_malik",
+  "text": "कंप्यूटर जी, ऑप्शन A: अरमान मलिक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_armaan_malik",
+  "text": "ऑप्शन B: अरमान मलिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_armaan_malik",
+  "text": "कंप्यूटर जी, ऑप्शन B: अरमान मलिक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_armaan_malik",
+  "text": "ऑप्शन C: अरमान मलिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_armaan_malik",
+  "text": "कंप्यूटर जी, ऑप्शन C: अरमान मलिक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_armaan_malik",
+  "text": "ऑप्शन D: अरमान मलिक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_armaan_malik",
+  "text": "कंप्यूटर जी, ऑप्शन D: अरमान मलिक लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_armaan_malik",
+  "text": "सही जवाब है — अरमान मलिक!"
+ },
+ {
+  "key": "lock_ask_A_asees_kaur",
+  "text": "ऑप्शन A: असीस कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_asees_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन A: असीस कौर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_asees_kaur",
+  "text": "ऑप्शन B: असीस कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_asees_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन B: असीस कौर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_asees_kaur",
+  "text": "ऑप्शन C: असीस कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_asees_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन C: असीस कौर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_asees_kaur",
+  "text": "ऑप्शन D: असीस कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_asees_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन D: असीस कौर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_asees_kaur",
+  "text": "सही जवाब है — असीस कौर!"
+ },
+ {
+  "key": "lock_ask_A_asha_bhosle",
+  "text": "ऑप्शन A: आशा भोसले को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_asha_bhosle",
+  "text": "कंप्यूटर जी, ऑप्शन A: आशा भोसले लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_asha_bhosle",
+  "text": "ऑप्शन B: आशा भोसले को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_asha_bhosle",
+  "text": "कंप्यूटर जी, ऑप्शन B: आशा भोसले लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_asha_bhosle",
+  "text": "ऑप्शन C: आशा भोसले को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_asha_bhosle",
+  "text": "कंप्यूटर जी, ऑप्शन C: आशा भोसले लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_asha_bhosle",
+  "text": "ऑप्शन D: आशा भोसले को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_asha_bhosle",
+  "text": "कंप्यूटर जी, ऑप्शन D: आशा भोसले लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_asha_bhosle",
+  "text": "सही जवाब है — आशा भोसले!"
+ },
+ {
+  "key": "lock_ask_A_atif_aslam",
+  "text": "ऑप्शन A: आतिफ़ असलम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_atif_aslam",
+  "text": "कंप्यूटर जी, ऑप्शन A: आतिफ़ असलम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_atif_aslam",
+  "text": "ऑप्शन B: आतिफ़ असलम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_atif_aslam",
+  "text": "कंप्यूटर जी, ऑप्शन B: आतिफ़ असलम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_atif_aslam",
+  "text": "ऑप्शन C: आतिफ़ असलम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_atif_aslam",
+  "text": "कंप्यूटर जी, ऑप्शन C: आतिफ़ असलम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_atif_aslam",
+  "text": "ऑप्शन D: आतिफ़ असलम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_atif_aslam",
+  "text": "कंप्यूटर जी, ऑप्शन D: आतिफ़ असलम लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_atif_aslam",
+  "text": "सही जवाब है — आतिफ़ असलम!"
+ },
+ {
+  "key": "lock_ask_A_b_praak",
+  "text": "ऑप्शन A: बी प्राक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_b_praak",
+  "text": "कंप्यूटर जी, ऑप्शन A: बी प्राक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_b_praak",
+  "text": "ऑप्शन B: बी प्राक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_b_praak",
+  "text": "कंप्यूटर जी, ऑप्शन B: बी प्राक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_b_praak",
+  "text": "ऑप्शन C: बी प्राक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_b_praak",
+  "text": "कंप्यूटर जी, ऑप्शन C: बी प्राक लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_b_praak",
+  "text": "ऑप्शन D: बी प्राक को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_b_praak",
+  "text": "कंप्यूटर जी, ऑप्शन D: बी प्राक लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_b_praak",
+  "text": "सही जवाब है — बी प्राक!"
+ },
+ {
+  "key": "lock_ask_A_badshah",
+  "text": "ऑप्शन A: बादशाह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_badshah",
+  "text": "कंप्यूटर जी, ऑप्शन A: बादशाह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_badshah",
+  "text": "ऑप्शन B: बादशाह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_badshah",
+  "text": "कंप्यूटर जी, ऑप्शन B: बादशाह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_badshah",
+  "text": "ऑप्शन C: बादशाह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_badshah",
+  "text": "कंप्यूटर जी, ऑप्शन C: बादशाह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_badshah",
+  "text": "ऑप्शन D: बादशाह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_badshah",
+  "text": "कंप्यूटर जी, ऑप्शन D: बादशाह लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_badshah",
+  "text": "सही जवाब है — बादशाह!"
+ },
+ {
+  "key": "lock_ask_A_benny_dayal",
+  "text": "ऑप्शन A: बेनी दयाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_benny_dayal",
+  "text": "कंप्यूटर जी, ऑप्शन A: बेनी दयाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_benny_dayal",
+  "text": "ऑप्शन B: बेनी दयाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_benny_dayal",
+  "text": "कंप्यूटर जी, ऑप्शन B: बेनी दयाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_benny_dayal",
+  "text": "ऑप्शन C: बेनी दयाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_benny_dayal",
+  "text": "कंप्यूटर जी, ऑप्शन C: बेनी दयाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_benny_dayal",
+  "text": "ऑप्शन D: बेनी दयाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_benny_dayal",
+  "text": "कंप्यूटर जी, ऑप्शन D: बेनी दयाल लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_benny_dayal",
+  "text": "सही जवाब है — बेनी दयाल!"
+ },
+ {
+  "key": "lock_ask_A_daler_mehndi",
+  "text": "ऑप्शन A: दलेर मेहंदी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_daler_mehndi",
+  "text": "कंप्यूटर जी, ऑप्शन A: दलेर मेहंदी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_daler_mehndi",
+  "text": "ऑप्शन B: दलेर मेहंदी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_daler_mehndi",
+  "text": "कंप्यूटर जी, ऑप्शन B: दलेर मेहंदी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_daler_mehndi",
+  "text": "ऑप्शन C: दलेर मेहंदी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_daler_mehndi",
+  "text": "कंप्यूटर जी, ऑप्शन C: दलेर मेहंदी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_daler_mehndi",
+  "text": "ऑप्शन D: दलेर मेहंदी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_daler_mehndi",
+  "text": "कंप्यूटर जी, ऑप्शन D: दलेर मेहंदी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_daler_mehndi",
+  "text": "सही जवाब है — दलेर मेहंदी!"
+ },
+ {
+  "key": "lock_ask_A_darshan_raval",
+  "text": "ऑप्शन A: दर्शन रावल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_darshan_raval",
+  "text": "कंप्यूटर जी, ऑप्शन A: दर्शन रावल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_darshan_raval",
+  "text": "ऑप्शन B: दर्शन रावल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_darshan_raval",
+  "text": "कंप्यूटर जी, ऑप्शन B: दर्शन रावल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_darshan_raval",
+  "text": "ऑप्शन C: दर्शन रावल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_darshan_raval",
+  "text": "कंप्यूटर जी, ऑप्शन C: दर्शन रावल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_darshan_raval",
+  "text": "ऑप्शन D: दर्शन रावल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_darshan_raval",
+  "text": "कंप्यूटर जी, ऑप्शन D: दर्शन रावल लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_darshan_raval",
+  "text": "सही जवाब है — दर्शन रावल!"
+ },
+ {
+  "key": "lock_ask_A_dhvani_bhanushali",
+  "text": "ऑप्शन A: ध्वनि भानुशाली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_dhvani_bhanushali",
+  "text": "कंप्यूटर जी, ऑप्शन A: ध्वनि भानुशाली लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_dhvani_bhanushali",
+  "text": "ऑप्शन B: ध्वनि भानुशाली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_dhvani_bhanushali",
+  "text": "कंप्यूटर जी, ऑप्शन B: ध्वनि भानुशाली लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_dhvani_bhanushali",
+  "text": "ऑप्शन C: ध्वनि भानुशाली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_dhvani_bhanushali",
+  "text": "कंप्यूटर जी, ऑप्शन C: ध्वनि भानुशाली लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_dhvani_bhanushali",
+  "text": "ऑप्शन D: ध्वनि भानुशाली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_dhvani_bhanushali",
+  "text": "कंप्यूटर जी, ऑप्शन D: ध्वनि भानुशाली लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_dhvani_bhanushali",
+  "text": "सही जवाब है — ध्वनि भानुशाली!"
+ },
+ {
+  "key": "lock_ask_A_diljit_dosanjh",
+  "text": "ऑप्शन A: दिलजीत दोसांझ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_diljit_dosanjh",
+  "text": "कंप्यूटर जी, ऑप्शन A: दिलजीत दोसांझ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_diljit_dosanjh",
+  "text": "ऑप्शन B: दिलजीत दोसांझ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_diljit_dosanjh",
+  "text": "कंप्यूटर जी, ऑप्शन B: दिलजीत दोसांझ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_diljit_dosanjh",
+  "text": "ऑप्शन C: दिलजीत दोसांझ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_diljit_dosanjh",
+  "text": "कंप्यूटर जी, ऑप्शन C: दिलजीत दोसांझ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_diljit_dosanjh",
+  "text": "ऑप्शन D: दिलजीत दोसांझ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_diljit_dosanjh",
+  "text": "कंप्यूटर जी, ऑप्शन D: दिलजीत दोसांझ लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_diljit_dosanjh",
+  "text": "सही जवाब है — दिलजीत दोसांझ!"
+ },
+ {
+  "key": "lock_ask_A_divine",
+  "text": "ऑप्शन A: डिवाइन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_divine",
+  "text": "कंप्यूटर जी, ऑप्शन A: डिवाइन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_divine",
+  "text": "ऑप्शन B: डिवाइन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_divine",
+  "text": "कंप्यूटर जी, ऑप्शन B: डिवाइन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_divine",
+  "text": "ऑप्शन C: डिवाइन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_divine",
+  "text": "कंप्यूटर जी, ऑप्शन C: डिवाइन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_divine",
+  "text": "ऑप्शन D: डिवाइन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_divine",
+  "text": "कंप्यूटर जी, ऑप्शन D: डिवाइन लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_divine",
+  "text": "सही जवाब है — डिवाइन!"
+ },
+ {
+  "key": "lock_ask_A_geeta_dutt",
+  "text": "ऑप्शन A: गीता दत्त को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_geeta_dutt",
+  "text": "कंप्यूटर जी, ऑप्शन A: गीता दत्त लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_geeta_dutt",
+  "text": "ऑप्शन B: गीता दत्त को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_geeta_dutt",
+  "text": "कंप्यूटर जी, ऑप्शन B: गीता दत्त लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_geeta_dutt",
+  "text": "ऑप्शन C: गीता दत्त को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_geeta_dutt",
+  "text": "कंप्यूटर जी, ऑप्शन C: गीता दत्त लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_geeta_dutt",
+  "text": "ऑप्शन D: गीता दत्त को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_geeta_dutt",
+  "text": "कंप्यूटर जी, ऑप्शन D: गीता दत्त लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_geeta_dutt",
+  "text": "सही जवाब है — गीता दत्त!"
+ },
+ {
+  "key": "lock_ask_A_guru_randhawa",
+  "text": "ऑप्शन A: गुरु रंधावा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_guru_randhawa",
+  "text": "कंप्यूटर जी, ऑप्शन A: गुरु रंधावा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_guru_randhawa",
+  "text": "ऑप्शन B: गुरु रंधावा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_guru_randhawa",
+  "text": "कंप्यूटर जी, ऑप्शन B: गुरु रंधावा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_guru_randhawa",
+  "text": "ऑप्शन C: गुरु रंधावा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_guru_randhawa",
+  "text": "कंप्यूटर जी, ऑप्शन C: गुरु रंधावा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_guru_randhawa",
+  "text": "ऑप्शन D: गुरु रंधावा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_guru_randhawa",
+  "text": "कंप्यूटर जी, ऑप्शन D: गुरु रंधावा लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_guru_randhawa",
+  "text": "सही जवाब है — गुरु रंधावा!"
+ },
+ {
+  "key": "lock_ask_A_hardy_sandhu",
+  "text": "ऑप्शन A: हार्डी संधू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_hardy_sandhu",
+  "text": "कंप्यूटर जी, ऑप्शन A: हार्डी संधू लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_hardy_sandhu",
+  "text": "ऑप्शन B: हार्डी संधू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_hardy_sandhu",
+  "text": "कंप्यूटर जी, ऑप्शन B: हार्डी संधू लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_hardy_sandhu",
+  "text": "ऑप्शन C: हार्डी संधू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_hardy_sandhu",
+  "text": "कंप्यूटर जी, ऑप्शन C: हार्डी संधू लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_hardy_sandhu",
+  "text": "ऑप्शन D: हार्डी संधू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_hardy_sandhu",
+  "text": "कंप्यूटर जी, ऑप्शन D: हार्डी संधू लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_hardy_sandhu",
+  "text": "सही जवाब है — हार्डी संधू!"
+ },
+ {
+  "key": "lock_ask_A_hariharan",
+  "text": "ऑप्शन A: हरिहरन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_hariharan",
+  "text": "कंप्यूटर जी, ऑप्शन A: हरिहरन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_hariharan",
+  "text": "ऑप्शन B: हरिहरन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_hariharan",
+  "text": "कंप्यूटर जी, ऑप्शन B: हरिहरन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_hariharan",
+  "text": "ऑप्शन C: हरिहरन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_hariharan",
+  "text": "कंप्यूटर जी, ऑप्शन C: हरिहरन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_hariharan",
+  "text": "ऑप्शन D: हरिहरन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_hariharan",
+  "text": "कंप्यूटर जी, ऑप्शन D: हरिहरन लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_hariharan",
+  "text": "सही जवाब है — हरिहरन!"
+ },
+ {
+  "key": "lock_ask_A_harshdeep_kaur",
+  "text": "ऑप्शन A: हरशदीप कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_harshdeep_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन A: हरशदीप कौर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_harshdeep_kaur",
+  "text": "ऑप्शन B: हरशदीप कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_harshdeep_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन B: हरशदीप कौर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_harshdeep_kaur",
+  "text": "ऑप्शन C: हरशदीप कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_harshdeep_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन C: हरशदीप कौर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_harshdeep_kaur",
+  "text": "ऑप्शन D: हरशदीप कौर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_harshdeep_kaur",
+  "text": "कंप्यूटर जी, ऑप्शन D: हरशदीप कौर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_harshdeep_kaur",
+  "text": "सही जवाब है — हरशदीप कौर!"
+ },
+ {
+  "key": "lock_ask_A_hemant_kumar",
+  "text": "ऑप्शन A: हेमंत कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_hemant_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन A: हेमंत कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_hemant_kumar",
+  "text": "ऑप्शन B: हेमंत कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_hemant_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन B: हेमंत कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_hemant_kumar",
+  "text": "ऑप्शन C: हेमंत कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_hemant_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन C: हेमंत कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_hemant_kumar",
+  "text": "ऑप्शन D: हेमंत कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_hemant_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन D: हेमंत कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_hemant_kumar",
+  "text": "सही जवाब है — हेमंत कुमार!"
+ },
+ {
+  "key": "lock_ask_A_himesh_reshammiya",
+  "text": "ऑप्शन A: हिमेश रेशमिया को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_himesh_reshammiya",
+  "text": "कंप्यूटर जी, ऑप्शन A: हिमेश रेशमिया लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_himesh_reshammiya",
+  "text": "ऑप्शन B: हिमेश रेशमिया को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_himesh_reshammiya",
+  "text": "कंप्यूटर जी, ऑप्शन B: हिमेश रेशमिया लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_himesh_reshammiya",
+  "text": "ऑप्शन C: हिमेश रेशमिया को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_himesh_reshammiya",
+  "text": "कंप्यूटर जी, ऑप्शन C: हिमेश रेशमिया लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_himesh_reshammiya",
+  "text": "ऑप्शन D: हिमेश रेशमिया को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_himesh_reshammiya",
+  "text": "कंप्यूटर जी, ऑप्शन D: हिमेश रेशमिया लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_himesh_reshammiya",
+  "text": "सही जवाब है — हिमेश रेशमिया!"
+ },
+ {
+  "key": "lock_ask_A_jasleen_royal",
+  "text": "ऑप्शन A: जसलीन रॉयल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_jasleen_royal",
+  "text": "कंप्यूटर जी, ऑप्शन A: जसलीन रॉयल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_jasleen_royal",
+  "text": "ऑप्शन B: जसलीन रॉयल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_jasleen_royal",
+  "text": "कंप्यूटर जी, ऑप्शन B: जसलीन रॉयल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_jasleen_royal",
+  "text": "ऑप्शन C: जसलीन रॉयल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_jasleen_royal",
+  "text": "कंप्यूटर जी, ऑप्शन C: जसलीन रॉयल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_jasleen_royal",
+  "text": "ऑप्शन D: जसलीन रॉयल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_jasleen_royal",
+  "text": "कंप्यूटर जी, ऑप्शन D: जसलीन रॉयल लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_jasleen_royal",
+  "text": "सही जवाब है — जसलीन रॉयल!"
+ },
+ {
+  "key": "lock_ask_A_jonita_gandhi",
+  "text": "ऑप्शन A: जोनिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_jonita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन A: जोनिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_jonita_gandhi",
+  "text": "ऑप्शन B: जोनिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_jonita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन B: जोनिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_jonita_gandhi",
+  "text": "ऑप्शन C: जोनिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_jonita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन C: जोनिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_jonita_gandhi",
+  "text": "ऑप्शन D: जोनिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_jonita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन D: जोनिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_jonita_gandhi",
+  "text": "सही जवाब है — जोनिता गांधी!"
+ },
+ {
+  "key": "lock_ask_A_jubin_nautiyal",
+  "text": "ऑप्शन A: जुबिन नौटियाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_jubin_nautiyal",
+  "text": "कंप्यूटर जी, ऑप्शन A: जुबिन नौटियाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_jubin_nautiyal",
+  "text": "ऑप्शन B: जुबिन नौटियाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_jubin_nautiyal",
+  "text": "कंप्यूटर जी, ऑप्शन B: जुबिन नौटियाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_jubin_nautiyal",
+  "text": "ऑप्शन C: जुबिन नौटियाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_jubin_nautiyal",
+  "text": "कंप्यूटर जी, ऑप्शन C: जुबिन नौटियाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_jubin_nautiyal",
+  "text": "ऑप्शन D: जुबिन नौटियाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_jubin_nautiyal",
+  "text": "कंप्यूटर जी, ऑप्शन D: जुबिन नौटियाल लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_jubin_nautiyal",
+  "text": "सही जवाब है — जुबिन नौटियाल!"
+ },
+ {
+  "key": "lock_ask_A_kk",
+  "text": "ऑप्शन A: केके को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_kk",
+  "text": "कंप्यूटर जी, ऑप्शन A: केके लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_kk",
+  "text": "ऑप्शन B: केके को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_kk",
+  "text": "कंप्यूटर जी, ऑप्शन B: केके लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_kk",
+  "text": "ऑप्शन C: केके को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_kk",
+  "text": "कंप्यूटर जी, ऑप्शन C: केके लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_kk",
+  "text": "ऑप्शन D: केके को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_kk",
+  "text": "कंप्यूटर जी, ऑप्शन D: केके लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_kk",
+  "text": "सही जवाब है — केके!"
+ },
+ {
+  "key": "lock_ask_A_kailash_kher",
+  "text": "ऑप्शन A: कैलाश खेर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_kailash_kher",
+  "text": "कंप्यूटर जी, ऑप्शन A: कैलाश खेर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_kailash_kher",
+  "text": "ऑप्शन B: कैलाश खेर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_kailash_kher",
+  "text": "कंप्यूटर जी, ऑप्शन B: कैलाश खेर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_kailash_kher",
+  "text": "ऑप्शन C: कैलाश खेर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_kailash_kher",
+  "text": "कंप्यूटर जी, ऑप्शन C: कैलाश खेर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_kailash_kher",
+  "text": "ऑप्शन D: कैलाश खेर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_kailash_kher",
+  "text": "कंप्यूटर जी, ऑप्शन D: कैलाश खेर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_kailash_kher",
+  "text": "सही जवाब है — कैलाश खेर!"
+ },
+ {
+  "key": "lock_ask_A_kanika_kapoor",
+  "text": "ऑप्शन A: कनिका कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_kanika_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन A: कनिका कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_kanika_kapoor",
+  "text": "ऑप्शन B: कनिका कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_kanika_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन B: कनिका कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_kanika_kapoor",
+  "text": "ऑप्शन C: कनिका कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_kanika_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन C: कनिका कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_kanika_kapoor",
+  "text": "ऑप्शन D: कनिका कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_kanika_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन D: कनिका कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_kanika_kapoor",
+  "text": "सही जवाब है — कनिका कपूर!"
+ },
+ {
+  "key": "lock_ask_A_kavita_krishnamurthy",
+  "text": "ऑप्शन A: कविता कृष्णमूर्ति को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_kavita_krishnamurthy",
+  "text": "कंप्यूटर जी, ऑप्शन A: कविता कृष्णमूर्ति लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_kavita_krishnamurthy",
+  "text": "ऑप्शन B: कविता कृष्णमूर्ति को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_kavita_krishnamurthy",
+  "text": "कंप्यूटर जी, ऑप्शन B: कविता कृष्णमूर्ति लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_kavita_krishnamurthy",
+  "text": "ऑप्शन C: कविता कृष्णमूर्ति को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_kavita_krishnamurthy",
+  "text": "कंप्यूटर जी, ऑप्शन C: कविता कृष्णमूर्ति लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_kavita_krishnamurthy",
+  "text": "ऑप्शन D: कविता कृष्णमूर्ति को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_kavita_krishnamurthy",
+  "text": "कंप्यूटर जी, ऑप्शन D: कविता कृष्णमूर्ति लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_kavita_krishnamurthy",
+  "text": "सही जवाब है — कविता कृष्णमूर्ति!"
+ },
+ {
+  "key": "lock_ask_A_king",
+  "text": "ऑप्शन A: किंग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_king",
+  "text": "कंप्यूटर जी, ऑप्शन A: किंग लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_king",
+  "text": "ऑप्शन B: किंग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_king",
+  "text": "कंप्यूटर जी, ऑप्शन B: किंग लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_king",
+  "text": "ऑप्शन C: किंग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_king",
+  "text": "कंप्यूटर जी, ऑप्शन C: किंग लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_king",
+  "text": "ऑप्शन D: किंग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_king",
+  "text": "कंप्यूटर जी, ऑप्शन D: किंग लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_king",
+  "text": "सही जवाब है — किंग!"
+ },
+ {
+  "key": "lock_ask_A_kishore_kumar",
+  "text": "ऑप्शन A: किशोर कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_kishore_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन A: किशोर कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_kishore_kumar",
+  "text": "ऑप्शन B: किशोर कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_kishore_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन B: किशोर कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_kishore_kumar",
+  "text": "ऑप्शन C: किशोर कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_kishore_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन C: किशोर कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_kishore_kumar",
+  "text": "ऑप्शन D: किशोर कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_kishore_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन D: किशोर कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_kishore_kumar",
+  "text": "सही जवाब है — किशोर कुमार!"
+ },
+ {
+  "key": "lock_ask_A_kumar_sanu",
+  "text": "ऑप्शन A: कुमार सानू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_kumar_sanu",
+  "text": "कंप्यूटर जी, ऑप्शन A: कुमार सानू लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_kumar_sanu",
+  "text": "ऑप्शन B: कुमार सानू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_kumar_sanu",
+  "text": "कंप्यूटर जी, ऑप्शन B: कुमार सानू लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_kumar_sanu",
+  "text": "ऑप्शन C: कुमार सानू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_kumar_sanu",
+  "text": "कंप्यूटर जी, ऑप्शन C: कुमार सानू लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_kumar_sanu",
+  "text": "ऑप्शन D: कुमार सानू को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_kumar_sanu",
+  "text": "कंप्यूटर जी, ऑप्शन D: कुमार सानू लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_kumar_sanu",
+  "text": "सही जवाब है — कुमार सानू!"
+ },
+ {
+  "key": "lock_ask_A_kunal_ganjawala",
+  "text": "ऑप्शन A: कुणाल गांजावाला को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_kunal_ganjawala",
+  "text": "कंप्यूटर जी, ऑप्शन A: कुणाल गांजावाला लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_kunal_ganjawala",
+  "text": "ऑप्शन B: कुणाल गांजावाला को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_kunal_ganjawala",
+  "text": "कंप्यूटर जी, ऑप्शन B: कुणाल गांजावाला लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_kunal_ganjawala",
+  "text": "ऑप्शन C: कुणाल गांजावाला को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_kunal_ganjawala",
+  "text": "कंप्यूटर जी, ऑप्शन C: कुणाल गांजावाला लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_kunal_ganjawala",
+  "text": "ऑप्शन D: कुणाल गांजावाला को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_kunal_ganjawala",
+  "text": "कंप्यूटर जी, ऑप्शन D: कुणाल गांजावाला लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_kunal_ganjawala",
+  "text": "सही जवाब है — कुणाल गांजावाला!"
+ },
+ {
+  "key": "lock_ask_A_lata_mangeshkar",
+  "text": "ऑप्शन A: लता मंगेशकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_lata_mangeshkar",
+  "text": "कंप्यूटर जी, ऑप्शन A: लता मंगेशकर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_lata_mangeshkar",
+  "text": "ऑप्शन B: लता मंगेशकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_lata_mangeshkar",
+  "text": "कंप्यूटर जी, ऑप्शन B: लता मंगेशकर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_lata_mangeshkar",
+  "text": "ऑप्शन C: लता मंगेशकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_lata_mangeshkar",
+  "text": "कंप्यूटर जी, ऑप्शन C: लता मंगेशकर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_lata_mangeshkar",
+  "text": "ऑप्शन D: लता मंगेशकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_lata_mangeshkar",
+  "text": "कंप्यूटर जी, ऑप्शन D: लता मंगेशकर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_lata_mangeshkar",
+  "text": "सही जवाब है — लता मंगेशकर!"
+ },
+ {
+  "key": "lock_ask_A_lisa_mishra",
+  "text": "ऑप्शन A: लिसा मिश्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_lisa_mishra",
+  "text": "कंप्यूटर जी, ऑप्शन A: लिसा मिश्रा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_lisa_mishra",
+  "text": "ऑप्शन B: लिसा मिश्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_lisa_mishra",
+  "text": "कंप्यूटर जी, ऑप्शन B: लिसा मिश्रा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_lisa_mishra",
+  "text": "ऑप्शन C: लिसा मिश्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_lisa_mishra",
+  "text": "कंप्यूटर जी, ऑप्शन C: लिसा मिश्रा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_lisa_mishra",
+  "text": "ऑप्शन D: लिसा मिश्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_lisa_mishra",
+  "text": "कंप्यूटर जी, ऑप्शन D: लिसा मिश्रा लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_lisa_mishra",
+  "text": "सही जवाब है — लिसा मिश्रा!"
+ },
+ {
+  "key": "lock_ask_A_lucky_ali",
+  "text": "ऑप्शन A: लकी अली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_lucky_ali",
+  "text": "कंप्यूटर जी, ऑप्शन A: लकी अली लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_lucky_ali",
+  "text": "ऑप्शन B: लकी अली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_lucky_ali",
+  "text": "कंप्यूटर जी, ऑप्शन B: लकी अली लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_lucky_ali",
+  "text": "ऑप्शन C: लकी अली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_lucky_ali",
+  "text": "कंप्यूटर जी, ऑप्शन C: लकी अली लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_lucky_ali",
+  "text": "ऑप्शन D: लकी अली को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_lucky_ali",
+  "text": "कंप्यूटर जी, ऑप्शन D: लकी अली लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_lucky_ali",
+  "text": "सही जवाब है — लकी अली!"
+ },
+ {
+  "key": "lock_ask_A_mahalakshmi_iyer",
+  "text": "ऑप्शन A: महालक्ष्मी अय्यर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_mahalakshmi_iyer",
+  "text": "कंप्यूटर जी, ऑप्शन A: महालक्ष्मी अय्यर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_mahalakshmi_iyer",
+  "text": "ऑप्शन B: महालक्ष्मी अय्यर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_mahalakshmi_iyer",
+  "text": "कंप्यूटर जी, ऑप्शन B: महालक्ष्मी अय्यर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_mahalakshmi_iyer",
+  "text": "ऑप्शन C: महालक्ष्मी अय्यर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_mahalakshmi_iyer",
+  "text": "कंप्यूटर जी, ऑप्शन C: महालक्ष्मी अय्यर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_mahalakshmi_iyer",
+  "text": "ऑप्शन D: महालक्ष्मी अय्यर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_mahalakshmi_iyer",
+  "text": "कंप्यूटर जी, ऑप्शन D: महालक्ष्मी अय्यर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_mahalakshmi_iyer",
+  "text": "सही जवाब है — महालक्ष्मी अय्यर!"
+ },
+ {
+  "key": "lock_ask_A_mahendra_kapoor",
+  "text": "ऑप्शन A: महेंद्र कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_mahendra_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन A: महेंद्र कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_mahendra_kapoor",
+  "text": "ऑप्शन B: महेंद्र कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_mahendra_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन B: महेंद्र कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_mahendra_kapoor",
+  "text": "ऑप्शन C: महेंद्र कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_mahendra_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन C: महेंद्र कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_mahendra_kapoor",
+  "text": "ऑप्शन D: महेंद्र कपूर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_mahendra_kapoor",
+  "text": "कंप्यूटर जी, ऑप्शन D: महेंद्र कपूर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_mahendra_kapoor",
+  "text": "सही जवाब है — महेंद्र कपूर!"
+ },
+ {
+  "key": "lock_ask_A_manna_dey",
+  "text": "ऑप्शन A: मन्ना डे को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_manna_dey",
+  "text": "कंप्यूटर जी, ऑप्शन A: मन्ना डे लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_manna_dey",
+  "text": "ऑप्शन B: मन्ना डे को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_manna_dey",
+  "text": "कंप्यूटर जी, ऑप्शन B: मन्ना डे लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_manna_dey",
+  "text": "ऑप्शन C: मन्ना डे को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_manna_dey",
+  "text": "कंप्यूटर जी, ऑप्शन C: मन्ना डे लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_manna_dey",
+  "text": "ऑप्शन D: मन्ना डे को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_manna_dey",
+  "text": "कंप्यूटर जी, ऑप्शन D: मन्ना डे लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_manna_dey",
+  "text": "सही जवाब है — मन्ना डे!"
+ },
+ {
+  "key": "lock_ask_A_mika_singh",
+  "text": "ऑप्शन A: मीका सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_mika_singh",
+  "text": "कंप्यूटर जी, ऑप्शन A: मीका सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_mika_singh",
+  "text": "ऑप्शन B: मीका सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_mika_singh",
+  "text": "कंप्यूटर जी, ऑप्शन B: मीका सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_mika_singh",
+  "text": "ऑप्शन C: मीका सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_mika_singh",
+  "text": "कंप्यूटर जी, ऑप्शन C: मीका सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_mika_singh",
+  "text": "ऑप्शन D: मीका सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_mika_singh",
+  "text": "कंप्यूटर जी, ऑप्शन D: मीका सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_mika_singh",
+  "text": "सही जवाब है — मीका सिंह!"
+ },
+ {
+  "key": "lock_ask_A_mohammed_aziz",
+  "text": "ऑप्शन A: मोहम्मद अज़ीज़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_mohammed_aziz",
+  "text": "कंप्यूटर जी, ऑप्शन A: मोहम्मद अज़ीज़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_mohammed_aziz",
+  "text": "ऑप्शन B: मोहम्मद अज़ीज़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_mohammed_aziz",
+  "text": "कंप्यूटर जी, ऑप्शन B: मोहम्मद अज़ीज़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_mohammed_aziz",
+  "text": "ऑप्शन C: मोहम्मद अज़ीज़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_mohammed_aziz",
+  "text": "कंप्यूटर जी, ऑप्शन C: मोहम्मद अज़ीज़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_mohammed_aziz",
+  "text": "ऑप्शन D: मोहम्मद अज़ीज़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_mohammed_aziz",
+  "text": "कंप्यूटर जी, ऑप्शन D: मोहम्मद अज़ीज़ लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_mohammed_aziz",
+  "text": "सही जवाब है — मोहम्मद अज़ीज़!"
+ },
+ {
+  "key": "lock_ask_A_mohammed_rafi",
+  "text": "ऑप्शन A: मोहम्मद रफ़ी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_mohammed_rafi",
+  "text": "कंप्यूटर जी, ऑप्शन A: मोहम्मद रफ़ी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_mohammed_rafi",
+  "text": "ऑप्शन B: मोहम्मद रफ़ी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_mohammed_rafi",
+  "text": "कंप्यूटर जी, ऑप्शन B: मोहम्मद रफ़ी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_mohammed_rafi",
+  "text": "ऑप्शन C: मोहम्मद रफ़ी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_mohammed_rafi",
+  "text": "कंप्यूटर जी, ऑप्शन C: मोहम्मद रफ़ी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_mohammed_rafi",
+  "text": "ऑप्शन D: मोहम्मद रफ़ी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_mohammed_rafi",
+  "text": "कंप्यूटर जी, ऑप्शन D: मोहम्मद रफ़ी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_mohammed_rafi",
+  "text": "सही जवाब है — मोहम्मद रफ़ी!"
+ },
+ {
+  "key": "lock_ask_A_mohit_chauhan",
+  "text": "ऑप्शन A: मोहित चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_mohit_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन A: मोहित चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_mohit_chauhan",
+  "text": "ऑप्शन B: मोहित चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_mohit_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन B: मोहित चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_mohit_chauhan",
+  "text": "ऑप्शन C: मोहित चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_mohit_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन C: मोहित चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_mohit_chauhan",
+  "text": "ऑप्शन D: मोहित चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_mohit_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन D: मोहित चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_mohit_chauhan",
+  "text": "सही जवाब है — मोहित चौहान!"
+ },
+ {
+  "key": "lock_ask_A_monali_thakur",
+  "text": "ऑप्शन A: मोनाली ठाकुर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_monali_thakur",
+  "text": "कंप्यूटर जी, ऑप्शन A: मोनाली ठाकुर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_monali_thakur",
+  "text": "ऑप्शन B: मोनाली ठाकुर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_monali_thakur",
+  "text": "कंप्यूटर जी, ऑप्शन B: मोनाली ठाकुर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_monali_thakur",
+  "text": "ऑप्शन C: मोनाली ठाकुर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_monali_thakur",
+  "text": "कंप्यूटर जी, ऑप्शन C: मोनाली ठाकुर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_monali_thakur",
+  "text": "ऑप्शन D: मोनाली ठाकुर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_monali_thakur",
+  "text": "कंप्यूटर जी, ऑप्शन D: मोनाली ठाकुर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_monali_thakur",
+  "text": "सही जवाब है — मोनाली ठाकुर!"
+ },
+ {
+  "key": "lock_ask_A_mukesh",
+  "text": "ऑप्शन A: मुकेश को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_mukesh",
+  "text": "कंप्यूटर जी, ऑप्शन A: मुकेश लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_mukesh",
+  "text": "ऑप्शन B: मुकेश को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_mukesh",
+  "text": "कंप्यूटर जी, ऑप्शन B: मुकेश लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_mukesh",
+  "text": "ऑप्शन C: मुकेश को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_mukesh",
+  "text": "कंप्यूटर जी, ऑप्शन C: मुकेश लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_mukesh",
+  "text": "ऑप्शन D: मुकेश को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_mukesh",
+  "text": "कंप्यूटर जी, ऑप्शन D: मुकेश लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_mukesh",
+  "text": "सही जवाब है — मुकेश!"
+ },
+ {
+  "key": "lock_ask_A_neeti_mohan",
+  "text": "ऑप्शन A: नीति मोहन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_neeti_mohan",
+  "text": "कंप्यूटर जी, ऑप्शन A: नीति मोहन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_neeti_mohan",
+  "text": "ऑप्शन B: नीति मोहन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_neeti_mohan",
+  "text": "कंप्यूटर जी, ऑप्शन B: नीति मोहन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_neeti_mohan",
+  "text": "ऑप्शन C: नीति मोहन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_neeti_mohan",
+  "text": "कंप्यूटर जी, ऑप्शन C: नीति मोहन लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_neeti_mohan",
+  "text": "ऑप्शन D: नीति मोहन को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_neeti_mohan",
+  "text": "कंप्यूटर जी, ऑप्शन D: नीति मोहन लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_neeti_mohan",
+  "text": "सही जवाब है — नीति मोहन!"
+ },
+ {
+  "key": "lock_ask_A_neha_kakkar",
+  "text": "ऑप्शन A: नेहा कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_neha_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन A: नेहा कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_neha_kakkar",
+  "text": "ऑप्शन B: नेहा कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_neha_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन B: नेहा कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_neha_kakkar",
+  "text": "ऑप्शन C: नेहा कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_neha_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन C: नेहा कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_neha_kakkar",
+  "text": "ऑप्शन D: नेहा कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_neha_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन D: नेहा कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_neha_kakkar",
+  "text": "सही जवाब है — नेहा कक्कड़!"
+ },
+ {
+  "key": "lock_ask_A_nikhita_gandhi",
+  "text": "ऑप्शन A: निखिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_nikhita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन A: निखिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_nikhita_gandhi",
+  "text": "ऑप्शन B: निखिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_nikhita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन B: निखिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_nikhita_gandhi",
+  "text": "ऑप्शन C: निखिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_nikhita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन C: निखिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_nikhita_gandhi",
+  "text": "ऑप्शन D: निखिता गांधी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_nikhita_gandhi",
+  "text": "कंप्यूटर जी, ऑप्शन D: निखिता गांधी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_nikhita_gandhi",
+  "text": "सही जवाब है — निखिता गांधी!"
+ },
+ {
+  "key": "lock_ask_A_palak_muchhal",
+  "text": "ऑप्शन A: पलक मुच्छल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_palak_muchhal",
+  "text": "कंप्यूटर जी, ऑप्शन A: पलक मुच्छल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_palak_muchhal",
+  "text": "ऑप्शन B: पलक मुच्छल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_palak_muchhal",
+  "text": "कंप्यूटर जी, ऑप्शन B: पलक मुच्छल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_palak_muchhal",
+  "text": "ऑप्शन C: पलक मुच्छल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_palak_muchhal",
+  "text": "कंप्यूटर जी, ऑप्शन C: पलक मुच्छल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_palak_muchhal",
+  "text": "ऑप्शन D: पलक मुच्छल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_palak_muchhal",
+  "text": "कंप्यूटर जी, ऑप्शन D: पलक मुच्छल लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_palak_muchhal",
+  "text": "सही जवाब है — पलक मुच्छल!"
+ },
+ {
+  "key": "lock_ask_A_pankaj_udhas",
+  "text": "ऑप्शन A: पंकज उधास को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_pankaj_udhas",
+  "text": "कंप्यूटर जी, ऑप्शन A: पंकज उधास लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_pankaj_udhas",
+  "text": "ऑप्शन B: पंकज उधास को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_pankaj_udhas",
+  "text": "कंप्यूटर जी, ऑप्शन B: पंकज उधास लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_pankaj_udhas",
+  "text": "ऑप्शन C: पंकज उधास को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_pankaj_udhas",
+  "text": "कंप्यूटर जी, ऑप्शन C: पंकज उधास लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_pankaj_udhas",
+  "text": "ऑप्शन D: पंकज उधास को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_pankaj_udhas",
+  "text": "कंप्यूटर जी, ऑप्शन D: पंकज उधास लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_pankaj_udhas",
+  "text": "सही जवाब है — पंकज उधास!"
+ },
+ {
+  "key": "lock_ask_A_poornima",
+  "text": "ऑप्शन A: पूर्णिमा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_poornima",
+  "text": "कंप्यूटर जी, ऑप्शन A: पूर्णिमा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_poornima",
+  "text": "ऑप्शन B: पूर्णिमा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_poornima",
+  "text": "कंप्यूटर जी, ऑप्शन B: पूर्णिमा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_poornima",
+  "text": "ऑप्शन C: पूर्णिमा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_poornima",
+  "text": "कंप्यूटर जी, ऑप्शन C: पूर्णिमा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_poornima",
+  "text": "ऑप्शन D: पूर्णिमा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_poornima",
+  "text": "कंप्यूटर जी, ऑप्शन D: पूर्णिमा लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_poornima",
+  "text": "सही जवाब है — पूर्णिमा!"
+ },
+ {
+  "key": "lock_ask_A_prateek_kuhad",
+  "text": "ऑप्शन A: प्रतीक कुहाड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_prateek_kuhad",
+  "text": "कंप्यूटर जी, ऑप्शन A: प्रतीक कुहाड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_prateek_kuhad",
+  "text": "ऑप्शन B: प्रतीक कुहाड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_prateek_kuhad",
+  "text": "कंप्यूटर जी, ऑप्शन B: प्रतीक कुहाड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_prateek_kuhad",
+  "text": "ऑप्शन C: प्रतीक कुहाड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_prateek_kuhad",
+  "text": "कंप्यूटर जी, ऑप्शन C: प्रतीक कुहाड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_prateek_kuhad",
+  "text": "ऑप्शन D: प्रतीक कुहाड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_prateek_kuhad",
+  "text": "कंप्यूटर जी, ऑप्शन D: प्रतीक कुहाड़ लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_prateek_kuhad",
+  "text": "सही जवाब है — प्रतीक कुहाड़!"
+ },
+ {
+  "key": "lock_ask_A_raftaar",
+  "text": "ऑप्शन A: रफ़्तार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_raftaar",
+  "text": "कंप्यूटर जी, ऑप्शन A: रफ़्तार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_raftaar",
+  "text": "ऑप्शन B: रफ़्तार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_raftaar",
+  "text": "कंप्यूटर जी, ऑप्शन B: रफ़्तार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_raftaar",
+  "text": "ऑप्शन C: रफ़्तार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_raftaar",
+  "text": "कंप्यूटर जी, ऑप्शन C: रफ़्तार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_raftaar",
+  "text": "ऑप्शन D: रफ़्तार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_raftaar",
+  "text": "कंप्यूटर जी, ऑप्शन D: रफ़्तार लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_raftaar",
+  "text": "सही जवाब है — रफ़्तार!"
+ },
+ {
+  "key": "lock_ask_A_rahat_fateh_ali_khan",
+  "text": "ऑप्शन A: राहत फ़तेह अली ख़ान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_rahat_fateh_ali_khan",
+  "text": "कंप्यूटर जी, ऑप्शन A: राहत फ़तेह अली ख़ान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_rahat_fateh_ali_khan",
+  "text": "ऑप्शन B: राहत फ़तेह अली ख़ान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_rahat_fateh_ali_khan",
+  "text": "कंप्यूटर जी, ऑप्शन B: राहत फ़तेह अली ख़ान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_rahat_fateh_ali_khan",
+  "text": "ऑप्शन C: राहत फ़तेह अली ख़ान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_rahat_fateh_ali_khan",
+  "text": "कंप्यूटर जी, ऑप्शन C: राहत फ़तेह अली ख़ान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_rahat_fateh_ali_khan",
+  "text": "ऑप्शन D: राहत फ़तेह अली ख़ान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_rahat_fateh_ali_khan",
+  "text": "कंप्यूटर जी, ऑप्शन D: राहत फ़तेह अली ख़ान लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_rahat_fateh_ali_khan",
+  "text": "सही जवाब है — राहत फ़तेह अली ख़ान!"
+ },
+ {
+  "key": "lock_ask_A_rekha_bhardwaj",
+  "text": "ऑप्शन A: रेखा भारद्वाज को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_rekha_bhardwaj",
+  "text": "कंप्यूटर जी, ऑप्शन A: रेखा भारद्वाज लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_rekha_bhardwaj",
+  "text": "ऑप्शन B: रेखा भारद्वाज को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_rekha_bhardwaj",
+  "text": "कंप्यूटर जी, ऑप्शन B: रेखा भारद्वाज लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_rekha_bhardwaj",
+  "text": "ऑप्शन C: रेखा भारद्वाज को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_rekha_bhardwaj",
+  "text": "कंप्यूटर जी, ऑप्शन C: रेखा भारद्वाज लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_rekha_bhardwaj",
+  "text": "ऑप्शन D: रेखा भारद्वाज को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_rekha_bhardwaj",
+  "text": "कंप्यूटर जी, ऑप्शन D: रेखा भारद्वाज लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_rekha_bhardwaj",
+  "text": "सही जवाब है — रेखा भारद्वाज!"
+ },
+ {
+  "key": "lock_ask_A_richa_sharma",
+  "text": "ऑप्शन A: ऋचा शर्मा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_richa_sharma",
+  "text": "कंप्यूटर जी, ऑप्शन A: ऋचा शर्मा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_richa_sharma",
+  "text": "ऑप्शन B: ऋचा शर्मा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_richa_sharma",
+  "text": "कंप्यूटर जी, ऑप्शन B: ऋचा शर्मा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_richa_sharma",
+  "text": "ऑप्शन C: ऋचा शर्मा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_richa_sharma",
+  "text": "कंप्यूटर जी, ऑप्शन C: ऋचा शर्मा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_richa_sharma",
+  "text": "ऑप्शन D: ऋचा शर्मा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_richa_sharma",
+  "text": "कंप्यूटर जी, ऑप्शन D: ऋचा शर्मा लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_richa_sharma",
+  "text": "सही जवाब है — ऋचा शर्मा!"
+ },
+ {
+  "key": "lock_ask_A_roop_kumar_rathod",
+  "text": "ऑप्शन A: रूप कुमार राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_roop_kumar_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन A: रूप कुमार राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_roop_kumar_rathod",
+  "text": "ऑप्शन B: रूप कुमार राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_roop_kumar_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन B: रूप कुमार राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_roop_kumar_rathod",
+  "text": "ऑप्शन C: रूप कुमार राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_roop_kumar_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन C: रूप कुमार राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_roop_kumar_rathod",
+  "text": "ऑप्शन D: रूप कुमार राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_roop_kumar_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन D: रूप कुमार राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_roop_kumar_rathod",
+  "text": "सही जवाब है — रूप कुमार राठौड़!"
+ },
+ {
+  "key": "lock_ask_A_sadhana_sargam",
+  "text": "ऑप्शन A: साधना सरगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_sadhana_sargam",
+  "text": "कंप्यूटर जी, ऑप्शन A: साधना सरगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_sadhana_sargam",
+  "text": "ऑप्शन B: साधना सरगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_sadhana_sargam",
+  "text": "कंप्यूटर जी, ऑप्शन B: साधना सरगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_sadhana_sargam",
+  "text": "ऑप्शन C: साधना सरगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_sadhana_sargam",
+  "text": "कंप्यूटर जी, ऑप्शन C: साधना सरगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_sadhana_sargam",
+  "text": "ऑप्शन D: साधना सरगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_sadhana_sargam",
+  "text": "कंप्यूटर जी, ऑप्शन D: साधना सरगम लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_sadhana_sargam",
+  "text": "सही जवाब है — साधना सरगम!"
+ },
+ {
+  "key": "lock_ask_A_salim_merchant",
+  "text": "ऑप्शन A: सलीम मर्चेंट को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_salim_merchant",
+  "text": "कंप्यूटर जी, ऑप्शन A: सलीम मर्चेंट लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_salim_merchant",
+  "text": "ऑप्शन B: सलीम मर्चेंट को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_salim_merchant",
+  "text": "कंप्यूटर जी, ऑप्शन B: सलीम मर्चेंट लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_salim_merchant",
+  "text": "ऑप्शन C: सलीम मर्चेंट को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_salim_merchant",
+  "text": "कंप्यूटर जी, ऑप्शन C: सलीम मर्चेंट लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_salim_merchant",
+  "text": "ऑप्शन D: सलीम मर्चेंट को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_salim_merchant",
+  "text": "कंप्यूटर जी, ऑप्शन D: सलीम मर्चेंट लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_salim_merchant",
+  "text": "सही जवाब है — सलीम मर्चेंट!"
+ },
+ {
+  "key": "lock_ask_A_sapna_mukherjee",
+  "text": "ऑप्शन A: सपना मुखर्जी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_sapna_mukherjee",
+  "text": "कंप्यूटर जी, ऑप्शन A: सपना मुखर्जी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_sapna_mukherjee",
+  "text": "ऑप्शन B: सपना मुखर्जी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_sapna_mukherjee",
+  "text": "कंप्यूटर जी, ऑप्शन B: सपना मुखर्जी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_sapna_mukherjee",
+  "text": "ऑप्शन C: सपना मुखर्जी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_sapna_mukherjee",
+  "text": "कंप्यूटर जी, ऑप्शन C: सपना मुखर्जी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_sapna_mukherjee",
+  "text": "ऑप्शन D: सपना मुखर्जी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_sapna_mukherjee",
+  "text": "कंप्यूटर जी, ऑप्शन D: सपना मुखर्जी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_sapna_mukherjee",
+  "text": "सही जवाब है — सपना मुखर्जी!"
+ },
+ {
+  "key": "lock_ask_A_shaan",
+  "text": "ऑप्शन A: शान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_shaan",
+  "text": "कंप्यूटर जी, ऑप्शन A: शान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_shaan",
+  "text": "ऑप्शन B: शान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_shaan",
+  "text": "कंप्यूटर जी, ऑप्शन B: शान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_shaan",
+  "text": "ऑप्शन C: शान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_shaan",
+  "text": "कंप्यूटर जी, ऑप्शन C: शान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_shaan",
+  "text": "ऑप्शन D: शान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_shaan",
+  "text": "कंप्यूटर जी, ऑप्शन D: शान लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_shaan",
+  "text": "सही जवाब है — शान!"
+ },
+ {
+  "key": "lock_ask_A_shailendra_singh",
+  "text": "ऑप्शन A: शैलेंद्र सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_shailendra_singh",
+  "text": "कंप्यूटर जी, ऑप्शन A: शैलेंद्र सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_shailendra_singh",
+  "text": "ऑप्शन B: शैलेंद्र सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_shailendra_singh",
+  "text": "कंप्यूटर जी, ऑप्शन B: शैलेंद्र सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_shailendra_singh",
+  "text": "ऑप्शन C: शैलेंद्र सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_shailendra_singh",
+  "text": "कंप्यूटर जी, ऑप्शन C: शैलेंद्र सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_shailendra_singh",
+  "text": "ऑप्शन D: शैलेंद्र सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_shailendra_singh",
+  "text": "कंप्यूटर जी, ऑप्शन D: शैलेंद्र सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_shailendra_singh",
+  "text": "सही जवाब है — शैलेंद्र सिंह!"
+ },
+ {
+  "key": "lock_ask_A_shalmali_kholgade",
+  "text": "ऑप्शन A: शाल्मली खोलगड़े को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_shalmali_kholgade",
+  "text": "कंप्यूटर जी, ऑप्शन A: शाल्मली खोलगड़े लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_shalmali_kholgade",
+  "text": "ऑप्शन B: शाल्मली खोलगड़े को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_shalmali_kholgade",
+  "text": "कंप्यूटर जी, ऑप्शन B: शाल्मली खोलगड़े लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_shalmali_kholgade",
+  "text": "ऑप्शन C: शाल्मली खोलगड़े को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_shalmali_kholgade",
+  "text": "कंप्यूटर जी, ऑप्शन C: शाल्मली खोलगड़े लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_shalmali_kholgade",
+  "text": "ऑप्शन D: शाल्मली खोलगड़े को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_shalmali_kholgade",
+  "text": "कंप्यूटर जी, ऑप्शन D: शाल्मली खोलगड़े लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_shalmali_kholgade",
+  "text": "सही जवाब है — शाल्मली खोलगड़े!"
+ },
+ {
+  "key": "lock_ask_A_shamshad_begum",
+  "text": "ऑप्शन A: शमशाद बेगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_shamshad_begum",
+  "text": "कंप्यूटर जी, ऑप्शन A: शमशाद बेगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_shamshad_begum",
+  "text": "ऑप्शन B: शमशाद बेगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_shamshad_begum",
+  "text": "कंप्यूटर जी, ऑप्शन B: शमशाद बेगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_shamshad_begum",
+  "text": "ऑप्शन C: शमशाद बेगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_shamshad_begum",
+  "text": "कंप्यूटर जी, ऑप्शन C: शमशाद बेगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_shamshad_begum",
+  "text": "ऑप्शन D: शमशाद बेगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_shamshad_begum",
+  "text": "कंप्यूटर जी, ऑप्शन D: शमशाद बेगम लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_shamshad_begum",
+  "text": "सही जवाब है — शमशाद बेगम!"
+ },
+ {
+  "key": "lock_ask_A_shekhar_ravjiani",
+  "text": "ऑप्शन A: शेखर रवजियानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_shekhar_ravjiani",
+  "text": "कंप्यूटर जी, ऑप्शन A: शेखर रवजियानी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_shekhar_ravjiani",
+  "text": "ऑप्शन B: शेखर रवजियानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_shekhar_ravjiani",
+  "text": "कंप्यूटर जी, ऑप्शन B: शेखर रवजियानी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_shekhar_ravjiani",
+  "text": "ऑप्शन C: शेखर रवजियानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_shekhar_ravjiani",
+  "text": "कंप्यूटर जी, ऑप्शन C: शेखर रवजियानी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_shekhar_ravjiani",
+  "text": "ऑप्शन D: शेखर रवजियानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_shekhar_ravjiani",
+  "text": "कंप्यूटर जी, ऑप्शन D: शेखर रवजियानी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_shekhar_ravjiani",
+  "text": "सही जवाब है — शेखर रवजियानी!"
+ },
+ {
+  "key": "lock_ask_A_shilpa_rao",
+  "text": "ऑप्शन A: शिल्पा राव को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_shilpa_rao",
+  "text": "कंप्यूटर जी, ऑप्शन A: शिल्पा राव लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_shilpa_rao",
+  "text": "ऑप्शन B: शिल्पा राव को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_shilpa_rao",
+  "text": "कंप्यूटर जी, ऑप्शन B: शिल्पा राव लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_shilpa_rao",
+  "text": "ऑप्शन C: शिल्पा राव को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_shilpa_rao",
+  "text": "कंप्यूटर जी, ऑप्शन C: शिल्पा राव लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_shilpa_rao",
+  "text": "ऑप्शन D: शिल्पा राव को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_shilpa_rao",
+  "text": "कंप्यूटर जी, ऑप्शन D: शिल्पा राव लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_shilpa_rao",
+  "text": "सही जवाब है — शिल्पा राव!"
+ },
+ {
+  "key": "lock_ask_A_shreya_ghoshal",
+  "text": "ऑप्शन A: श्रेया घोषाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_shreya_ghoshal",
+  "text": "कंप्यूटर जी, ऑप्शन A: श्रेया घोषाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_shreya_ghoshal",
+  "text": "ऑप्शन B: श्रेया घोषाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_shreya_ghoshal",
+  "text": "कंप्यूटर जी, ऑप्शन B: श्रेया घोषाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_shreya_ghoshal",
+  "text": "ऑप्शन C: श्रेया घोषाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_shreya_ghoshal",
+  "text": "कंप्यूटर जी, ऑप्शन C: श्रेया घोषाल लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_shreya_ghoshal",
+  "text": "ऑप्शन D: श्रेया घोषाल को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_shreya_ghoshal",
+  "text": "कंप्यूटर जी, ऑप्शन D: श्रेया घोषाल लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_shreya_ghoshal",
+  "text": "सही जवाब है — श्रेया घोषाल!"
+ },
+ {
+  "key": "lock_ask_A_sona_mohapatra",
+  "text": "ऑप्शन A: सोना मोहपात्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_sona_mohapatra",
+  "text": "कंप्यूटर जी, ऑप्शन A: सोना मोहपात्रा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_sona_mohapatra",
+  "text": "ऑप्शन B: सोना मोहपात्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_sona_mohapatra",
+  "text": "कंप्यूटर जी, ऑप्शन B: सोना मोहपात्रा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_sona_mohapatra",
+  "text": "ऑप्शन C: सोना मोहपात्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_sona_mohapatra",
+  "text": "कंप्यूटर जी, ऑप्शन C: सोना मोहपात्रा लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_sona_mohapatra",
+  "text": "ऑप्शन D: सोना मोहपात्रा को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_sona_mohapatra",
+  "text": "कंप्यूटर जी, ऑप्शन D: सोना मोहपात्रा लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_sona_mohapatra",
+  "text": "सही जवाब है — सोना मोहपात्रा!"
+ },
+ {
+  "key": "lock_ask_A_sonu_nigam",
+  "text": "ऑप्शन A: सोनू निगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_sonu_nigam",
+  "text": "कंप्यूटर जी, ऑप्शन A: सोनू निगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_sonu_nigam",
+  "text": "ऑप्शन B: सोनू निगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_sonu_nigam",
+  "text": "कंप्यूटर जी, ऑप्शन B: सोनू निगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_sonu_nigam",
+  "text": "ऑप्शन C: सोनू निगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_sonu_nigam",
+  "text": "कंप्यूटर जी, ऑप्शन C: सोनू निगम लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_sonu_nigam",
+  "text": "ऑप्शन D: सोनू निगम को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_sonu_nigam",
+  "text": "कंप्यूटर जी, ऑप्शन D: सोनू निगम लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_sonu_nigam",
+  "text": "सही जवाब है — सोनू निगम!"
+ },
+ {
+  "key": "lock_ask_A_sukhwinder_singh",
+  "text": "ऑप्शन A: सुखविंदर सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_sukhwinder_singh",
+  "text": "कंप्यूटर जी, ऑप्शन A: सुखविंदर सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_sukhwinder_singh",
+  "text": "ऑप्शन B: सुखविंदर सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_sukhwinder_singh",
+  "text": "कंप्यूटर जी, ऑप्शन B: सुखविंदर सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_sukhwinder_singh",
+  "text": "ऑप्शन C: सुखविंदर सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_sukhwinder_singh",
+  "text": "कंप्यूटर जी, ऑप्शन C: सुखविंदर सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_sukhwinder_singh",
+  "text": "ऑप्शन D: सुखविंदर सिंह को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_sukhwinder_singh",
+  "text": "कंप्यूटर जी, ऑप्शन D: सुखविंदर सिंह लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_sukhwinder_singh",
+  "text": "सही जवाब है — सुखविंदर सिंह!"
+ },
+ {
+  "key": "lock_ask_A_sunidhi_chauhan",
+  "text": "ऑप्शन A: सुनिधि चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_sunidhi_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन A: सुनिधि चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_sunidhi_chauhan",
+  "text": "ऑप्शन B: सुनिधि चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_sunidhi_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन B: सुनिधि चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_sunidhi_chauhan",
+  "text": "ऑप्शन C: सुनिधि चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_sunidhi_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन C: सुनिधि चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_sunidhi_chauhan",
+  "text": "ऑप्शन D: सुनिधि चौहान को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_sunidhi_chauhan",
+  "text": "कंप्यूटर जी, ऑप्शन D: सुनिधि चौहान लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_sunidhi_chauhan",
+  "text": "सही जवाब है — सुनिधि चौहान!"
+ },
+ {
+  "key": "lock_ask_A_suresh_wadkar",
+  "text": "ऑप्शन A: सुरेश वाडकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_suresh_wadkar",
+  "text": "कंप्यूटर जी, ऑप्शन A: सुरेश वाडकर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_suresh_wadkar",
+  "text": "ऑप्शन B: सुरेश वाडकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_suresh_wadkar",
+  "text": "कंप्यूटर जी, ऑप्शन B: सुरेश वाडकर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_suresh_wadkar",
+  "text": "ऑप्शन C: सुरेश वाडकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_suresh_wadkar",
+  "text": "कंप्यूटर जी, ऑप्शन C: सुरेश वाडकर लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_suresh_wadkar",
+  "text": "ऑप्शन D: सुरेश वाडकर को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_suresh_wadkar",
+  "text": "कंप्यूटर जी, ऑप्शन D: सुरेश वाडकर लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_suresh_wadkar",
+  "text": "सही जवाब है — सुरेश वाडकर!"
+ },
+ {
+  "key": "lock_ask_A_talat_mahmood",
+  "text": "ऑप्शन A: तलत महमूद को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_talat_mahmood",
+  "text": "कंप्यूटर जी, ऑप्शन A: तलत महमूद लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_talat_mahmood",
+  "text": "ऑप्शन B: तलत महमूद को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_talat_mahmood",
+  "text": "कंप्यूटर जी, ऑप्शन B: तलत महमूद लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_talat_mahmood",
+  "text": "ऑप्शन C: तलत महमूद को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_talat_mahmood",
+  "text": "कंप्यूटर जी, ऑप्शन C: तलत महमूद लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_talat_mahmood",
+  "text": "ऑप्शन D: तलत महमूद को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_talat_mahmood",
+  "text": "कंप्यूटर जी, ऑप्शन D: तलत महमूद लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_talat_mahmood",
+  "text": "सही जवाब है — तलत महमूद!"
+ },
+ {
+  "key": "lock_ask_A_tony_kakkar",
+  "text": "ऑप्शन A: टोनी कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_tony_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन A: टोनी कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_tony_kakkar",
+  "text": "ऑप्शन B: टोनी कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_tony_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन B: टोनी कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_tony_kakkar",
+  "text": "ऑप्शन C: टोनी कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_tony_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन C: टोनी कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_tony_kakkar",
+  "text": "ऑप्शन D: टोनी कक्कड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_tony_kakkar",
+  "text": "कंप्यूटर जी, ऑप्शन D: टोनी कक्कड़ लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_tony_kakkar",
+  "text": "सही जवाब है — टोनी कक्कड़!"
+ },
+ {
+  "key": "lock_ask_A_tulsi_kumar",
+  "text": "ऑप्शन A: तुलसी कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_tulsi_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन A: तुलसी कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_tulsi_kumar",
+  "text": "ऑप्शन B: तुलसी कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_tulsi_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन B: तुलसी कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_tulsi_kumar",
+  "text": "ऑप्शन C: तुलसी कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_tulsi_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन C: तुलसी कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_tulsi_kumar",
+  "text": "ऑप्शन D: तुलसी कुमार को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_tulsi_kumar",
+  "text": "कंप्यूटर जी, ऑप्शन D: तुलसी कुमार लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_tulsi_kumar",
+  "text": "सही जवाब है — तुलसी कुमार!"
+ },
+ {
+  "key": "lock_ask_A_udit_narayan",
+  "text": "ऑप्शन A: उदित नारायण को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_udit_narayan",
+  "text": "कंप्यूटर जी, ऑप्शन A: उदित नारायण लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_udit_narayan",
+  "text": "ऑप्शन B: उदित नारायण को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_udit_narayan",
+  "text": "कंप्यूटर जी, ऑप्शन B: उदित नारायण लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_udit_narayan",
+  "text": "ऑप्शन C: उदित नारायण को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_udit_narayan",
+  "text": "कंप्यूटर जी, ऑप्शन C: उदित नारायण लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_udit_narayan",
+  "text": "ऑप्शन D: उदित नारायण को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_udit_narayan",
+  "text": "कंप्यूटर जी, ऑप्शन D: उदित नारायण लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_udit_narayan",
+  "text": "सही जवाब है — उदित नारायण!"
+ },
+ {
+  "key": "lock_ask_A_vinod_rathod",
+  "text": "ऑप्शन A: विनोद राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_vinod_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन A: विनोद राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_vinod_rathod",
+  "text": "ऑप्शन B: विनोद राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_vinod_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन B: विनोद राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_vinod_rathod",
+  "text": "ऑप्शन C: विनोद राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_vinod_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन C: विनोद राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_vinod_rathod",
+  "text": "ऑप्शन D: विनोद राठौड़ को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_vinod_rathod",
+  "text": "कंप्यूटर जी, ऑप्शन D: विनोद राठौड़ लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_vinod_rathod",
+  "text": "सही जवाब है — विनोद राठौड़!"
+ },
+ {
+  "key": "lock_ask_A_vishal_dadlani",
+  "text": "ऑप्शन A: विशाल ददलानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_vishal_dadlani",
+  "text": "कंप्यूटर जी, ऑप्शन A: विशाल ददलानी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_vishal_dadlani",
+  "text": "ऑप्शन B: विशाल ददलानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_vishal_dadlani",
+  "text": "कंप्यूटर जी, ऑप्शन B: विशाल ददलानी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_vishal_dadlani",
+  "text": "ऑप्शन C: विशाल ददलानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_vishal_dadlani",
+  "text": "कंप्यूटर जी, ऑप्शन C: विशाल ददलानी लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_vishal_dadlani",
+  "text": "ऑप्शन D: विशाल ददलानी को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_vishal_dadlani",
+  "text": "कंप्यूटर जी, ऑप्शन D: विशाल ददलानी लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_vishal_dadlani",
+  "text": "सही जवाब है — विशाल ददलानी!"
+ },
+ {
+  "key": "lock_ask_A_zubeen_garg",
+  "text": "ऑप्शन A: ज़ुबीन गर्ग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_A_zubeen_garg",
+  "text": "कंप्यूटर जी, ऑप्शन A: ज़ुबीन गर्ग लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_B_zubeen_garg",
+  "text": "ऑप्शन B: ज़ुबीन गर्ग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_B_zubeen_garg",
+  "text": "कंप्यूटर जी, ऑप्शन B: ज़ुबीन गर्ग लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_C_zubeen_garg",
+  "text": "ऑप्शन C: ज़ुबीन गर्ग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_C_zubeen_garg",
+  "text": "कंप्यूटर जी, ऑप्शन C: ज़ुबीन गर्ग लॉक किया जाए!"
+ },
+ {
+  "key": "lock_ask_D_zubeen_garg",
+  "text": "ऑप्शन D: ज़ुबीन गर्ग को लॉक किया जाए?"
+ },
+ {
+  "key": "lock_do_D_zubeen_garg",
+  "text": "कंप्यूटर जी, ऑप्शन D: ज़ुबीन गर्ग लॉक किया जाए!"
+ },
+ {
+  "key": "reveal_zubeen_garg",
+  "text": "सही जवाब है — ज़ुबीन गर्ग!"
+ }
+]

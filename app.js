@@ -30,6 +30,98 @@ const TIMER_PRESETS = {
   hard: 20
 };
 
+// --- SINGER GALLERY PHOTO REGISTRY (From surkbc-resources & images/singers) ---
+const SINGER_PHOTO_MAP = {
+  "arijit singh": "images/singers/arijit.jpg",
+  "sonu nigam": "images/singers/sonu.jpg",
+  "kk": "images/singers/kk.jpg",
+  "mohd. rafi": "images/singers/rafi.jpg",
+  "mohammed rafi": "images/singers/rafi.jpg",
+  "kishore kumar": "images/singers/kishore.jpg",
+  "shaan": "images/singers/shaan.jpg",
+  "udit narayan": "images/singers/uditnarayan.jpg",
+  "lucky ali": "images/singers/luckyali.jpg",
+  "mohit chauhan": "images/singers/mohit.jpg",
+  "sunidhi chauhan": "images/singers/sunidhi.jpg",
+  "shreya ghoshal": "images/singers/shreya.jpg",
+  "lata mangeshkar": "images/singers/lata.jpg",
+  "alka yagnik": "images/singers/alkayagnik.jpg",
+  "mukesh": "images/singers/mukesh.jpg",
+  "manna dey": "images/singers/manna.jpg",
+  "sukhwinder singh": "images/singers/sukhwinder.jpg",
+  "daler mehndi": "images/singers/dalermehndi.jpg",
+  "mika singh": "images/singers/mikasingh.jpg",
+  "asha bhosle": "images/singers/ashabhosle.jpg",
+  "geeta dutt": "images/singers/geetadutt.jpg",
+  "noor jehan": "images/singers/noorjehan.jpg",
+  "atif aslam": "images/singers/atifaslam.jpg",
+  "rahat fateh ali khan": "images/singers/rahatfatehalikhan.jpg",
+  "javed ali": "images/singers/javedali.jpg",
+  "neha kakkar": "images/singers/nehakakkar.jpg",
+  "monali thakur": "images/singers/monalithakur.jpg",
+  "kanika kapoor": "images/singers/kanikakapoor.jpg",
+  "hemant kumar": "images/singers/hemantkumar.jpg",
+  "talat mahmood": "images/singers/talatmahmood.jpg",
+  "hariharan": "images/singers/hariharan.jpg",
+  "s. p. balasubrahmanyam": "images/singers/spbalasubrahmanyam.jpg",
+  "k. j. yesudas": "images/singers/kjyesudas.jpg",
+  "bhimsen joshi": "images/singers/bhimsenjoshi.jpg",
+  "pandit jasraj": "images/singers/panditjasraj.jpg",
+  "k. l. saigal": "images/singers/klsaigal.jpg",
+  "bhupen hazarika": "images/singers/bhupenhazarika.jpg",
+  "kailash kher": "images/singers/kailashkher.jpg",
+  "suman kalyanpur": "images/singers/sumankalyanpur.jpg",
+  "a. r. rahman": "images/singers/arrahman.jpg"
+};
+
+let gallerySingers = {};
+fetch('singers.json')
+  .then(res => res.json())
+  .then(data => {
+    if (Array.isArray(data)) {
+      data.forEach(s => {
+        if (s.name && s.photo) {
+          gallerySingers[s.name.toLowerCase().trim()] = s.photo;
+        }
+      });
+    }
+  })
+  .catch(() => {});
+
+function getSingerPhoto(name) {
+  if (!name) return "images/singers/arijit.jpg";
+  const clean = name.toLowerCase().trim();
+  if (SINGER_PHOTO_MAP[clean]) return SINGER_PHOTO_MAP[clean];
+  if (gallerySingers[clean]) return gallerySingers[clean];
+
+  const norm = clean.replace(/^mohd\.?\s+/i, 'mohammed ').replace(/[^a-z0-9]/g, '');
+  for (const [k, v] of Object.entries(SINGER_PHOTO_MAP)) {
+    const kNorm = k.replace(/^mohd\.?\s+/i, 'mohammed ').replace(/[^a-z0-9]/g, '');
+    if (kNorm === norm || norm.includes(kNorm) || kNorm.includes(norm)) {
+      return v;
+    }
+  }
+  for (const [k, v] of Object.entries(gallerySingers)) {
+    const kNorm = k.replace(/^mohd\.?\s+/i, 'mohammed ').replace(/[^a-z0-9]/g, '');
+    if (kNorm === norm || norm.includes(kNorm) || kNorm.includes(norm)) {
+      return v;
+    }
+  }
+
+  // Multi-artist split (e.g., "A & B")
+  const parts = name.split(/&|,/).map(p => p.trim());
+  if (parts.length > 1) {
+    for (const part of parts) {
+      const pPhoto = getSingerPhoto(part);
+      if (pPhoto && !pPhoto.endsWith('arijit.jpg')) {
+        return pPhoto;
+      }
+    }
+  }
+
+  return `images/singers/${norm}.jpg`;
+}
+
 // --- STATE MANAGEMENT ---
 let profile = loadProfile();
 let musicFactsData = null;
@@ -461,17 +553,15 @@ function renderQuestion() {
   if (optsContainer) {
     optsContainer.innerHTML = q.options.map((optText, optIdx) => {
       const letter = ["A", "B", "C", "D"][optIdx];
-      const initial = optText.charAt(0);
-      const photoSrc = q.photo || `images/singers/${optText.toLowerCase().replace(/[^a-z]/g, '')}.jpg`;
+      const photoSrc = getSingerPhoto(optText);
       return `
         <button class="option-card" id="opt-btn-${optIdx}" onclick="onOptionSelect(${optIdx})">
-          <div class="opt-avatar-badge">
-            <img src="${photoSrc}" alt="${optText}" class="opt-photo-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <span class="opt-fallback-initial" style="display: none;">${initial}</span>
+          <div class="opt-photo-container">
+            <img src="${photoSrc}" alt="${optText}" class="opt-photo-img" loading="eager" onerror="this.onerror=null; this.src='images/singers/arijit.jpg';">
+            <span class="opt-letter-badge">${letter}</span>
           </div>
           <div class="opt-content">
-            <span class="opt-letter">${letter}:</span>
-            <span class="opt-name">${optText}</span>
+            <span class="opt-name">${escapeHtml(optText)}</span>
           </div>
         </button>
       `;
@@ -696,10 +786,16 @@ function renderResult() {
 
   const songCard = document.getElementById('result-song-info');
   if (songCard) {
+    const singerImg = getSingerPhoto(q.singer);
     songCard.innerHTML = `
       <h3>🎵 ${escapeHtml(q.song)} (${escapeHtml(q.movie)})</h3>
-      <p><strong>Gayak:</strong> ${escapeHtml(q.singer)}</p>
-      <p><strong>Sangeetkar:</strong> ${escapeHtml(q.music)}</p>
+      <div style="display:flex; align-items:center; gap:12px; margin: 12px 0;">
+        <img src="${singerImg}" alt="${escapeHtml(q.singer)}" style="width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold-primary); box-shadow: 0 0 10px rgba(212,175,55,0.4);" onerror="this.onerror=null; this.src='images/singers/arijit.jpg';">
+        <div>
+          <p style="margin:0; font-size: 14px;"><strong>Gayak:</strong> ${escapeHtml(q.singer)}</p>
+          <p style="margin:3px 0 0 0; font-size: 13px; color: var(--gold-secondary);"><strong>Sangeetkar:</strong> ${escapeHtml(q.music)}</p>
+        </div>
+      </div>
       <p class="trivia-p">${escapeHtml(q.trivia)}</p>
     `;
   }

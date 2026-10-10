@@ -228,52 +228,86 @@ input, textarea, select {
 
 /* Additional Option Card, Ladder, & Banner Styles */
 
-/* 15-Level Ladder Rows */
+/* 15-Level Ladder Rows (Larger & clearer for mobile) */
 .ladder-row {
   display: flex;
   justify-content: space-between;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 700;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 800;
   color: var(--text-muted);
+  transition: all 0.2s ease;
 }
 
 .ladder-row.padaav {
   color: #ffffff;
-  font-weight: 800;
+  font-weight: 900;
+  font-size: 15.5px;
+  border-left: 3px solid var(--gold-primary);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 .ladder-row.active {
   background: linear-gradient(90deg, #ffd700 0%, #ff9900 100%);
   color: #070d1e !important;
   font-weight: 900;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+  font-size: 16px;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.85);
+  transform: scale(1.02);
 }
 
-/* 4 Option Cards Grid */
+/* 4 Option Cards Grid with Big Singer Portraits */
 .option-card {
   background: var(--bg-navy-surface);
-  border: 1.5px solid var(--gold-muted);
-  border-radius: 8px;
-  padding: 10px 8px;
+  border: 2px solid var(--gold-muted);
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
   cursor: pointer;
-  text-align: left;
-  transition: all 0.2s ease;
+  text-align: center;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  position: relative;
+  outline: none;
 }
 
 .option-card:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
-.opt-avatar-badge {
-  width: 34px;
-  height: 34px;
+.opt-photo-container {
+  width: 100%;
+  height: 98px;
+  position: relative;
+  overflow: hidden;
+  background: #050a18;
+}
+
+.opt-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.option-card:hover .opt-photo-img {
+  transform: scale(1.05);
+}
+
+.opt-letter-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--bg-navy-deep);
+  background: rgba(7, 13, 30, 0.9);
   border: 1.5px solid var(--gold-primary);
   color: var(--gold-primary);
   font-size: 14px;
@@ -281,37 +315,51 @@ input, textarea, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 2;
 }
 
 .opt-content {
+  padding: 8px 6px;
+  min-height: 48px;
   display: flex;
-  flex-direction: column;
-}
-
-.opt-letter {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--gold-primary);
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #101c3d 0%, #0a1228 100%);
+  width: 100%;
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .opt-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.2;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  text-align: center;
+  word-break: break-word;
 }
 
 /* Selected Option State (Amber / Yellow) */
 .option-card.selected {
-  background: linear-gradient(180deg, #ffcc00 0%, #e6a100 100%) !important;
-  border-color: #fff !important;
-  box-shadow: 0 0 14px rgba(255, 204, 0, 0.9);
+  border-color: #ffffff !important;
+  box-shadow: 0 0 18px rgba(255, 204, 0, 0.95);
+  transform: scale(1.02);
 }
 
-.option-card.selected .opt-letter,
+.option-card.selected .opt-content {
+  background: linear-gradient(180deg, #ffcc00 0%, #e6a100 100%) !important;
+}
+
 .option-card.selected .opt-name {
   color: #070d1e !important;
+  font-weight: 900;
+}
+
+.option-card.selected .opt-letter-badge {
+  background: #070d1e;
+  border-color: #ffd700;
+  color: #ffd700;
 }
 
 /* Result Banners */
@@ -514,31 +562,49 @@ input, textarea, select {
 .option-card {
   perspective: 800px;
   transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .option-card.flip-reveal-correct {
   transform: rotateY(360deg);
-  background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
   border-color: #ffffff !important;
-  box-shadow: 0 0 20px rgba(46, 204, 113, 0.9) !important;
+  box-shadow: 0 0 24px rgba(46, 204, 113, 1) !important;
 }
 
-.option-card.flip-reveal-correct .opt-letter,
+.option-card.flip-reveal-correct .opt-content {
+  background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
+}
+
 .option-card.flip-reveal-correct .opt-name {
   color: #ffffff !important;
+  font-weight: 900;
+}
+
+.option-card.flip-reveal-correct .opt-letter-badge {
+  background: #27ae60;
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 .option-card.flip-reveal-wrong {
   transform: rotateY(360deg);
-  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%) !important;
   border-color: #ffffff !important;
-  box-shadow: 0 0 20px rgba(231, 76, 60, 0.9) !important;
+  box-shadow: 0 0 24px rgba(231, 76, 60, 1) !important;
 }
 
-.option-card.flip-reveal-wrong .opt-letter,
+.option-card.flip-reveal-wrong .opt-content {
+  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%) !important;
+}
+
 .option-card.flip-reveal-wrong .opt-name {
   color: #ffffff !important;
+  font-weight: 900;
+}
+
+.option-card.flip-reveal-wrong .opt-letter-badge {
+  background: #c0392b;
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 /* c3A.3: Mini Ladder on Question Screen */
