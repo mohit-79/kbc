@@ -75,15 +75,24 @@ const SINGER_PHOTO_MAP = {
 };
 
 let gallerySingers = {};
+let singersDirectory = [];
+
 fetch('singers.json')
   .then(res => res.json())
   .then(data => {
     if (Array.isArray(data)) {
+      singersDirectory = data;
       data.forEach(s => {
-        if (s.name && s.photo) {
-          gallerySingers[s.name.toLowerCase().trim()] = s.photo;
+        if (s.name) {
+          const norm = s.name.toLowerCase().trim().replace(/^mohd\.?\s+/i, 'mohammed ').replace(/[^a-z0-9]/g, '');
+          const localImg = `images/singers/${norm}.jpg`;
+          gallerySingers[s.name.toLowerCase().trim()] = localImg;
         }
       });
+      // If active game has no questions or is at question 0, try enriching with dynamic questions
+      if (game && (!game.questions || !game.questions.length) && typeof getQuestionsForGame === 'function') {
+        game.questions = getQuestionsForGame();
+      }
     }
   })
   .catch(() => {});
@@ -272,7 +281,77 @@ function saveProfile(shouldPush = true) {
   }
 }
 
+// --- DYNAMIC QUESTION GENERATION (from singers.json with preview streams & deduplication) ---
+function buildDynamicQuestionsFromSingers(count = 15) {
+  if (!Array.isArray(singersDirectory) || singersDirectory.length < 4) {
+    return [];
+  }
+
+  // Filter singers that have at least one song with a preview URL
+  const singersWithPreview = singersDirectory.filter(s => 
+    Array.isArray(s.songs) && s.songs.some(song => song && (song.preview || song.previewUrl || song.clip))
+  );
+
+  // If preview URLs are still populating or not yet present, return empty to use curated bank
+  if (singersWithPreview.length < 4) {
+    return [];
+  }
+
+  const generated = [];
+  const usedSongKeys = new Set();
+  const maxAttempts = count * 20;
+  let attempts = 0;
+
+  while (generated.length < count && attempts < maxAttempts) {
+    attempts++;
+    // 1. Random singer + random song with preview
+    const singer = singersWithPreview[Math.floor(Math.random() * singersWithPreview.length)];
+    const validSongs = singer.songs.filter(song => (song.preview || song.previewUrl || song.clip) && !usedSongKeys.has(`${singer.name}|${song.t || song.title}`));
+    if (!validSongs.length) continue;
+
+    const song = validSongs[Math.floor(Math.random() * validSongs.length)];
+    const songTitle = song.t || song.title || "Gaana";
+    const songKey = `${singer.name}|${songTitle}`;
+    usedSongKeys.add(songKey);
+
+    // 2. 3 Random distinct distractor singers
+    const distractorCandidates = singersDirectory.filter(s => s.name && s.name.toLowerCase().trim() !== singer.name.toLowerCase().trim());
+    if (distractorCandidates.length < 3) continue;
+
+    const shuffledCandidates = [...distractorCandidates].sort(() => 0.5 - Math.random());
+    const distractors = [shuffledCandidates[0].name, shuffledCandidates[1].name, shuffledCandidates[2].name];
+
+    // 3. Assemble and shuffle 4 options
+    const options = [singer.name, ...distractors].sort(() => 0.5 - Math.random());
+    const answerIdx = options.indexOf(singer.name);
+
+    const previewUrl = song.preview || song.previewUrl || song.clip;
+
+    generated.push({
+      id: 1000 + generated.length,
+      clip: previewUrl,
+      preview: previewUrl,
+      options: options,
+      answer: answerIdx,
+      song: songTitle,
+      movie: song.m || song.movie || "Film / Album",
+      singer: singer.name,
+      music: (song.co && song.co.length) ? song.co.join(', ') : "Bollywood",
+      difficulty: generated.length < 5 ? "easy" : (generated.length < 10 ? "medium" : "hard"),
+      trivia: `${singer.name} ka yeh mashhoor gaana '${songTitle}' hai.`,
+      photo: getSingerPhoto(singer.name)
+    });
+  }
+
+  return generated;
+}
+
 function getQuestionsForGame() {
+  const dynamicQs = buildDynamicQuestionsFromSingers(15);
+  if (dynamicQs.length >= 15) {
+    return dynamicQs;
+  }
+
   if (typeof SAMPLE_QUESTIONS === 'undefined' || !SAMPLE_QUESTIONS.length) {
     return [];
   }
@@ -300,6 +379,7 @@ function createNewGameState() {
     timerId: null,
     questions: getQuestionsForGame(),
     lastAnswerCorrect: null,
+    usedSongKeys: [],
     used: {
       fifty: false,
       phone: false,
@@ -380,6 +460,16 @@ const showToast = window.showToast;
 
 // --- RENDER DISPATCHER ---
 function renderScreen(screenId) {
+  if (window.audioEngine) {
+    if (screenId === 'screen-home' || screenId === 'screen-intro') {
+      window.audioEngine.playIntroBg();
+    } else if (screenId === 'screen-question') {
+      window.audioEngine.playQuestionBed();
+    } else {
+      window.audioEngine.stopBgMusic();
+    }
+  }
+
   if (screenId === 'screen-home') renderHome();
   if (screenId === 'screen-intro') renderIntro();
   if (screenId === 'screen-question') renderQuestion();
@@ -526,9 +616,10 @@ function renderQuestion() {
   const qPrize = document.getElementById('q-prize-badge');
   const qText = document.getElementById('q-text');
 
+  const promptText = q.question || `Yeh gaana kis gayak ka hai? 🎵 "${q.song}" (${q.movie || ''})`;
   if (qNum) qNum.textContent = `Prashn ${game.qIndex + 1}`;
   if (qPrize) qPrize.textContent = KBC_LADDER[game.qIndex].prize;
-  if (qText) qText.textContent = q.question;
+  if (qText) qText.textContent = promptText;
 
   // c3A.3: Mini Ladder on Question Screen
   const miniLadder = document.getElementById('q-mini-ladder');
@@ -573,7 +664,7 @@ function renderQuestion() {
 
   if (window.audioEngine) {
     window.audioEngine.playClip(q.clip);
-    window.audioEngine.speak(`${q.question}`);
+    window.audioEngine.speak(`${promptText}`);
   }
 }
 
@@ -787,6 +878,26 @@ function renderResult() {
   const songCard = document.getElementById('result-song-info');
   if (songCard) {
     const singerImg = getSingerPhoto(q.singer);
+    // Find popular songs for this singer from singers.json
+    let singerSongsHtml = '';
+    const normSinger = (q.singer || '').toLowerCase().trim().replace(/^mohd\.?\s+/i, 'mohammed ').replace(/[^a-z0-9]/g, '');
+    const entry = singersDirectory.find(s => {
+      const sNorm = (s.name || '').toLowerCase().trim().replace(/^mohd\.?\s+/i, 'mohammed ').replace(/[^a-z0-9]/g, '');
+      return sNorm === normSinger || normSinger.includes(sNorm) || sNorm.includes(normSinger);
+    });
+
+    if (entry && Array.isArray(entry.songs) && entry.songs.length > 0) {
+      const topSongs = entry.songs.slice(0, 4);
+      singerSongsHtml = `
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(212,175,55,0.25); text-align: left;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--gold-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">🎼 ${escapeHtml(entry.name || q.singer)} Ke Mashhoor Gaane:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            ${topSongs.map(s => `<span style="background: rgba(14,26,56,0.8); border: 1px solid rgba(212,175,55,0.3); border-radius: 12px; padding: 2px 8px; font-size: 11px; color: #fff;">🎶 ${escapeHtml(s.t || s.title || s.name || '')}${s.m ? ` <span style="opacity:0.7">(${escapeHtml(s.m)})</span>` : ''}</span>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
     songCard.innerHTML = `
       <h3>🎵 ${escapeHtml(q.song)} (${escapeHtml(q.movie)})</h3>
       <div style="display:flex; align-items:center; gap:12px; margin: 12px 0;">
@@ -797,6 +908,7 @@ function renderResult() {
         </div>
       </div>
       <p class="trivia-p">${escapeHtml(q.trivia)}</p>
+      ${singerSongsHtml}
     `;
   }
 
@@ -837,6 +949,9 @@ window.handleResultNextClick = function() {
 
 // c3A.5: Confetti & Padaav Helpers
 function showPadaavBanner() {
+  if (window.audioEngine) {
+    window.audioEngine.playPadaavSting();
+  }
   const b = document.getElementById('padaav-banner');
   if (b) {
     b.style.display = 'block';
@@ -1721,6 +1836,9 @@ window.useFlipQuestion = function() {
 
 // Lifeline Dispatcher
 window.useLifeline = function(type) {
+  if (game.used && !game.used[type] && window.audioEngine) {
+    window.audioEngine.playLifelineSting();
+  }
   if (type === 'fifty') useFiftyFifty();
   else if (type === 'phone') usePhoneAFriend();
   else if (type === 'poll') useAudiencePoll();

@@ -105,12 +105,43 @@ class AudioEngine {
     draw();
   }
 
-  // c2C.2: Clip Playback with Stop on Lock/Timeout/Quit
-  playClip(clipName) {
+  // c2C.2: Clip Playback with Stop on Lock/Timeout/Quit (supports streaming preview URL or synthesized signature)
+  playClip(clipUrlOrName) {
     this.init();
     this.stopClip();
 
-    // Synthesized melodic signature hook connected to analyser
+    if (typeof clipUrlOrName === 'string' && (clipUrlOrName.startsWith('http://') || clipUrlOrName.startsWith('https://') || clipUrlOrName.endsWith('.mp3') || clipUrlOrName.endsWith('.m4a'))) {
+      try {
+        const audio = new Audio(clipUrlOrName);
+        audio.crossOrigin = "anonymous";
+        audio.volume = 0.85;
+        this.currentAudio = audio;
+
+        // Try connecting to Web Audio analyser for waveform visualizer if CORS allows
+        if (this.ctx) {
+          try {
+            const source = this.ctx.createMediaElementSource(audio);
+            if (this.analyser) {
+              source.connect(this.analyser);
+              this.analyser.connect(this.ctx.destination);
+            } else {
+              source.connect(this.ctx.destination);
+            }
+          } catch (corsErr) {
+            // If cross-origin restrictions block Web Audio node, native audio still plays cleanly
+          }
+        }
+
+        audio.play().catch(e => {
+          console.warn("Stream preview play failed (user interaction required or network error):", e);
+        });
+        return;
+      } catch (e) {
+        console.warn("Error creating preview audio:", e);
+      }
+    }
+
+    // Synthesized melodic signature hook connected to analyser as fallback
     if (this.ctx) {
       const melodyChords = [261.63, 329.63, 392.00, 523.25, 440.00, 392.00];
       melodyChords.forEach((freq, idx) => {
@@ -150,40 +181,89 @@ class AudioEngine {
     }
   }
 
+  // Play real MP3 track with loop or one-shot, and synth fallback
+  playMusicTrack(trackName, loop = false, volume = 0.5) {
+    this.init();
+    try {
+      const audio = new Audio(`music/${trackName}.mp3`);
+      audio.volume = volume;
+      audio.loop = loop;
+      audio.play().catch(e => console.warn(`Audio play failed for ${trackName}:`, e));
+      return audio;
+    } catch (e) {
+      console.warn("playMusicTrack error:", e);
+      return null;
+    }
+  }
+
+  // Background Ambience / Beds
+  playIntroBg() {
+    this.stopBgMusic();
+    this.bgAudio = this.playMusicTrack('intro_bg', true, 0.4);
+  }
+
+  playQuestionBed() {
+    this.stopBgMusic();
+    this.bgAudio = this.playMusicTrack('question_bed', true, 0.35);
+  }
+
+  stopBgMusic() {
+    if (this.bgAudio) {
+      try {
+        this.bgAudio.pause();
+        this.bgAudio.currentTime = 0;
+      } catch (e) {}
+      this.bgAudio = null;
+    }
+  }
+
   // c2C.4: Tension Loop & Stings
   startTensionLoop() {
     this.init();
     this.stopTensionLoop();
+    this.stopBgMusic();
 
-    if (!this.ctx) return;
     try {
-      this.tensionOsc = this.ctx.createOscillator();
-      this.tensionGain = this.ctx.createGain();
-
-      this.tensionOsc.type = 'sawtooth';
-      this.tensionOsc.frequency.setValueAtTime(55, this.ctx.currentTime);
-
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(140, this.ctx.currentTime);
-
-      this.tensionGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
-      this.tensionGain.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 1.2);
-
-      this.tensionOsc.connect(filter);
-      filter.connect(this.tensionGain);
-      if (this.analyser) {
-        this.tensionGain.connect(this.analyser);
-        this.analyser.connect(this.ctx.destination);
-      } else {
-        this.tensionGain.connect(this.ctx.destination);
-      }
-
-      this.tensionOsc.start();
+      this.tensionAudio = this.playMusicTrack('suspense', true, 0.6);
     } catch (e) {}
+
+    if (!this.tensionAudio && this.ctx) {
+      try {
+        this.tensionOsc = this.ctx.createOscillator();
+        this.tensionGain = this.ctx.createGain();
+
+        this.tensionOsc.type = 'sawtooth';
+        this.tensionOsc.frequency.setValueAtTime(55, this.ctx.currentTime);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(140, this.ctx.currentTime);
+
+        this.tensionGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+        this.tensionGain.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 1.2);
+
+        this.tensionOsc.connect(filter);
+        filter.connect(this.tensionGain);
+        if (this.analyser) {
+          this.tensionGain.connect(this.analyser);
+          this.analyser.connect(this.ctx.destination);
+        } else {
+          this.tensionGain.connect(this.ctx.destination);
+        }
+
+        this.tensionOsc.start();
+      } catch (e) {}
+    }
   }
 
   stopTensionLoop() {
+    if (this.tensionAudio) {
+      try {
+        this.tensionAudio.pause();
+        this.tensionAudio.currentTime = 0;
+      } catch (e) {}
+      this.tensionAudio = null;
+    }
     if (this.tensionOsc) {
       try {
         this.tensionOsc.stop();
@@ -194,9 +274,12 @@ class AudioEngine {
   }
 
   playVictorySting() {
+    this.stopBgMusic();
+    this.stopTensionLoop();
+    this.playMusicTrack('correct', false, 0.7);
+
     this.init();
     if (!this.ctx) return;
-
     const chords = [523.25, 659.25, 783.99, 1046.50];
     chords.forEach((freq, idx) => {
       try {
@@ -220,6 +303,10 @@ class AudioEngine {
   }
 
   playWrongSting() {
+    this.stopBgMusic();
+    this.stopTensionLoop();
+    this.playMusicTrack('wrong', false, 0.7);
+
     this.init();
     if (!this.ctx) return;
 
@@ -240,6 +327,20 @@ class AudioEngine {
       osc.start();
       osc.stop(this.ctx.currentTime + 0.8);
     } catch (e) {}
+  }
+
+  playLifelineSting() {
+    this.playMusicTrack('lifeline', false, 0.6);
+  }
+
+  playPadaavSting() {
+    this.playMusicTrack('padaav', false, 0.7);
+  }
+
+  playWinFanfare() {
+    this.stopBgMusic();
+    this.stopTensionLoop();
+    this.playMusicTrack('victory', false, 0.75);
   }
 
   // c2C.1: Hindi TTS with Kannada-rate tuning (rate: 0.92) & cancel on screen change
