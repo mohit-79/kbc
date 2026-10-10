@@ -37,20 +37,23 @@
     .call-video-grid {
       flex: 1;
       display: grid;
-      grid-template-rows: 1fr 1fr;
-      gap: 12px;
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 8px;
       width: 100%;
-      margin: 12px 0;
+      max-height: calc(100vh - 160px);
+      margin: 6px 0;
     }
     .call-video-box {
       background: #000;
       border: 1.5px solid var(--neon-cyan);
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 0;
+      height: 100%;
     }
     .call-video-box video {
       width: 100%;

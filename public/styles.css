@@ -737,11 +737,12 @@ input, textarea, select {
 .call-video-stage {
   flex: 1;
   display: grid;
-  grid-template-rows: 1fr 1fr;
-  gap: 12px;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
+  max-width: 400px;
+  max-height: calc(100vh - 160px);
+  margin: 4px auto 8px;
 }
 
 @media (min-width: 600px) {
@@ -754,10 +755,12 @@ input, textarea, select {
 .video-tile {
   background: #000;
   border: 1.5px solid var(--gold-secondary);
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  min-height: 0; /* Ensures grid respects flex bounds without overflowing phone screen */
+  height: 100%;
 }
 
 .video-tile.friend-tile {
