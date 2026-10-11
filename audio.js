@@ -327,6 +327,64 @@ class AudioEngine {
     this.playMusicTrack('victory', false, 0.75);
   }
 
+  // Fix 7: XTTS Pre-Generated Amitabh Bachchan Voice Player with System TTS Fallback
+  playVoice(voiceKey, fallbackText = "", onDone = null) {
+    if (!VOICE_ENABLED) {
+      if (onDone) onDone();
+      return;
+    }
+
+    this.init();
+    this.cancelVoice();
+
+    let finished = false;
+    const doneCallback = () => {
+      if (!finished) {
+        finished = true;
+        if (onDone) onDone();
+      }
+    };
+
+    if (voiceKey) {
+      try {
+        const audioPath = `audio/${voiceKey}.mp3`;
+        const voiceAudio = new Audio(audioPath);
+        voiceAudio.volume = 0.95;
+
+        voiceAudio.onended = () => doneCallback();
+        voiceAudio.onerror = () => {
+          // Fall back to Hindi Baritone Web Speech Synthesis
+          if (fallbackText) {
+            this.speak(fallbackText, doneCallback);
+          } else {
+            doneCallback();
+          }
+        };
+
+        this.currentVoiceAudio = voiceAudio;
+        const playPromise = voiceAudio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            if (fallbackText) {
+              this.speak(fallbackText, doneCallback);
+            } else {
+              doneCallback();
+            }
+          });
+        }
+        return;
+      } catch (e) {
+        // Fall back to speak
+      }
+    }
+
+    if (fallbackText) {
+      this.speak(fallbackText, doneCallback);
+    } else {
+      doneCallback();
+    }
+  }
+
   // c2C.1: Hindi TTS with Kannada-rate tuning (rate: 0.92) & cancel on screen change
   speak(text, onDone = null) {
     if (!VOICE_ENABLED || !('speechSynthesis' in window)) {
@@ -366,6 +424,13 @@ class AudioEngine {
   }
 
   cancelVoice() {
+    if (this.currentVoiceAudio) {
+      try {
+        this.currentVoiceAudio.pause();
+        this.currentVoiceAudio.currentTime = 0;
+      } catch (e) {}
+      this.currentVoiceAudio = null;
+    }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }

@@ -196,6 +196,7 @@
       <div class="kbc-card">
         <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Kathinaai (Timer)</label>
         <select id="settings-difficulty-select" class="kbc-input">
+          <option value="casual">Casual (Aaraam Se) — No Timer ⏳∞</option>
           <option value="easy">Aasaan (Easy) — 45s Timer</option>
           <option value="medium">Madhyam (Medium) — 30s Timer</option>
           <option value="hard">Kathin (Hard) — 20s Timer</option>
@@ -389,6 +390,22 @@
         <p id="quit-modal-prize-text" style="font-size: 13px; color: #fff; margin: 10px 0 16px; font-weight: 700;">₹0 lekar quit karein?</p>
         <button class="kbc-btn-gold" style="height: 42px; font-size: 13px;" onclick="confirmQuit()">Haan, Quit Karein</button>
         <button class="kbc-btn-secondary" style="height: 38px; font-size: 12px;" onclick="cancelQuit()">Nahi, Khel Jaari Rakhein</button>
+      </div>
+    </div>
+
+    <!-- Fix 4: ONE-TIME FIRST-USE SECURITY CODE MODAL -->
+    <div id="modal-security-gate" class="modal-overlay" style="z-index: 9999; backdrop-filter: blur(12px); background: rgba(5, 10, 24, 0.95);">
+      <div class="modal-content" style="border: 2px solid var(--gold-primary); box-shadow: 0 0 35px rgba(255, 215, 0, 0.4); max-width: 340px; padding: 24px 20px;">
+        <div style="font-size: 38px; margin-bottom: 6px;">🔐</div>
+        <h3 style="font-size: 17px; color: var(--gold-primary); font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">SurKBC Access</h3>
+        <p style="font-size: 12px; color: #e0e0e0; margin: 8px 0 16px; line-height: 1.4;">
+          SurKBC me pravesh ke liye suraksha code darj karein. Yeh sirf pehli baar poocha jayega.
+        </p>
+        <input type="password" id="input-security-code" class="kbc-input" placeholder="Security Code (4 digits)" maxlength="10" style="text-align: center; font-size: 18px; letter-spacing: 4px; font-weight: 800; margin-bottom: 12px;" onkeydown="if(event.key==='Enter') submitSecurityCode()">
+        <p id="security-error-msg" style="color: var(--color-red); font-size: 11px; margin-bottom: 10px; display: none; font-weight: 700;">Ghalat code! Kripya sahi code dalein.</p>
+        <button class="kbc-btn-gold" style="height: 46px; font-size: 14px;" onclick="submitSecurityCode()">
+          <span>Pravesh Karein 🔓</span>
+        </button>
       </div>
     </div>
 

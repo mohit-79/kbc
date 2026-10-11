@@ -210,16 +210,20 @@ export default {
 
         // Target URL links
         const origin = url.origin.includes("localhost") || url.origin.includes("127.0.0.1") ? url.origin : "https://kbc.harjani.me";
-        const answerUrl = `${origin}/friend.html?session=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}`;
+        const audioClip = body.clip || "";
         const audioUrl = `${origin}/call?session=${encodeURIComponent(sessionId)}&mode=audio`;
         const videoUrl = `${origin}/call?session=${encodeURIComponent(sessionId)}&mode=video`;
 
-        // Owner's Exact Message Template
+        // Fix 2: Message template with audio clip link and no redundant answer link
         const optA = options[0] || "";
         const optB = options[1] || "";
         const optC = options[2] || "";
         const optD = options[3] || "";
-        const messageText = `🎵 SurKBC — Aapke dost ${playerName} ko aapki madad chahiye!\n\nSawaal: ${question}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}\n\n👉 Uttar dene ke liye link:\n${answerUrl}\n\n🎙️ Audio call:\n${audioUrl}\n\n📹 Video call:\n${videoUrl}`;
+        let messageText = `🎵 SurKBC — Aapke dost ${playerName} ko aapki madad chahiye!\n\nSawaal: ${question}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}`;
+        if (audioClip) {
+          messageText += `\n\n🎵 Gaana (Audio Clip) Sunein:\n${audioClip}`;
+        }
+        messageText += `\n\n🎙️ Audio call:\n${audioUrl}\n\n📹 Video call:\n${videoUrl}`;
 
         // Clean phone for WhatsApp
         const cleanPhone = friendPhone.replace(/[\s\-\(\)]/g, "");
