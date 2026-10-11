@@ -39,19 +39,24 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
-      // 2. Profile API: GET /api/profile?name=<name>
+      // 2. Profile API: GET /api/profile?name=<name>&token=<token>
       if (url.pathname === "/api/profile" && method === "GET") {
         if (!env.DB) {
           return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
         }
+        const token = (request.headers.get("X-Device-Token") || url.searchParams.get("token") || "").trim();
         const name = (url.searchParams.get("name") || "Contestant").trim();
-        let profile = await env.DB.prepare("SELECT * FROM profiles WHERE name = ?").bind(name).first();
+
+        let profile = null;
+        if (token) {
+          profile = await env.DB.prepare("SELECT * FROM profiles WHERE id = ?").bind(token).first();
+        }
 
         if (!profile) {
-          const newId = crypto.randomUUID();
+          const profileId = token || crypto.randomUUID();
           await env.DB.prepare("INSERT INTO profiles (id, name, high_score, games_played) VALUES (?, ?, '₹ 0', 0)")
-            .bind(newId, name).run();
-          profile = { id: newId, name, high_score: "₹ 0", games_played: 0 };
+            .bind(profileId, name).run().catch(() => {});
+          profile = { id: profileId, name, high_score: "₹ 0", games_played: 0 };
         }
 
         const friendsRes = await env.DB.prepare("SELECT id, name, phone FROM friends WHERE profile_id = ?").bind(profile.id).all();
@@ -73,21 +78,26 @@ export default {
         if (!env.DB) {
           return new Response(JSON.stringify({ error: "D1 database not bound" }), { status: 500, headers: corsHeaders });
         }
+        const token = (request.headers.get("X-Device-Token") || "").trim();
         const body = await request.json().catch(() => ({}));
         const name = (body.name || "Contestant").trim();
         const highScore = body.highScore || "₹ 0";
         const gamesPlayed = typeof body.gamesPlayed === "number" ? body.gamesPlayed : 0;
         const friendsList = Array.isArray(body.friends) ? body.friends.slice(0, 7) : [];
 
-        let profile = await env.DB.prepare("SELECT * FROM profiles WHERE name = ?").bind(name).first();
-        let profileId = profile ? profile.id : crypto.randomUUID();
+        let profile = null;
+        if (token) {
+          profile = await env.DB.prepare("SELECT * FROM profiles WHERE id = ?").bind(token).first();
+        }
+
+        const profileId = profile ? profile.id : (token || crypto.randomUUID());
 
         if (!profile) {
           await env.DB.prepare("INSERT INTO profiles (id, name, high_score, games_played) VALUES (?, ?, ?, ?)")
             .bind(profileId, name, highScore, gamesPlayed).run();
         } else {
-          await env.DB.prepare("UPDATE profiles SET high_score = ?, games_played = ? WHERE id = ?")
-            .bind(highScore, gamesPlayed, profileId).run();
+          await env.DB.prepare("UPDATE profiles SET name = ?, high_score = ?, games_played = ? WHERE id = ?")
+            .bind(name, highScore, gamesPlayed, profileId).run();
         }
 
         // Sync friends roster

@@ -1,4 +1,4 @@
 @echo off
 git add -A
-git commit -m "1.0"
+git commit -m "perfect edition"
 git status

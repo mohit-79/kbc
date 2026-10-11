@@ -153,10 +153,7 @@ function loadProfile() {
     highScore: "₹ 0",
     gamesPlayed: 0,
     difficulty: "easy",
-    friends: [
-      { id: 1, name: "Rahul", phone: "" },
-      { id: 2, name: "Priya", phone: "" }
-    ]
+    friends: []
   };
 }
 
@@ -178,8 +175,9 @@ function getDeviceToken() {
 
 async function syncProfileFromServer() {
   try {
-    const res = await fetch(`${API_BASE}/api/profile?name=${encodeURIComponent(profile.name || 'Contestant')}`, {
-      headers: { 'X-Device-Token': getDeviceToken() }
+    const token = getDeviceToken();
+    const res = await fetch(`${API_BASE}/api/profile?name=${encodeURIComponent(profile.name || 'Contestant')}&token=${encodeURIComponent(token)}`, {
+      headers: { 'X-Device-Token': token }
     });
     if (!res.ok) return;
     const data = await res.json();
@@ -190,7 +188,7 @@ async function syncProfileFromServer() {
       if (typeof data.profile.gamesPlayed === 'number' && data.profile.gamesPlayed > profile.gamesPlayed) {
         profile.gamesPlayed = data.profile.gamesPlayed;
       }
-      if (Array.isArray(data.profile.friends) && data.profile.friends.length > 0) {
+      if (Array.isArray(data.profile.friends)) {
         profile.friends = data.profile.friends;
       }
       saveProfile(false);
@@ -603,9 +601,13 @@ window.editFriendPhone = function(id) {
 };
 
 window.removeFriend = function(id) {
-  profile.friends = profile.friends.filter(f => f.id !== id);
+  const targetId = String(id);
+  const found = profile.friends.find(f => String(f.id) === targetId);
+  const removedName = found ? found.name : "Dost";
+  profile.friends = profile.friends.filter(f => String(f.id) !== targetId);
   saveProfile();
   renderHome();
+  showToast(`${removedName} ko list se hata diya gaya!`);
 };
 
 // --- SCREEN 2: HOT-SEAT INTRO ---

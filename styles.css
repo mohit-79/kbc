@@ -387,12 +387,26 @@ input, textarea, select {
 }
 
 .btn-remove-friend {
-  background: none;
-  border: none;
-  color: var(--color-red);
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid rgba(231, 76, 60, 0.6);
+  color: #ff6b6b;
   font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.btn-remove-friend:active {
+  background: rgba(231, 76, 60, 0.5);
+  color: #fff;
 }
 
 @keyframes bounceBar {
@@ -690,7 +704,7 @@ input, textarea, select {
   background: radial-gradient(circle at 50% 30%, #0d1e44 0%, #050a18 100%);
   display: none;
   flex-direction: column;
-  padding: calc(var(--sat) + 12px) 16px calc(var(--sab) + 16px);
+  padding: calc(var(--sat, 12px) + 12px) 16px calc(var(--sab, 20px) + 28px);
   color: #fff;
   overflow: hidden;
 }
@@ -872,7 +886,11 @@ input, textarea, select {
   display: flex;
   gap: 10px;
   justify-content: center;
-  margin-top: 14px;
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: calc(var(--sab, 16px) + 8px);
+  z-index: 50;
+  position: relative;
 }
 
 .call-btn-hangup {
