@@ -77,7 +77,41 @@ function renderQuestion(data) {
       </button>
     `).join('');
   }
+
+  // Audio Clip Preview
+  const clipWrap = document.getElementById('portal-audio-clip-wrap');
+  if (clipWrap && data.clip) {
+    clipWrap.style.display = 'flex';
+    if (!window.portalAudio) {
+      window.portalAudio = new Audio(data.clip);
+      window.portalAudio.addEventListener('ended', () => {
+        window.isPortalAudioPlaying = false;
+        const btn = document.getElementById('btn-play-portal-clip');
+        if (btn) btn.textContent = '▶ Clip Bajao';
+      });
+    } else {
+      window.portalAudio.src = data.clip;
+    }
+  }
 }
+
+window.togglePortalClipPlayback = function() {
+  if (!window.portalAudio) return;
+  const btn = document.getElementById('btn-play-portal-clip');
+  if (window.isPortalAudioPlaying) {
+    window.portalAudio.pause();
+    window.isPortalAudioPlaying = false;
+    if (btn) btn.textContent = '▶ Clip Bajao';
+  } else {
+    window.portalAudio.currentTime = 0;
+    window.portalAudio.play().then(() => {
+      window.isPortalAudioPlaying = true;
+      if (btn) btn.textContent = '⏸ Rokain';
+    }).catch(err => {
+      console.warn("Portal audio play error:", err);
+    });
+  }
+};
 
 window.selectOption = function(idx) {
   selectedOptionIndex = idx;

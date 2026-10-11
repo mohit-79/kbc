@@ -77,7 +77,7 @@ export default {
         const name = (body.name || "Contestant").trim();
         const highScore = body.highScore || "₹ 0";
         const gamesPlayed = typeof body.gamesPlayed === "number" ? body.gamesPlayed : 0;
-        const friendsList = Array.isArray(body.friends) ? body.friends.slice(0, 3) : [];
+        const friendsList = Array.isArray(body.friends) ? body.friends.slice(0, 7) : [];
 
         let profile = await env.DB.prepare("SELECT * FROM profiles WHERE name = ?").bind(name).first();
         let profileId = profile ? profile.id : crypto.randomUUID();
@@ -210,9 +210,11 @@ export default {
 
         // Target URL links
         const origin = url.origin.includes("localhost") || url.origin.includes("127.0.0.1") ? url.origin : "https://kbc.harjani.me";
+        const answerUrl = `${origin}/friend.html?session=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}`;
         const audioClip = body.clip || "";
-        const audioUrl = `${origin}/call?session=${encodeURIComponent(sessionId)}&mode=audio`;
-        const videoUrl = `${origin}/call?session=${encodeURIComponent(sessionId)}&mode=video`;
+        const callBase = `${origin}/friend-call.html?session=${encodeURIComponent(sessionId)}&clip=${encodeURIComponent(audioClip)}&q=${encodeURIComponent(question)}&opts=${encodeURIComponent(JSON.stringify(options))}&player=${encodeURIComponent(playerName)}`;
+        const audioUrl = `${callBase}&mode=audio`;
+        const videoUrl = `${callBase}&mode=video`;
 
         // Fix 2: Message template with audio clip link and no redundant answer link
         const optA = options[0] || "";
@@ -226,8 +228,9 @@ export default {
         messageText += `\n\n🎙️ Audio call:\n${audioUrl}\n\n📹 Video call:\n${videoUrl}`;
 
         // Clean phone for WhatsApp
-        const cleanPhone = friendPhone.replace(/[\s\-\(\)]/g, "");
-        const waLink = `https://wa.me/${cleanPhone.replace(/^\+/, "")}?text=${encodeURIComponent(messageText)}`;
+        const digitsOnly = friendPhone.replace(/\D/g, "");
+        const formattedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
+        const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`;
 
         let delivered = false;
         let gatewayResponse = null;
@@ -252,13 +255,16 @@ export default {
               method: "POST",
               headers: headers,
               body: JSON.stringify({
-                chatId: `${cleanPhone.replace(/^\+/, "")}@c.us`,
+                chatId: `${formattedPhone}@c.us`,
                 message: messageText
               })
             });
             if (gwRes.ok) {
               delivered = true;
               gatewayResponse = "gw-sent";
+            } else {
+              const errBody = await gwRes.text().catch(() => "");
+              console.warn("Green-API error status:", gwRes.status, errBody);
             }
           } catch (e) {
             console.warn("WhatsApp gateway error:", e);
@@ -315,13 +321,20 @@ export default {
         const sessionId = url.searchParams.get("session");
         const token = url.searchParams.get("token");
 
-        if (!sessionId || !token) {
-          return new Response(JSON.stringify({ error: "Missing session or token" }), { status: 400, headers: corsHeaders });
+        if (!sessionId) {
+          return new Response(JSON.stringify({ error: "Missing session" }), { status: 400, headers: corsHeaders });
         }
 
-        const reqRow = await env.DB.prepare(
-          "SELECT * FROM friend_requests WHERE session_id = ? AND token = ?"
-        ).bind(sessionId, token).first();
+        let reqRow = null;
+        if (token && token !== "manual") {
+          reqRow = await env.DB.prepare(
+            "SELECT * FROM friend_requests WHERE session_id = ? AND token = ?"
+          ).bind(sessionId, token).first();
+        } else {
+          reqRow = await env.DB.prepare(
+            "SELECT * FROM friend_requests WHERE session_id = ? ORDER BY created_at DESC LIMIT 1"
+          ).bind(sessionId).first();
+        }
 
         if (!reqRow) {
           return new Response(JSON.stringify({ error: "Invalid link or request not found" }), { status: 404, headers: corsHeaders });
@@ -655,7 +668,8 @@ export default {
           return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400, headers: corsHeaders });
         }
 
-        const cleanPhone = String(friendPhone).replace(/[\s\-\(\)\+]/g, "");
+        const cleanDigits = String(friendPhone).replace(/\D/g, "");
+        const formattedPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
         let delivered = false;
 
         if (env.WHATSAPP_GATEWAY_URL && env.WHATSAPP_GATEWAY_TOKEN) {
@@ -670,7 +684,7 @@ export default {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                chatId: `${cleanPhone}@c.us`,
+                chatId: `${formattedPhone}@c.us`,
                 message: messageText
               })
             });
@@ -737,6 +751,12 @@ export default {
 
       // Static fallback when serving through worker
       if (env.ASSETS) {
+        // Rewrite friendly /call route to /friend-call.html preserving query string
+        if (url.pathname === "/call") {
+          const callUrl = new URL(request.url);
+          callUrl.pathname = "/friend-call.html";
+          return env.ASSETS.fetch(new Request(callUrl.toString(), request));
+        }
         return env.ASSETS.fetch(request);
       }
       return new Response("SurKBC Worker Active", { status: 200 });

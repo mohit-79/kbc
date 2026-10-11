@@ -385,7 +385,7 @@ class AudioEngine {
     }
   }
 
-  // c2C.1: Hindi TTS with Kannada-rate tuning (rate: 0.92) & cancel on screen change
+  // c2C.1: Hindi TTS with Amitabh deep baritone tuning
   speak(text, onDone = null) {
     if (!VOICE_ENABLED || !('speechSynthesis' in window)) {
       if (onDone) onDone();
@@ -396,12 +396,12 @@ class AudioEngine {
       window.speechSynthesis.cancel(); // Cancel any queued speech
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.92; // Pinned Kannada-rate tuning
-      utterance.pitch = 0.78; // Amitabh deep baritone
+      utterance.rate = 0.90; // Natural pacing
+      utterance.pitch = 0.75; // Amitabh deep baritone
 
       // Pick Hindi / Indian English voice
       const voices = window.speechSynthesis.getVoices();
-      const hiVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN')) || voices[0];
+      const hiVoice = voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.lang.includes('IN')) || voices[0];
       if (hiVoice) utterance.voice = hiVoice;
 
       let called = false;
@@ -414,8 +414,8 @@ class AudioEngine {
 
       utterance.onend = finish;
       utterance.onerror = finish;
-      // 3.5s safety timeout so game flow never hangs
-      setTimeout(finish, 3500);
+      // 4s safety timeout so game flow never hangs
+      setTimeout(finish, 4000);
 
       window.speechSynthesis.speak(utterance);
     } catch (e) {

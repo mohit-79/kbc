@@ -97,7 +97,16 @@
       <!-- Question Card -->
       <div class="friend-portal-card" style="text-align: center;">
         <div style="font-size: 11px; color: var(--gold-primary); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Prashn</div>
-        <h2 id="portal-q-text" style="font-size: 15px; color: #fff; line-height: 1.4; font-weight: 800;"></h2>
+        <h2 id="portal-q-text" style="font-size: 15px; color: #fff; line-height: 1.4; font-weight: 800; margin-bottom: 10px;"></h2>
+        <div id="portal-audio-clip-wrap" style="display: none; background: rgba(14, 26, 56, 0.8); border: 1px dashed var(--gold-primary); border-radius: 8px; padding: 8px 12px; margin-top: 8px; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">🎵</span>
+            <span style="font-size: 11px; color: #ffd700; font-weight: 700;">Gaaney Ki Clip:</span>
+          </div>
+          <button id="btn-play-portal-clip" class="kbc-btn-gold" style="height: 32px; font-size: 11px; padding: 0 12px; margin: 0; width: auto;" onclick="togglePortalClipPlayback()">
+            ▶ Clip Bajao
+          </button>
+        </div>
       </div>
 
       <!-- Options List -->

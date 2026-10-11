@@ -708,8 +708,12 @@ function renderQuestion() {
   const nextQFallback = `Agla sawaal ${KBC_LADDER[game.qIndex].prize} ka aapki screen par. ${promptText}`;
 
   if (window.audioEngine) {
-    window.audioEngine.playClip(q.clip);
-    window.audioEngine.playVoice(qIntroKey, nextQFallback);
+    window.audioEngine.playVoice(qIntroKey, nextQFallback, () => {
+      // Play song clip once intro narration completes
+      if (game.qIndex === game.qIndex) {
+        window.audioEngine.playClip(q.clip);
+      }
+    });
   }
 }
 
@@ -1182,13 +1186,16 @@ window.saveSettings = function() {
 
 // c2B.1: 50:50 Lifeline
 window.useFiftyFifty = function() {
-  if (game.used.fifty) {
+  const isCasual = (profile.difficulty === 'casual');
+  if (!isCasual && game.used.fifty) {
     showToast("Ye lifeline use ho chuki hai!");
     return;
   }
   if (game.locked) return;
 
-  game.used.fifty = true;
+  if (!isCasual) {
+    game.used.fifty = true;
+  }
   updateLifelineHUD();
 
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
@@ -1214,14 +1221,17 @@ window.useFiftyFifty = function() {
 
 // c2B.2: Audience Poll Lifeline
 window.useAudiencePoll = function() {
-  if (game.used.poll) {
+  const isCasual = (profile.difficulty === 'casual');
+  if (!isCasual && game.used.poll) {
     showToast("Ye lifeline use ho chuki hai!");
     return;
   }
   if (game.locked) return;
 
   stopTimer(); // Pause timer during poll modal
-  game.used.poll = true;
+  if (!isCasual) {
+    game.used.poll = true;
+  }
   updateLifelineHUD();
 
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
@@ -1278,7 +1288,8 @@ let friendAnswerWs = null;
 let currentFriendPendingAnswer = null;
 
 window.usePhoneAFriend = function() {
-  if (game.used.phone) {
+  const isCasual = (profile.difficulty === 'casual');
+  if (!isCasual && game.used.phone) {
     showToast("Ye lifeline use ho chuki hai!");
     return;
   }
@@ -1493,8 +1504,10 @@ function onFriendAnswerReceived(optLetter, note, friendName) {
   const phoneModal = document.getElementById('modal-phone-friend');
   if (phoneModal) phoneModal.classList.remove('active');
 
-  // Mark lifeline used
-  game.used.phone = true;
+  // Mark lifeline used (only for non-casual)
+  if (profile.difficulty !== 'casual') {
+    game.used.phone = true;
+  }
   updateLifelineHUD();
   syncServerSession();
 
@@ -1708,11 +1721,13 @@ function initPlayerPeerSession() {
       launchCustomCallModal(callMode);
 
       try {
-        // Capture local microphone (and camera if video mode)
-        playerLocalMediaStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: (callMode === 'video')
-        });
+        // Ensure local microphone/camera stream is ready
+        if (!playerLocalMediaStream) {
+          playerLocalMediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: (callMode === 'video')
+          });
+        }
 
         if (callMode === 'video') {
           const localVid = document.getElementById('player-local-video');
@@ -1750,13 +1765,100 @@ function initPlayerPeerSession() {
 function attachRemoteMediaStream(remoteStream, mode) {
   if (mode === 'video') {
     const remoteVid = document.getElementById('player-remote-video');
-    if (remoteVid) remoteVid.srcObject = remoteStream;
+    if (remoteVid) {
+      remoteVid.srcObject = remoteStream;
+      remoteVid.play().catch(e => console.warn('Player remote video play error:', e));
+    }
   } else {
     const remoteAud = document.getElementById('player-remote-audio');
     if (remoteAud) {
       remoteAud.srcObject = remoteStream;
-      remoteAud.play().catch(() => {});
+      remoteAud.muted = false;
+      remoteAud.volume = 1.0;
+      remoteAud.play().catch(e => console.warn('Player remote audio play error:', e));
     }
+  }
+
+  // Auto re-ask question, play song clip, and vocally read options to Player
+  triggerPlayerAutoReaskSequence();
+}
+
+let playerHasReasked = false;
+let playerTtsCancel = false;
+let playerCallClipAudio = null;
+
+function triggerPlayerAutoReaskSequence() {
+  if (playerHasReasked) return;
+  playerHasReasked = true;
+  playerTtsCancel = false;
+
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  if (!q) return;
+
+  const qPrompt = q.question || `Gaana '${q.song}' kis gaayak ne gaya hai?`;
+  const clipUrl = q.clip || q.preview || "";
+  const opts = q.options || [];
+
+  setTimeout(() => {
+    if (playerTtsCancel) return;
+
+    // 1. Speak Question
+    const qSpeech = `Sawaal hai: ${qPrompt}. Kripya gaana sunein.`;
+    if (window.audioEngine && window.audioEngine.speak) {
+      window.audioEngine.speak(qSpeech, () => {
+        if (playerTtsCancel) return;
+
+        // 2. Play Song Clip
+        if (clipUrl) {
+          if (playerCallClipAudio) {
+            try { playerCallClipAudio.pause(); } catch (e) {}
+          }
+          playerCallClipAudio = new Audio(clipUrl);
+          playerCallClipAudio.volume = 1.0;
+          playerCallClipAudio.play().then(() => {
+            let ended = false;
+            const onEnd = () => {
+              if (ended) return;
+              ended = true;
+              readPlayerOptionsVocally(opts);
+            };
+            playerCallClipAudio.onended = onEnd;
+            setTimeout(onEnd, 12000);
+          }).catch(() => {
+            readPlayerOptionsVocally(opts);
+          });
+        } else {
+          readPlayerOptionsVocally(opts);
+        }
+      });
+    }
+  }, 1000);
+}
+
+function readPlayerOptionsVocally(opts) {
+  if (playerTtsCancel) return;
+  if (Array.isArray(opts) && opts.length >= 4) {
+    const letters = ["Option A", "Option B", "Option C", "Option D"];
+    const optSpeech = `Vikalp hain: ${letters[0]}, ${opts[0]}. ${letters[1]}, ${opts[1]}. ${letters[2]}, ${opts[2]}. ${letters[3]}, ${opts[3]}.`;
+    if (window.audioEngine && window.audioEngine.speak) {
+      window.audioEngine.speak(optSpeech);
+    }
+  }
+}
+
+function stopPlayerAutoReaskSequence() {
+  playerTtsCancel = true;
+  playerHasReasked = false;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  if (playerCallClipAudio) {
+    try {
+      playerCallClipAudio.pause();
+      playerCallClipAudio.currentTime = 0;
+    } catch (e) {}
+    playerCallClipAudio = null;
   }
 }
 
@@ -1867,6 +1969,7 @@ window.lockFromCall = function() {
 };
 
 window.endCustomCall = function() {
+  stopPlayerAutoReaskSequence();
   stopAudioVisualizerLoop();
   const modal = document.getElementById('modal-kbc-call');
   if (modal) modal.classList.remove('active');
@@ -1897,13 +2000,16 @@ window.endCustomCall = function() {
 
 // c2B.4: Flip the Question Lifeline
 window.useFlipQuestion = function() {
-  if (game.used.flip) {
+  const isCasual = (profile.difficulty === 'casual');
+  if (!isCasual && game.used.flip) {
     showToast("Ye lifeline use ho chuki hai!");
     return;
   }
   if (game.locked) return;
 
-  game.used.flip = true;
+  if (!isCasual) {
+    game.used.flip = true;
+  }
   updateLifelineHUD();
 
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
@@ -1938,11 +2044,12 @@ window.useLifeline = function(type) {
 
 // c2B.5: Lifeline HUD Update (dims used buttons across all screens)
 function updateLifelineHUD() {
+  const isCasual = (profile.difficulty === 'casual');
   const keys = ['fifty', 'phone', 'poll', 'flip'];
   keys.forEach(k => {
     const btn = document.getElementById(`lifeline-btn-${k}`);
     if (btn) {
-      if (game.used[k]) {
+      if (!isCasual && game.used[k]) {
         btn.classList.add('used');
       } else {
         btn.classList.remove('used');
@@ -1952,11 +2059,12 @@ function updateLifelineHUD() {
 }
 
 function updateLifelineChips() {
+  const isCasual = (profile.difficulty === 'casual');
   const keys = ['fifty', 'phone', 'poll', 'flip'];
   keys.forEach(k => {
     const chip = document.getElementById(`intro-chip-${k}`);
     if (chip) {
-      if (game.used[k]) {
+      if (!isCasual && game.used[k]) {
         chip.classList.add('used');
       } else {
         chip.classList.remove('used');

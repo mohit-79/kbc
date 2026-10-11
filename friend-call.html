@@ -15,15 +15,16 @@
   <script src="peerjs.min.js"></script>
   <style>
     body {
-      background: radial-gradient(circle at 50% 30%, #0d1e44 0%, #050a18 100%);
+      background: radial-gradient(circle at 50% 25%, #0d1e44 0%, #050a18 100%);
       color: #fff;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       margin: 0;
-      padding: calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);
+      padding: calc(var(--sat, 12px) + 8px) 12px calc(var(--sab, 12px) + 12px);
       box-sizing: border-box;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
     }
     .call-container {
       flex: 1;
@@ -33,52 +34,91 @@
       margin: 0 auto;
       width: 100%;
       text-align: center;
-    }
-    .call-video-grid {
-      flex: 1;
-      display: grid;
-      grid-template-rows: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      width: 100%;
-      max-height: calc(100vh - 160px);
-      margin: 6px 0;
-    }
-    .call-video-box {
-      background: #000;
-      border: 1.5px solid var(--neon-cyan);
-      border-radius: 10px;
-      overflow: hidden;
       position: relative;
+    }
+    /* Modern WhatsApp/FaceTime style Video Stage with PiP */
+    .call-video-stage-modern {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid var(--neon-cyan);
+      box-shadow: 0 8px 30px rgba(0, 210, 255, 0.25);
+      margin: 8px 0 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 0;
-      height: 100%;
     }
-    .call-video-box video {
+    .call-video-main {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #070d1e;
+    }
+    .call-video-pip {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 110px;
+      height: 155px;
+      border-radius: 10px;
+      border: 2px solid var(--gold-primary);
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+      z-index: 10;
+      background: #000;
+    }
+    .call-video-pip video {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
     .call-badge {
       position: absolute;
-      top: 8px;
-      left: 8px;
-      background: rgba(7, 13, 30, 0.8);
-      color: var(--neon-cyan);
+      top: 10px;
+      left: 10px;
+      background: rgba(7, 13, 30, 0.85);
+      color: #fff;
       font-size: 11px;
       font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
       border: 1px solid rgba(0, 210, 255, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      z-index: 5;
+    }
+    .call-pip-badge {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(7, 13, 30, 0.85);
+      color: var(--gold-primary);
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 10px;
+      z-index: 12;
     }
     .join-prompt-card {
-      background: rgba(7, 13, 30, 0.9);
+      background: rgba(7, 13, 30, 0.95);
       border: 2px solid var(--gold-primary);
       border-radius: 16px;
-      padding: 24px 18px;
-      margin: auto 0;
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+      padding: 22px 16px;
+      margin: 8px 0;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.25);
+    }
+    /* Compact Floating Question Box during Active Video Call */
+    .call-compact-q {
+      background: rgba(14, 26, 56, 0.9);
+      border: 1.5px solid var(--gold-primary);
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: left;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -96,52 +136,53 @@
       </p>
     </header>
 
-    <!-- 1. EXPLICIT USER GESTURE CARD (Fixes mobile browser permission prompt requirement) -->
-    <div id="join-prompt" class="join-prompt-card">
-      <div style="font-size: 42px; margin-bottom: 10px;" id="join-icon">🎙️</div>
-      <h3 style="font-size: 17px; font-weight: 900; color: #ffd700; margin-bottom: 6px;">Call Shuru Karein</h3>
-      <p style="font-size: 12px; color: #e0e0e0; margin-bottom: 18px; line-height: 1.4;">
-        Aapke dost ko sawaal par aapki zaroorat hai. Tap karte hi microphone aur camera connect ho jayega.
+    <!-- Fix 3: Friend Greeting & Urgency Explanation Card (ALWAYS VISIBLE) -->
+    <div id="call-greeting-card" style="background: rgba(14, 26, 56, 0.95); border: 1.5px solid var(--gold-primary); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+        <span style="font-size: 11px; color: var(--gold-primary); font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">📞 Dost Ki Pukar</span>
+        <span style="font-size: 11px; background: rgba(0, 210, 255, 0.2); color: var(--neon-cyan); padding: 2px 6px; border-radius: 4px; font-weight: 700;">Live Help</span>
+      </div>
+      <p id="call-greeting-text" style="font-size: 13px; color: #fff; line-height: 1.4; margin: 0; font-weight: 600;">
+        Namaste! Aapke dost SurKBC ke Hot Seat par hain aur unhe is sawaal par aapki turant zaroorat hai!
       </p>
-      <button id="btn-start-call" class="kbc-btn-gold" style="height: 52px; font-size: 15px; border-radius: 26px;" onclick="userInitiateCall()">
+    </div>
+
+    <!-- Fix 3: Question Display Card & Audio Clip Player (ALWAYS VISIBLE) -->
+    <div id="call-question-box" style="background: rgba(7, 13, 30, 0.9); border: 1.5px solid var(--neon-cyan); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; text-align: left;">
+      <div style="font-size: 10px; color: var(--neon-cyan); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Prashn (Question):</div>
+      <div id="call-q-text" style="font-size: 13.5px; font-weight: 800; color: #fff; margin-bottom: 10px; line-height: 1.35;">
+        Gaana sunkar sahi gaayak ko pehchanein.
+      </div>
+
+      <!-- Audio Clip Playback Bar -->
+      <div id="call-audio-clip-wrap" style="background: rgba(14, 26, 56, 0.8); border: 1px dashed var(--gold-primary); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 18px;">🎵</span>
+          <span style="font-size: 11px; color: #ffd700; font-weight: 700;">Gaaney Ki Clip:</span>
+        </div>
+        <button id="btn-play-call-clip" class="kbc-btn-gold" style="height: 34px; font-size: 12px; padding: 0 14px; margin: 0; width: auto;" onclick="toggleCallClipPlayback()">
+          ▶ Clip Bajao
+        </button>
+      </div>
+
+      <!-- 4 Options Grid -->
+      <div id="call-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;"></div>
+    </div>
+
+    <!-- 1. EXPLICIT USER GESTURE CARD (Fixes mobile browser permission prompt requirement) -->
+    <div id="join-prompt" class="join-prompt-card" style="margin: 0 0 12px 0;">
+      <div style="font-size: 36px; margin-bottom: 6px;" id="join-icon">🎙️</div>
+      <h3 style="font-size: 16px; font-weight: 900; color: #ffd700; margin-bottom: 4px;">Call Me Judey</h3>
+      <p style="font-size: 12px; color: #e0e0e0; margin-bottom: 14px; line-height: 1.4;">
+        Tap karte hi microphone/camera jud jayega aur aap dost se live baat kar sakenge.
+      </p>
+      <button id="btn-start-call" class="kbc-btn-gold" style="height: 48px; font-size: 14px; border-radius: 24px;" onclick="userInitiateCall()">
         <span id="btn-start-call-txt">🎙️ Call Me Shamil Hon</span>
       </button>
     </div>
 
     <!-- 2. ACTIVE CALL STAGE -->
     <div id="active-call-stage" style="display: none; flex: 1; flex-direction: column;">
-      <!-- Fix 3: Friend Greeting & Urgency Explanation Card -->
-      <div id="call-greeting-card" style="background: rgba(14, 26, 56, 0.95); border: 1.5px solid var(--gold-primary); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-          <span style="font-size: 11px; color: var(--gold-primary); font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">📞 Dost Ki Pukar</span>
-          <span style="font-size: 11px; background: rgba(0, 210, 255, 0.2); color: var(--neon-cyan); padding: 2px 6px; border-radius: 4px; font-weight: 700;">Live Help</span>
-        </div>
-        <p id="call-greeting-text" style="font-size: 13px; color: #fff; line-height: 1.4; margin: 0; font-weight: 600;">
-          Namaste! Aapke dost SurKBC ke Hot Seat par hain aur unhe is sawaal par aapki turant zaroorat hai!
-        </p>
-      </div>
-
-      <!-- Fix 3: Question Display Card & Audio Clip Player -->
-      <div id="call-question-box" style="background: rgba(7, 13, 30, 0.9); border: 1.5px solid var(--neon-cyan); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; text-align: left;">
-        <div style="font-size: 10px; color: var(--neon-cyan); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Prashn (Question):</div>
-        <div id="call-q-text" style="font-size: 13.5px; font-weight: 800; color: #fff; margin-bottom: 10px; line-height: 1.35;">
-          Gaana sunkar sahi gaayak ko pehchanein.
-        </div>
-
-        <!-- Audio Clip Playback Bar -->
-        <div id="call-audio-clip-wrap" style="background: rgba(14, 26, 56, 0.8); border: 1px dashed var(--gold-primary); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 18px;">🎵</span>
-            <span style="font-size: 11px; color: #ffd700; font-weight: 700;">Gaaney Ki Clip:</span>
-          </div>
-          <button id="btn-play-call-clip" class="kbc-btn-gold" style="height: 32px; font-size: 11px; padding: 0 12px; margin: 0; width: auto;" onclick="toggleCallClipPlayback()">
-            ▶ Clip Bajao
-          </button>
-        </div>
-
-        <!-- 4 Options Grid -->
-        <div id="call-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;"></div>
-      </div>
 
       <!-- Audio Mode Stage -->
       <div id="friend-audio-stage" class="call-audio-stage" style="display: none; padding: 12px 0;">
@@ -166,14 +207,12 @@
         </div>
       </div>
 
-      <!-- Video Mode Stage -->
-      <div id="friend-video-stage" class="call-video-grid" style="display: none; max-height: 240px;">
-        <div class="call-video-box">
-          <span class="call-badge">👤 Khiladi (Contestant)</span>
-          <video id="remote-video" autoplay playsinline></video>
-        </div>
-        <div class="call-video-box" style="border-color: var(--gold-primary);">
-          <span class="call-badge" style="color: var(--gold-primary); border-color: rgba(255, 215, 0, 0.4);">👤 Aap (Friend)</span>
+      <!-- Video Mode Stage (Modern WhatsApp/FaceTime style PiP) -->
+      <div id="friend-video-stage" class="call-video-stage-modern" style="display: none;">
+        <span class="call-badge">👤 Khiladi (Contestant)</span>
+        <video id="remote-video" class="call-video-main" autoplay playsinline></video>
+        <div class="call-video-pip">
+          <span class="call-pip-badge">Aap</span>
           <video id="local-video" autoplay muted playsinline></video>
         </div>
       </div>
@@ -206,6 +245,16 @@
     let clipAudio = null;
     let isClipPlaying = false;
 
+    // Extracted Question Details for auto re-ask routine
+    let qText = params.get('q');
+    let playerName = params.get('player') || "Aapke dost";
+    let clipUrl = params.get('clip');
+    let optionsList = [];
+    try {
+      const rawOpts = params.get('opts');
+      if (rawOpts) optionsList = JSON.parse(rawOpts);
+    } catch (e) {}
+
     document.addEventListener('DOMContentLoaded', () => {
       const joinIcon = document.getElementById('join-icon');
       const btnTxt = document.getElementById('btn-start-call-txt');
@@ -221,53 +270,66 @@
         headline.textContent = "🎙️ Live Audio Helpline";
       }
 
-      // Fix 3: Populate Greeting, Question, and Options from parameters or session
-      const qText = params.get('q');
-      const playerName = params.get('player') || "Aapke dost";
-      const clipUrl = params.get('clip');
-      let optionsList = [];
-      try {
-        const rawOpts = params.get('opts');
-        if (rawOpts) optionsList = JSON.parse(rawOpts);
-      } catch (e) {}
+      function updateCallUI() {
+        const greetEl = document.getElementById('call-greeting-text');
+        if (greetEl) {
+          greetEl.textContent = `Namaste! Aapke dost ${playerName} SurKBC ke Hot Seat par hain aur unhe is sawaal par aapki turant zaroorat hai!`;
+        }
 
-      const greetEl = document.getElementById('call-greeting-text');
-      if (greetEl) {
-        greetEl.textContent = `Namaste! Aapke dost ${playerName} SurKBC ke Hot Seat par hain aur unhe is sawaal par aapki turant zaroorat hai!`;
+        const contestantEl = document.getElementById('call-contestant-name');
+        if (contestantEl) {
+          contestantEl.textContent = `👤 ${playerName} (Hot Seat)`;
+        }
+
+        const qEl = document.getElementById('call-q-text');
+        if (qEl && qText) {
+          qEl.textContent = qText;
+        }
+
+        const gridEl = document.getElementById('call-options-grid');
+        if (gridEl && Array.isArray(optionsList) && optionsList.length) {
+          const letters = ["A", "B", "C", "D"];
+          gridEl.innerHTML = optionsList.map((opt, i) => `
+            <div style="background: rgba(14, 26, 56, 0.85); border: 1px solid var(--gold-muted); border-radius: 6px; padding: 6px 8px; font-size: 11px; color: #fff; display: flex; align-items: center; gap: 6px;">
+              <span style="color: var(--gold-primary); font-weight: 800;">${letters[i]}:</span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${opt}</span>
+            </div>
+          `).join('');
+        }
+
+        // Audio clip setup
+        if (clipUrl) {
+          if (!clipAudio) {
+            clipAudio = new Audio(clipUrl);
+            clipAudio.addEventListener('ended', () => {
+              isClipPlaying = false;
+              const btn = document.getElementById('btn-play-call-clip');
+              if (btn) btn.textContent = "▶ Clip Bajao";
+            });
+          }
+          const wrap = document.getElementById('call-audio-clip-wrap');
+          if (wrap) wrap.style.display = 'flex';
+        } else {
+          const wrap = document.getElementById('call-audio-clip-wrap');
+          if (wrap) wrap.style.display = 'none';
+        }
       }
 
-      const contestantEl = document.getElementById('call-contestant-name');
-      if (contestantEl) {
-        contestantEl.textContent = `👤 ${playerName} (Hot Seat)`;
-      }
+      updateCallUI();
 
-      const qEl = document.getElementById('call-q-text');
-      if (qEl && qText) {
-        qEl.textContent = qText;
-      }
-
-      const gridEl = document.getElementById('call-options-grid');
-      if (gridEl && Array.isArray(optionsList) && optionsList.length) {
-        const letters = ["A", "B", "C", "D"];
-        gridEl.innerHTML = optionsList.map((opt, i) => `
-          <div style="background: rgba(14, 26, 56, 0.85); border: 1px solid var(--gold-muted); border-radius: 6px; padding: 6px 8px; font-size: 11px; color: #fff; display: flex; align-items: center; gap: 6px;">
-            <span style="color: var(--gold-primary); font-weight: 800;">${letters[i]}:</span>
-            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${opt}</span>
-          </div>
-        `).join('');
-      }
-
-      // Audio clip setup
-      if (clipUrl) {
-        clipAudio = new Audio(clipUrl);
-        clipAudio.addEventListener('ended', () => {
-          isClipPlaying = false;
-          const btn = document.getElementById('btn-play-call-clip');
-          if (btn) btn.textContent = "▶ Clip Bajao";
-        });
-      } else {
-        const wrap = document.getElementById('call-audio-clip-wrap');
-        if (wrap) wrap.style.display = 'none';
+      // If question details were missing in URL params, fetch from server fallback
+      if (!qText && sessionId) {
+        fetch(`/api/phone-friend/question?session=${encodeURIComponent(sessionId)}&token=manual`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.question) {
+              qText = data.question;
+              if (Array.isArray(data.options)) optionsList = data.options;
+              if (data.friendName) playerName = data.friendName;
+              updateCallUI();
+            }
+          })
+          .catch(() => {});
       }
     });
 
@@ -311,7 +373,14 @@
 
         if (mode === 'video') {
           audioStage.style.display = 'none';
-          videoStage.style.display = 'grid';
+          videoStage.style.display = 'flex';
+          const greetCard = document.getElementById('call-greeting-card');
+          if (greetCard) greetCard.style.display = 'none';
+          const qBox = document.getElementById('call-question-box');
+          if (qBox) {
+            qBox.style.padding = '8px 10px';
+            qBox.style.marginBottom = '6px';
+          }
           const localVid = document.getElementById('local-video');
           if (localVid) localVid.srcObject = localStream;
         } else {
@@ -358,19 +427,132 @@
 
         if (mode === 'video') {
           const remoteVid = document.getElementById('remote-video');
-          if (remoteVid) remoteVid.srcObject = remoteStream;
+          if (remoteVid) {
+            remoteVid.srcObject = remoteStream;
+            remoteVid.play().catch(e => console.warn("Remote video play error:", e));
+          }
         } else {
           const remoteAud = document.getElementById('remote-audio');
           if (remoteAud) {
             remoteAud.srcObject = remoteStream;
-            remoteAud.play().catch(() => {});
+            remoteAud.muted = false;
+            remoteAud.volume = 1.0;
+            remoteAud.play().catch(e => console.warn("Remote audio play error:", e));
           }
         }
+
+        // Auto re-ask question, play song clip, and vocally read options to Friend
+        triggerAutoReaskSequence();
       });
 
       call.on('close', () => {
+        stopAutoReaskSequence();
         hangupCall(false);
       });
+    }
+
+    // Auto Re-Ask Voice & Audio Clip Routine
+    let hasReasked = false;
+    let ttsCancelRequested = false;
+
+    function speakTextTTS(text, onDone = null) {
+      if (!('speechSynthesis' in window) || ttsCancelRequested) {
+        if (onDone) setTimeout(onDone, 300);
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.90;
+        u.pitch = 0.85;
+        const voices = window.speechSynthesis.getVoices();
+        const hiVoice = voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.lang.includes('IN')) || voices[0];
+        if (hiVoice) u.voice = hiVoice;
+
+        let called = false;
+        const finish = () => {
+          if (!called) {
+            called = true;
+            if (onDone) onDone();
+          }
+        };
+        u.onend = finish;
+        u.onerror = finish;
+        setTimeout(finish, 6000);
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        if (onDone) onDone();
+      }
+    }
+
+    function triggerAutoReaskSequence() {
+      if (hasReasked) return;
+      hasReasked = true;
+      ttsCancelRequested = false;
+
+      // Small initial delay so WebRTC audio stabilizes
+      setTimeout(() => {
+        if (ttsCancelRequested) return;
+
+        // 1. Speak Question
+        const qSpeech = qText ? `Sawaal hai: ${qText}. Kripya gaana sunein.` : "Kripya gaana sunein aur sahi vikalp chunein.";
+        speakTextTTS(qSpeech, () => {
+          if (ttsCancelRequested) return;
+
+          // 2. Play Song Clip
+          if (clipUrl) {
+            const clipEl = clipAudio || new Audio(clipUrl);
+            clipEl.currentTime = 0;
+            clipEl.volume = 1.0;
+            isClipPlaying = true;
+            const btn = document.getElementById('btn-play-call-clip');
+            if (btn) btn.textContent = "⏸ Rokain";
+
+            clipEl.play().then(() => {
+              // Wait for clip to finish or max 12 seconds
+              let clipEnded = false;
+              const onClipEnd = () => {
+                if (clipEnded) return;
+                clipEnded = true;
+                isClipPlaying = false;
+                if (btn) btn.textContent = "▶ Clip Bajao";
+                // 3. Vocally list options after song
+                readOptionsVocally();
+              };
+
+              clipEl.onended = onClipEnd;
+              setTimeout(onClipEnd, 12000);
+            }).catch(() => {
+              readOptionsVocally();
+            });
+          } else {
+            readOptionsVocally();
+          }
+        });
+      }, 1000);
+    }
+
+    function readOptionsVocally() {
+      if (ttsCancelRequested) return;
+      if (Array.isArray(optionsList) && optionsList.length >= 4) {
+        const letters = ["Option A", "Option B", "Option C", "Option D"];
+        const optSpeech = `Vikalp hain: ${letters[0]}, ${optionsList[0]}. ${letters[1]}, ${optionsList[1]}. ${letters[2]}, ${optionsList[2]}. ${letters[3]}, ${optionsList[3]}.`;
+        speakTextTTS(optSpeech);
+      }
+    }
+
+    function stopAutoReaskSequence() {
+      ttsCancelRequested = true;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (clipAudio) {
+        try {
+          clipAudio.pause();
+          clipAudio.currentTime = 0;
+        } catch (e) {}
+        isClipPlaying = false;
+      }
     }
 
     function toggleMic() {
