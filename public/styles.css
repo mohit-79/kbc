@@ -981,3 +981,29 @@ input, textarea, select {
   justify-content: center;
 }
 
+/* Fix 4: Shake animation for invalid security passkey */
+@keyframes kbcShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+.shake {
+  animation: kbcShake 0.4s ease;
+  border-color: var(--color-red) !important;
+}
+
+/* Fix 5: Friends container scroll styling for up to 7 contacts */
+#home-friends-list {
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+#home-friends-list::-webkit-scrollbar {
+  width: 4px;
+}
+#home-friends-list::-webkit-scrollbar-thumb {
+  background: var(--gold-muted);
+  border-radius: 2px;
+}
+

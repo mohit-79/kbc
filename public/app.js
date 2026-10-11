@@ -24,7 +24,10 @@ const KBC_LADDER = [
   { level: 15, prize: "₹ 1,00,00,000", amount: 10000000, padaav: true }
 ];
 
+const DEFAULT_SECURITY_CODE = "0504";
+
 const TIMER_PRESETS = {
+  casual: null, // No timer capping
   easy: 45,
   medium: 30,
   hard: 20
@@ -346,25 +349,63 @@ function buildDynamicQuestionsFromSingers(count = 15) {
   return generated;
 }
 
+// --- RANDOMIZATION & SHUFFLE HELPERS (Fix 6) ---
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function randomizeQuestionOptions(q) {
+  if (!q || !Array.isArray(q.options) || q.options.length < 2) return q;
+  const correctOptionText = q.options[q.answer];
+  const shuffledOptions = shuffleArray(q.options);
+  const newAnswerIdx = shuffledOptions.indexOf(correctOptionText);
+  return {
+    ...q,
+    options: shuffledOptions,
+    answer: newAnswerIdx
+  };
+}
+
 function getQuestionsForGame() {
   const dynamicQs = buildDynamicQuestionsFromSingers(15);
   if (dynamicQs.length >= 15) {
-    return dynamicQs;
+    return shuffleArray(dynamicQs).map(randomizeQuestionOptions);
   }
 
   if (typeof SAMPLE_QUESTIONS === 'undefined' || !SAMPLE_QUESTIONS.length) {
     return [];
   }
+
   const diff = profile.difficulty || 'easy';
-  if (diff === 'easy') {
-    return SAMPLE_QUESTIONS.slice(0, 15);
+  let chosenBank = [];
+
+  if (diff === 'casual') {
+    // Casual mode: mix all difficulty levels randomly
+    chosenBank = shuffleArray(SAMPLE_QUESTIONS).slice(0, 15);
+  } else if (diff === 'easy') {
+    const easyBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy'));
+    const otherBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty !== 'easy'));
+    chosenBank = easyBank.concat(otherBank).slice(0, 15);
   } else if (diff === 'medium') {
-    const medBank = SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium' || q.difficulty === 'hard');
-    return medBank.concat(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy')).slice(0, 15);
+    const medBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium'));
+    const hardBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'hard'));
+    const easyBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy'));
+    chosenBank = medBank.concat(hardBank).concat(easyBank).slice(0, 15);
   } else {
-    const hardBank = SAMPLE_QUESTIONS.filter(q => q.difficulty === 'hard');
-    return hardBank.concat(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium')).slice(0, 15);
+    // Hard mode
+    const hardBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'hard'));
+    const medBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium'));
+    const easyBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy'));
+    chosenBank = hardBank.concat(medBank).concat(easyBank).slice(0, 15);
   }
+
+  // Shuffle selected questions and each question's 4 options
+  return shuffleArray(chosenBank).map(randomizeQuestionOptions);
 }
 
 function createNewGameState() {
@@ -525,8 +566,8 @@ function normalizePhoneNumber(raw) {
 }
 
 window.addFriend = function() {
-  if (profile.friends.length >= 3) {
-    showToast("Adhik-tam 3 dost allow hain!");
+  if (profile.friends.length >= 7) {
+    showToast("Adhik-tam 7 dost allow hain!");
     return;
   }
   const name = prompt("Dost ka naam likhein:");
@@ -662,9 +703,13 @@ function renderQuestion() {
   updateLifelineHUD();
   startTimer();
 
+  const currentPrizeAmount = KBC_LADDER[game.qIndex] ? KBC_LADDER[game.qIndex].amount : 1000;
+  const qIntroKey = `qintro_${currentPrizeAmount}`;
+  const nextQFallback = `Agla sawaal ${KBC_LADDER[game.qIndex].prize} ka aapki screen par. ${promptText}`;
+
   if (window.audioEngine) {
     window.audioEngine.playClip(q.clip);
-    window.audioEngine.speak(`${promptText}`);
+    window.audioEngine.playVoice(qIntroKey, nextQFallback);
   }
 }
 
@@ -680,7 +725,20 @@ function startTimer() {
   stopTimer();
   const timerDisplay = document.getElementById('q-timer-display');
   const ringProgress = document.getElementById('timer-ring-progress');
-  const maxSec = TIMER_PRESETS[profile.difficulty || 'easy'];
+  const diff = profile.difficulty || 'easy';
+  const maxSec = TIMER_PRESETS[diff];
+
+  // Fix 1: Casual mode has no timer capping / time limit
+  if (diff === 'casual' || maxSec === null || maxSec === undefined) {
+    game.timerSeconds = null;
+    if (timerDisplay) timerDisplay.textContent = '∞';
+    if (ringProgress) {
+      ringProgress.style.strokeDashoffset = 0;
+      ringProgress.classList.remove('danger');
+    }
+    return;
+  }
+
   game.timerSeconds = maxSec;
 
   if (timerDisplay) timerDisplay.textContent = game.timerSeconds;
@@ -707,6 +765,11 @@ function startTimer() {
 function updateTimerRing(currentSec, totalSec) {
   const ring = document.getElementById('timer-ring-progress');
   if (!ring) return;
+  if (!totalSec) {
+    ring.style.strokeDashoffset = 0;
+    ring.classList.remove('danger');
+    return;
+  }
   const circumference = 2 * Math.PI * 19; // ~119.38
   const pct = Math.max(0, currentSec / totalSec);
   const offset = circumference * (1 - pct);
@@ -760,7 +823,8 @@ window.onOptionSelect = function(idx) {
   stopTimer();
   if (window.audioEngine) {
     window.audioEngine.stopClip();
-    window.audioEngine.speak(`Option ${letter}: ${optName} ko lock kiya jaye?`);
+    const singerKey = (optName || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+    window.audioEngine.playVoice(`lock_ask_${letter}_${singerKey}`, `Option ${letter}: ${optName} ko lock kiya jaye?`);
   }
 };
 
@@ -775,8 +839,8 @@ window.declineLock = function() {
 window.confirmLock = function() {
   const confirmModal = document.getElementById('modal-lock-confirm');
   if (confirmModal) confirmModal.classList.remove('active');
-
   game.locked = true;
+
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
   const q = qList[game.qIndex % qList.length];
   const letter = ["A", "B", "C", "D"][game.selectedOption];
@@ -790,7 +854,8 @@ window.confirmLock = function() {
   // c2C.1 & c2C.4: Amitabh computer ji line + intense tension loop
   if (window.audioEngine) {
     window.audioEngine.startTensionLoop();
-    window.audioEngine.speak(`Computer ji, Option ${letter}: ${optName} lock kiya jaye!`);
+    const singerKey = (optName || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+    window.audioEngine.playVoice(`lock_do_${letter}_${singerKey}`, `Computer ji, Option ${letter}: ${optName} lock kiya jaye!`);
   }
 
   setTimeout(() => {
@@ -844,14 +909,25 @@ function evaluateAnswer(chosenIdx) {
 
     if (window.audioEngine) {
       window.audioEngine.playVictorySting();
-      window.audioEngine.speak("Bilkul sahi jawab! Adbhut!");
+      const prizeAmt = KBC_LADDER[game.qIndex].amount;
+      const prizeKey = `prize_${prizeAmt}`;
+      const correctVariants = ["correct_1", "correct_2", "correct_3"];
+      const correctKey = correctVariants[Math.floor(Math.random() * correctVariants.length)];
+      
+      // Play praise followed by prize declaration
+      window.audioEngine.playVoice(correctKey, "Bilkul sahi jawab! Adbhut!", () => {
+        window.audioEngine.playVoice(prizeKey, `Aap jeet chuke hain ${KBC_LADDER[game.qIndex].prize}!`);
+      });
     }
   } else {
     // Wrong answer drops winnings to guaranteed padaav prize
     game.currentPrize = game.guaranteedPrize || "₹ 0";
     if (window.audioEngine) {
       window.audioEngine.playWrongSting();
-      window.audioEngine.speak(`Galat jawab! Sahi uttar tha Option ${["A","B","C","D"][q.answer]}: ${q.options[q.answer]}`);
+      const wrongVariants = ["wrong_1", "wrong_2"];
+      const wrongKey = wrongVariants[Math.floor(Math.random() * wrongVariants.length)];
+      const answerLetter = ["A", "B", "C", "D"][q.answer];
+      window.audioEngine.playVoice(wrongKey, `Galat jawab! Sahi uttar tha Option ${answerLetter}: ${q.options[q.answer]}`);
     }
   }
 
@@ -1268,16 +1344,22 @@ window.triggerPhoneAFriendDispatch = async function(friendId) {
   const waitMsg = document.getElementById('phone-friend-wait-msg');
   if (waitMsg) waitMsg.textContent = `${friend.name} ko WhatsApp bhej diya gaya!`;
 
+  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
+  const q = qList[game.qIndex % qList.length];
+  const qPrompt = q.question || `Gaana '${q.song}' (${q.movie || "Bollywood"}) kis gaayak ne gaya hai?`;
+  const clipParam = encodeURIComponent(q.clip || q.preview || "");
+  const qTextParam = encodeURIComponent(qPrompt);
+  const optsParam = encodeURIComponent(JSON.stringify(q.options));
+  const playerParam = encodeURIComponent(profile.name || "Khiladi");
+
   // Set Call links & Init PeerJS
   const activeSess = game.sessionId || 'game';
   initPlayerPeerSession();
   const playerAudio = document.getElementById('btn-player-jitsi-audio');
   const playerVideo = document.getElementById('btn-player-jitsi-video');
-  if (playerAudio) playerAudio.href = `/friend-call.html?session=${encodeURIComponent(activeSess)}&mode=audio`;
-  if (playerVideo) playerVideo.href = `/friend-call.html?session=${encodeURIComponent(activeSess)}&mode=video`;
-
-  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
-  const q = qList[game.qIndex % qList.length];
+  const baseCallUrl = `/friend-call.html?session=${encodeURIComponent(activeSess)}&clip=${clipParam}&q=${qTextParam}&opts=${optsParam}&player=${playerParam}`;
+  if (playerAudio) playerAudio.href = `${baseCallUrl}&mode=audio`;
+  if (playerVideo) playerVideo.href = `${baseCallUrl}&mode=video`;
 
   try {
     const res = await fetch(`${API_BASE}/api/phone-friend/send`, {
@@ -1290,8 +1372,9 @@ window.triggerPhoneAFriendDispatch = async function(friendId) {
         sessionId: game.sessionId,
         friendName: friend.name,
         friendPhone: friend.phone,
-        question: q.question,
+        question: q.question || `${q.singer} ka gaana pehchano: '${q.song}' kisne gaya?`,
         options: q.options,
+        clip: q.clip || q.preview || "",
         playerName: profile.name
       })
     });
@@ -1314,11 +1397,19 @@ window.triggerPhoneAFriendDispatch = async function(friendId) {
 function fallbackDirectWhatsAppShare(friend, q) {
   const origin = window.location.origin.includes("localhost") ? window.location.origin : "https://kbc.harjani.me";
   const sId = game.sessionId || 'game';
-  const ansUrl = `${origin}/friend.html?session=${encodeURIComponent(sId)}&token=manual`;
-  const audioUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sId)}#config.startWithVideoMuted=true`;
-  const videoUrl = `https://meet.jit.si/surkbc-${encodeURIComponent(sId)}`;
+  const clipUrl = q.clip || q.preview || "";
+  const questionText = q.question || `Gaana '${q.song}' (${q.movie || "Bollywood"}) kis gaayak ne gaya hai?`;
+  const callBase = `${origin}/friend-call.html?session=${encodeURIComponent(sId)}&clip=${encodeURIComponent(clipUrl)}&q=${encodeURIComponent(questionText)}&opts=${encodeURIComponent(JSON.stringify(q.options))}&player=${encodeURIComponent(profile.name || "Khiladi")}`;
+  const audioUrl = `${callBase}&mode=audio`;
+  const videoUrl = `${callBase}&mode=video`;
 
-  const text = `🎵 SurKBC — Aapke dost ${profile.name} ko aapki madad chahiye!\n\nSawaal: ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\n\n👉 Uttar dene ke liye link:\n${ansUrl}\n\n🎙️ Audio call:\n${audioUrl}\n\n📹 Video call:\n${videoUrl}`;
+  // Fix 2: WhatsApp share template with clip link and direct call links (no redundant answer link)
+  let text = `🎵 SurKBC — Aapke dost ${profile.name} ko aapki madad chahiye!\n\nSawaal: ${questionText}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}`;
+  if (clipUrl) {
+    text += `\n\n🎵 Gaane Ki Audio Clip Sunein:\n${clipUrl}`;
+  }
+  text += `\n\n🎙️ Audio Call:\n${audioUrl}\n\n📹 Video Call:\n${videoUrl}`;
+
   const cleanPhone = (friend.phone || "").replace(/[\s\-\(\)\+]/g, "");
   const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
   window.open(waUrl, '_blank');
@@ -1435,7 +1526,7 @@ function onFriendAnswerReceived(optLetter, note, friendName) {
   if (ansModal) ansModal.classList.add('active');
 
   if (window.audioEngine) {
-    window.audioEngine.speak(`${friendName} ne kaha: Option ${optLetter}, ${optName}`);
+    window.audioEngine.playVoice('phone', `${friendName} ne kaha: Option ${optLetter}, ${optName}`);
   }
 }
 
@@ -1879,8 +1970,46 @@ function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
 }
 
+// --- FIX 4: ONE-TIME SECURITY CODE ONBOARDING GATE (Code: 0504) ---
+function checkSecurityCodeOnLoad() {
+  const isAuthPassed = localStorage.getItem('surkbc_auth_passed') === 'true';
+  const modal = document.getElementById('modal-security-gate');
+  if (!isAuthPassed && modal) {
+    modal.classList.add('active');
+    const input = document.getElementById('input-security-code');
+    if (input) {
+      input.value = '';
+      setTimeout(() => input.focus(), 300);
+    }
+  }
+}
+
+window.submitSecurityCode = function() {
+  const input = document.getElementById('input-security-code');
+  const errorMsg = document.getElementById('security-error-msg');
+  const modal = document.getElementById('modal-security-gate');
+  if (!input) return;
+
+  const entered = input.value.trim();
+  if (entered === DEFAULT_SECURITY_CODE) {
+    localStorage.setItem('surkbc_auth_passed', 'true');
+    if (modal) modal.classList.remove('active');
+    if (errorMsg) errorMsg.style.display = 'none';
+    showToast("Suraksha Code Swikaar! Swagat Hai!");
+  } else {
+    if (errorMsg) errorMsg.style.display = 'block';
+    input.classList.add('shake');
+    setTimeout(() => input.classList.remove('shake'), 500);
+    input.value = '';
+    input.focus();
+  }
+};
+
 // Initializer
 document.addEventListener('DOMContentLoaded', () => {
+  // Check one-time security code for first-time user
+  checkSecurityCodeOnLoad();
+
   // Check if a saved session was active
   let restoreScreen = 'screen-home';
   try {
