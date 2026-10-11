@@ -106,9 +106,21 @@ class AudioEngine {
   }
 
   // c2C.2: Clip Playback with Stop on Lock/Timeout/Quit (supports streaming preview URL or synthesized signature)
-  playClip(clipUrlOrName) {
+  playClip(clipUrlOrName, onDone = null) {
     this.init();
     this.stopClip();
+
+    let safetyTimer = null;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        if (safetyTimer) {
+          clearTimeout(safetyTimer);
+          safetyTimer = null;
+        }
+        if (onDone) onDone();
+      }
+    };
 
     if (typeof clipUrlOrName === 'string' && (clipUrlOrName.startsWith('http://') || clipUrlOrName.startsWith('https://') || clipUrlOrName.endsWith('.mp3') || clipUrlOrName.endsWith('.m4a'))) {
       try {
@@ -116,18 +128,30 @@ class AudioEngine {
         audio.volume = 0.85;
         this.currentAudio = audio;
 
+        // When clip completes naturally, invoke callback
+        audio.onended = () => {
+          setTimeout(finish, 400); // 400ms musical breath before reciting options
+        };
+        audio.onerror = finish;
+        // 14s safety timeout for long song clips
+        safetyTimer = setTimeout(finish, 14000);
+
         audio.play().catch(e => {
           console.warn("Stream preview play error:", e);
+          finish();
         });
         return;
       } catch (e) {
         console.warn("Error creating preview audio:", e);
+        finish();
+        return;
       }
     }
 
     // Synthesized melodic signature hook connected to analyser as fallback
     if (this.ctx) {
       const melodyChords = [261.63, 329.63, 392.00, 523.25, 440.00, 392.00];
+      setTimeout(finish, melodyChords.length * 300 + 400);
       melodyChords.forEach((freq, idx) => {
         try {
           const osc = this.ctx.createOscillator();
@@ -385,38 +409,195 @@ class AudioEngine {
     }
   }
 
-  // c2C.1: Hindi TTS with Amitabh deep baritone tuning
+  // Fix 1 & 2: High-Fidelity Microsoft Edge Neural Hindi TTS (/api/tts) with Native Devanagari Mapping
   speak(text, onDone = null) {
-    if (!VOICE_ENABLED || !('speechSynthesis' in window)) {
+    if (!VOICE_ENABLED || !text) {
+      if (onDone) onDone();
+      return;
+    }
+
+    this.init();
+    this.cancelVoice();
+
+    let finished = false;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        if (onDone) onDone();
+      }
+    };
+
+    // Auto-transliterate common Romanized host keywords to native Devanagari for natural human Hindi phonetics
+    let devanagariText = text;
+    const translitMap = [
+      [/Option A/gi, "ऑप्शन ए"],
+      [/Option B/gi, "ऑप्शन बी"],
+      [/Option C/gi, "ऑप्शन सी"],
+      [/Option D/gi, "ऑप्शन डी"],
+      [/Pehla sawaal aapki screen par —/gi, "पहला सवाल आपकी स्क्रीन पर..."],
+      [/Agla sawaal aapki screen par —/gi, "अगला सवाल आपकी स्क्रीन पर..."],
+      [/yeh gaane/gi, "इस गाने"],
+      [/ka gaayak kaun hai\?/gi, "के गायक कौन हैं?"],
+      [/Aapka samay shuru hota hai ab!/gi, "आपका समय शुरू होता है... अब!"],
+      [/ko lock kiya jaye\?/gi, "को लॉक किया जाए?"],
+      [/Computer ji, lock kar dijiye!/gi, "कंप्यूटर जी... लॉक कर दीजिए!"],
+      [/Bilkul sahi jawaab! Adbhut! Aap jeet chuke hain/gi, "बिल्कुल सही जवाब! अद्भुत! आप जीत चुके हैं"],
+      [/Galat jawaab! Sahi uttar tha/gi, "गलत जवाब! सही उत्तर था"],
+      [/Aapne jeete hain/gi, "आपने जीते हैं"],
+      [/Aap yahan se bina kisi dhanraashi ke jaa rahe hain/gi, "आप यहाँ से बिना किसी धनराशि के जा रहे हैं"],
+      [/Namaskar! Main hoon Amarnath Bachpan, aur aap dekh rahe hain Kaun Banega Crorepati! Shuru karte hain khel bina kisi deri ke!/gi,
+       "नमस्कार! मैं हूँ अमरनाथ बच्चन, और आप देख रहे हैं कौन बनेगा करोड़पति! शुरू करते हैं खेल बिना किसी देरी के!"]
+    ];
+
+    for (const [pattern, dev] of translitMap) {
+      devanagariText = devanagariText.replace(pattern, dev);
+    }
+
+    // Read voice preferences from profile or AudioEngine settings
+    const voiceMode = (window.profile && window.profile.voiceMode) || "madhur";
+    const userPitchHz = (window.profile && typeof window.profile.voicePitch === "number") ? window.profile.voicePitch : -6;
+    const userSpeedMult = (window.profile && typeof window.profile.voiceSpeed === "number") ? window.profile.voiceSpeed : 1.0;
+
+    // Device Native Voice mode
+    if (voiceMode === "device") {
+      this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+      return;
+    }
+
+    // Server-side Neural Voice mode
+    let serverRate = "-4%";
+    let serverPitch = `${userPitchHz}Hz`;
+
+    if (voiceMode === "rj") {
+      serverRate = "+12%";
+      serverPitch = "+2Hz";
+    } else if (voiceMode === "swara") {
+      serverRate = "0%";
+      serverPitch = "0Hz";
+    } else {
+      // Custom sliders applied to Amarnath
+      const pctRate = Math.round((userSpeedMult - 1.0) * 100) - 4;
+      serverRate = (pctRate >= 0 ? `+${pctRate}%` : `${pctRate}%`);
+      serverPitch = `${userPitchHz}Hz`;
+    }
+
+    // 1. Try Microsoft Audio Endpoint with client acoustic modulation
+    try {
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(devanagariText.trim())}&voice=${encodeURIComponent(voiceMode)}&rate=${encodeURIComponent(serverRate)}&pitch=${encodeURIComponent(serverPitch)}`;
+      const neuralAudio = new Audio(ttsUrl);
+      neuralAudio.volume = 1.0;
+
+      const applyAcoustics = () => {
+        try {
+          if (voiceMode === "rj") {
+            neuralAudio.playbackRate = 1.25;
+            neuralAudio.preservesPitch = false;
+            neuralAudio.mozPreservesPitch = false;
+            neuralAudio.webkitPreservesPitch = false;
+          } else if (voiceMode === "swara") {
+            neuralAudio.playbackRate = 1.15;
+            neuralAudio.preservesPitch = false;
+            neuralAudio.mozPreservesPitch = false;
+            neuralAudio.webkitPreservesPitch = false;
+          } else {
+            // Amarnath Bachchan / Custom Sliders
+            const speedFactor = Math.max(0.7, Math.min(1.4, userSpeedMult));
+            let rateFactor = speedFactor;
+            if (userPitchHz <= -6) {
+              rateFactor = 0.82 * speedFactor; // Deep baritone resonance
+            } else if (userPitchHz <= -3) {
+              rateFactor = 0.90 * speedFactor;
+            } else if (userPitchHz >= 2) {
+              rateFactor = 1.18 * speedFactor;
+            }
+            neuralAudio.playbackRate = rateFactor;
+            neuralAudio.preservesPitch = false;
+            neuralAudio.mozPreservesPitch = false;
+            neuralAudio.webkitPreservesPitch = false;
+          }
+        } catch (e) {}
+      };
+
+      applyAcoustics();
+      neuralAudio.addEventListener('loadedmetadata', applyAcoustics);
+      neuralAudio.addEventListener('play', applyAcoustics);
+
+      this.currentVoiceAudio = neuralAudio;
+
+      neuralAudio.onended = finish;
+      neuralAudio.onerror = () => {
+        // Fall back to client SpeechSynthesis
+        this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+      };
+
+      // Dynamic safety timeout
+      const safetyMs = Math.max(5000, devanagariText.length * 120);
+      setTimeout(finish, safetyMs);
+
+      neuralAudio.play().catch(() => {
+        this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+      });
+      return;
+    } catch (e) {
+      this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+    }
+  }
+
+  speakFallback(text, onDone = null, speed = 1.0, pitchHz = -6) {
+    if (!('speechSynthesis' in window)) {
       if (onDone) onDone();
       return;
     }
 
     try {
-      window.speechSynthesis.cancel(); // Cancel any queued speech
-
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.90; // Natural pacing
-      utterance.pitch = 0.75; // Amitabh deep baritone
+      
+      const voiceMode = (window.profile && window.profile.voiceMode) || "madhur";
 
-      // Pick Hindi / Indian English voice
+      // Rate: from 0.75x to 1.4x
+      let calculatedRate = speed;
+      if (voiceMode === "rj") calculatedRate = 1.25;
+      else if (voiceMode === "madhur" && calculatedRate === 1.0) calculatedRate = 0.88;
+      utterance.rate = Math.max(0.65, Math.min(1.5, calculatedRate));
+
+      // Pitch: from 0.5 (deep baritone) to 1.5 (high female/peppy)
+      let calculatedPitch = 1.0 + (pitchHz / 12);
+      if (voiceMode === "madhur") calculatedPitch = Math.min(calculatedPitch, 0.72); // Deep baritone
+      else if (voiceMode === "swara") calculatedPitch = 1.25; // Distinct female tone
+      else if (voiceMode === "rj") calculatedPitch = 1.15;
+      utterance.pitch = Math.max(0.45, Math.min(1.6, calculatedPitch));
+
       const voices = window.speechSynthesis.getVoices();
-      const hiVoice = voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.lang.includes('IN')) || voices[0];
-      if (hiVoice) utterance.voice = hiVoice;
+      const hiVoices = voices.filter(v => v.lang.startsWith('hi') || v.lang.includes('IN'));
+
+      if (voiceMode === "swara") {
+        // Find female voice
+        const female = hiVoices.find(v => /female|swara|kalpana|geeta|zira/i.test(v.name)) ||
+                       voices.find(v => /female|zira|samantha|kavya/i.test(v.name)) ||
+                       hiVoices[0];
+        if (female) utterance.voice = female;
+      } else if (voiceMode === "madhur" || voiceMode === "rj") {
+        // Find male voice
+        const male = hiVoices.find(v => /male|madhur|rishi|hemant|david|prabhat/i.test(v.name)) ||
+                     voices.find(v => /male|david|rishi/i.test(v.name)) ||
+                     hiVoices[0];
+        if (male) utterance.voice = male;
+      } else if (hiVoices.length) {
+        utterance.voice = hiVoices[0];
+      }
 
       let called = false;
-      const finish = () => {
+      const done = () => {
         if (!called) {
           called = true;
           if (onDone) onDone();
         }
       };
 
-      utterance.onend = finish;
-      utterance.onerror = finish;
-      // 4s safety timeout so game flow never hangs
-      setTimeout(finish, 4000);
-
+      utterance.onend = done;
+      utterance.onerror = done;
+      setTimeout(done, Math.max(4500, text.length * 100));
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       if (onDone) onDone();
@@ -432,7 +613,9 @@ class AudioEngine {
       this.currentVoiceAudio = null;
     }
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
     }
   }
 }

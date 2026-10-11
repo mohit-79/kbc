@@ -1,27 +1,16 @@
 import urllib.request
-import json
 
-payload = {
-    "sessionId": "test-session-123",
-    "friendPhone": "8962244848",
-    "friendName": "Mohit",
-    "question": "Test question?",
-    "options": ["A", "B", "C", "D"],
-    "playerName": "Mohit"
-}
+urls = [
+    ("Default (Madhur/Google)", "https://kbc.harjani.me/api/tts?text=%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0"),
+    ("Swara", "https://kbc.harjani.me/api/tts?text=%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0&voice=swara"),
+    ("RJ", "https://kbc.harjani.me/api/tts?text=%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0&voice=rj")
+]
 
-req = urllib.request.Request(
-    "https://kbc.harjani.me/api/phone-friend/send",
-    data=json.dumps(payload).encode('utf-8'),
-    headers={
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-)
-
-with urllib.request.urlopen(req) as resp:
-    data = json.loads(resp.read().decode('utf-8'))
-    print("STATUS:", resp.status)
-    print("SUCCESS:", data.get('success'))
-    print("DELIVERED:", data.get('delivered'))
-    print("GATEWAY:", data.get('gateway'))
+for label, u in urls:
+    req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req) as r:
+            data = r.read()
+            print(f"{label}: Status {r.status}, Length: {len(data)} bytes, Content-Type: {r.headers.get('content-type')}")
+    except Exception as e:
+        print(f"{label} error:", e)

@@ -136,6 +136,7 @@ function getSingerPhoto(name) {
 
 // --- STATE MANAGEMENT ---
 let profile = loadProfile();
+window.profile = profile;
 let musicFactsData = null;
 
 fetch('musicFacts.json')
@@ -153,6 +154,9 @@ function loadProfile() {
     highScore: "₹ 0",
     gamesPlayed: 0,
     difficulty: "easy",
+    voiceMode: "madhur",
+    voicePitch: -6,
+    voiceSpeed: 1.0,
     friends: []
   };
 }
@@ -610,6 +614,21 @@ window.removeFriend = function(id) {
   showToast(`${removedName} ko list se hata diya gaya!`);
 };
 
+// Fix 5: Grand Opening Intro Dialogue ("Namaskar mai hu amarnath bachpan...")
+window.startHotSeatGame = function() {
+  show('screen-intro');
+  if (window.audioEngine) {
+    window.audioEngine.cancelVoice();
+    const introSpeech = "नमस्कार! मैं हूँ अमरनाथ बच्चन, और आप देख रहे हैं कौन बनेगा करोड़पति! शुरू करते हैं खेल बिना किसी देरी के!";
+    window.audioEngine.speak(introSpeech, () => {
+      // Announce question 1 after opening monologue concludes
+      const upcomingLadder = KBC_LADDER[0];
+      const levelAnnouncement = `पहला प्रश्न... ${upcomingLadder.prize} के लिए!`;
+      window.audioEngine.speak(levelAnnouncement);
+    });
+  }
+};
+
 // --- SCREEN 2: HOT-SEAT INTRO ---
 function renderIntro() {
   if (!game.sessionId) {
@@ -623,12 +642,36 @@ function renderIntro() {
       const isCurrent = idx === game.qIndex;
       const isPadaav = PADAAV.includes(idx) || idx === 14;
       return `
-        <div class="ladder-row ${isCurrent ? 'active' : ''} ${isPadaav ? 'padaav' : ''}">
+        <div id="ladder-row-${idx}" class="ladder-row ${isCurrent ? 'active' : ''} ${isPadaav ? 'padaav' : ''}">
           <span class="ladder-idx">${t.level} ${isCurrent ? '▶' : ''}</span>
           <span class="ladder-val">${t.prize}</span>
         </div>
       `;
     }).join('');
+
+    // Smoothly scroll the upcoming question's row into view and center it
+    setTimeout(() => {
+      const activeRow = document.getElementById(`ladder-row-${game.qIndex}`);
+      if (activeRow) {
+        activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 250);
+  }
+
+  // Vocal announcement of the upcoming question level & prize (for question 2 onwards)
+  if (game.qIndex > 0 && window.audioEngine) {
+    const upcomingLadder = KBC_LADDER[game.qIndex] || KBC_LADDER[0];
+    const qNum = game.qIndex + 1;
+    const isPadaav = PADAAV.includes(game.qIndex);
+    let levelAnnouncement = `अगला पड़ाव, प्रश्न संख्या ${qNum}... ${upcomingLadder.prize} के लिए!`;
+    if (isPadaav) {
+      levelAnnouncement = `सावधान! यह एक महत्वपूर्ण पड़ाव है... प्रश्न संख्या ${qNum}... पूरे ${upcomingLadder.prize} के लिए!`;
+    }
+
+    setTimeout(() => {
+      window.audioEngine.cancelVoice();
+      window.audioEngine.speak(levelAnnouncement);
+    }, 450);
   }
 
   // Update lifeline chips HUD in intro
@@ -703,19 +746,45 @@ function renderQuestion() {
   }
 
   updateLifelineHUD();
-  startTimer();
+  stopTimer(); // Keep clock stopped during host's presentation
 
-  const currentPrizeAmount = KBC_LADDER[game.qIndex] ? KBC_LADDER[game.qIndex].amount : 1000;
-  const qIntroKey = `qintro_${currentPrizeAmount}`;
-  const nextQFallback = `Agla sawaal ${KBC_LADDER[game.qIndex].prize} ka aapki screen par. ${promptText}`;
+  // Fix 2: Authentic KBC Presentation Choreography in Native Devanagari
+  const isFirst = (game.qIndex === 0);
+  const qAnnouncement = isFirst
+    ? `पहला सवाल आपकी स्क्रीन पर... इस गाने ${q.song || 'इस गाने'} के गायक कौन हैं?`
+    : `अगला सवाल आपकी स्क्रीन पर... इस गाने ${q.song || 'इस गाने'} के गायक कौन हैं?`;
+
+  const activeIndex = game.qIndex;
 
   if (window.audioEngine) {
-    window.audioEngine.playVoice(qIntroKey, nextQFallback, () => {
-      // Play song clip once intro narration completes
-      if (game.qIndex === game.qIndex) {
-        window.audioEngine.playClip(q.clip);
-      }
+    window.audioEngine.cancelVoice();
+    window.audioEngine.stopClip();
+
+    // Step 1: Host announces question in Hindi
+    window.audioEngine.speak(qAnnouncement, () => {
+      if (game.qIndex !== activeIndex || game.locked) return;
+
+      // Step 2: Song clip plays
+      window.audioEngine.playClip(q.clip, () => {
+        if (game.qIndex !== activeIndex || game.locked) return;
+
+        // Step 3: Host vocally recites all 4 options in Hindi
+        const optsText = `ऑप्शन ए: ${q.options[0]}... ऑप्शन बी: ${q.options[1]}... ऑप्शन सी: ${q.options[2]}... ऑप्शन डी: ${q.options[3]}!`;
+        window.audioEngine.speak(optsText, () => {
+          if (game.qIndex !== activeIndex || game.locked) return;
+
+          // Step 4: Host declares timer start in Hindi
+          window.audioEngine.speak("आपका समय शुरू होता है... अब!", () => {
+            if (game.qIndex !== activeIndex || game.locked) return;
+
+            // Step 5: Clock begins ticking and countdown starts!
+            startTimer();
+          });
+        });
+      });
     });
+  } else {
+    startTimer();
   }
 }
 
@@ -828,9 +897,11 @@ window.onOptionSelect = function(idx) {
 
   stopTimer();
   if (window.audioEngine) {
+    window.audioEngine.cancelVoice();
     window.audioEngine.stopClip();
-    const singerKey = (optName || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
-    window.audioEngine.playVoice(`lock_ask_${letter}_${singerKey}`, `Option ${letter}: ${optName} ko lock kiya jaye?`);
+    // Fix 3: Host asks: "ऑप्शन X: {singer name} को लॉक किया जाए?"
+    const hindiLetter = { "A": "ए", "B": "बी", "C": "सी", "D": "डी" }[letter] || letter;
+    window.audioEngine.speak(`ऑप्शन ${hindiLetter}: ${optName} को लॉक किया जाए?`);
   }
 };
 
@@ -839,6 +910,7 @@ window.declineLock = function() {
   if (modal) modal.classList.remove('active');
   game.selectedOption = null;
   document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+  if (window.audioEngine) window.audioEngine.cancelVoice();
   startTimer();
 };
 
@@ -854,21 +926,20 @@ window.confirmLock = function() {
 
   const suspenseModal = document.getElementById('modal-suspense');
   const suspText = document.getElementById('suspense-text');
-  if (suspText) suspText.textContent = `Computer ji, Option ${letter}: ${optName} lock kiya jaye!`;
+  if (suspText) suspText.textContent = `Computer ji, lock kar dijiye!`;
   if (suspenseModal) suspenseModal.classList.add('active');
 
-  // c2C.1 & c2C.4: Amitabh computer ji line + intense tension loop
+  // Fix 3: Host commands: "कंप्यूटर जी... लॉक कर दीजिए!" with suspense music
   if (window.audioEngine) {
     window.audioEngine.startTensionLoop();
-    const singerKey = (optName || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
-    window.audioEngine.playVoice(`lock_do_${letter}_${singerKey}`, `Computer ji, Option ${letter}: ${optName} lock kiya jaye!`);
+    window.audioEngine.speak("कंप्यूटर जी... लॉक कर दीजिए!");
   }
 
   setTimeout(() => {
     if (suspenseModal) suspenseModal.classList.remove('active');
     if (window.audioEngine) window.audioEngine.stopTensionLoop();
     evaluateAnswer(game.selectedOption);
-  }, 2400);
+  }, 2600);
 };
 
 // --- RESULT INTERSTITIAL ---
@@ -915,25 +986,21 @@ function evaluateAnswer(chosenIdx) {
 
     if (window.audioEngine) {
       window.audioEngine.playVictorySting();
-      const prizeAmt = KBC_LADDER[game.qIndex].amount;
-      const prizeKey = `prize_${prizeAmt}`;
-      const correctVariants = ["correct_1", "correct_2", "correct_3"];
-      const correctKey = correctVariants[Math.floor(Math.random() * correctVariants.length)];
-      
-      // Play praise followed by prize declaration
-      window.audioEngine.playVoice(correctKey, "Bilkul sahi jawab! Adbhut!", () => {
-        window.audioEngine.playVoice(prizeKey, `Aap jeet chuke hain ${KBC_LADDER[game.qIndex].prize}!`);
-      });
+      // Fix 4: Vocal praise and exact prize won declaration in Devanagari
+      window.audioEngine.speak(`बिल्कुल सही जवाब! अद्भुत! आप जीत चुके हैं ${KBC_LADDER[game.qIndex].prize}!`);
     }
   } else {
     // Wrong answer drops winnings to guaranteed padaav prize
     game.currentPrize = game.guaranteedPrize || "₹ 0";
     if (window.audioEngine) {
       window.audioEngine.playWrongSting();
-      const wrongVariants = ["wrong_1", "wrong_2"];
-      const wrongKey = wrongVariants[Math.floor(Math.random() * wrongVariants.length)];
       const answerLetter = ["A", "B", "C", "D"][q.answer];
-      window.audioEngine.playVoice(wrongKey, `Galat jawab! Sahi uttar tha Option ${answerLetter}: ${q.options[q.answer]}`);
+      const hindiLetter = { "A": "ए", "B": "बी", "C": "सी", "D": "डी" }[answerLetter] || answerLetter;
+      // Fix 4: Vocal wrong announcement with correct answer and final money won in Devanagari
+      const wonText = (game.guaranteedPrize && game.guaranteedPrize !== "₹ 0")
+        ? `आपने जीते हैं ${game.guaranteedPrize}!`
+        : "आप यहाँ से बिना किसी धनराशि के जा रहे हैं!";
+      window.audioEngine.speak(`गलत जवाब! सही उत्तर था ऑप्शन ${hindiLetter}: ${q.options[q.answer]}! ${wonText}`);
     }
   }
 
@@ -1169,17 +1236,118 @@ window.restartGame = function() {
 function renderSettings() {
   const diffSelect = document.getElementById('settings-difficulty-select');
   if (diffSelect) diffSelect.value = profile.difficulty || 'easy';
+
+  const voiceSelect = document.getElementById('settings-voice-select');
+  if (voiceSelect) voiceSelect.value = profile.voiceMode || 'madhur';
+
+  const pitchSlider = document.getElementById('settings-pitch-slider');
+  const pitchVal = (typeof profile.voicePitch === 'number') ? profile.voicePitch : -6;
+  if (pitchSlider) {
+    pitchSlider.value = pitchVal;
+    updatePitchDisplay(pitchVal);
+  }
+
+  const speedSlider = document.getElementById('settings-speed-slider');
+  const speedVal = (typeof profile.voiceSpeed === 'number') ? profile.voiceSpeed : 1.0;
+  if (speedSlider) {
+    speedSlider.value = speedVal;
+    updateSpeedDisplay(speedVal);
+  }
 }
+
+window.updatePitchDisplay = function(val) {
+  const label = document.getElementById('settings-pitch-val');
+  if (!label) return;
+  const num = parseInt(val, 10);
+  let desc = "Normal";
+  if (num <= -8) desc = "Very Deep (Bachchan)";
+  else if (num <= -4) desc = "Deep Baritone";
+  else if (num < 0) desc = "Warm";
+  else if (num > 0) desc = "High Pitch";
+  label.textContent = `${num > 0 ? '+' : ''}${num} Hz (${desc})`;
+};
+
+window.updateSpeedDisplay = function(val) {
+  const label = document.getElementById('settings-speed-val');
+  if (!label) return;
+  const num = parseFloat(val);
+  let desc = "Normal";
+  if (num <= 0.85) desc = "Slow & Dramatic";
+  else if (num >= 1.2) desc = "Fast & Peppy";
+  else if (num >= 1.1) desc = "Brisk";
+  label.textContent = `${num.toFixed(2)}x (${desc})`;
+};
+
+window.onVoicePersonaChange = function() {
+  const voiceSelect = document.getElementById('settings-voice-select');
+  const pitchSlider = document.getElementById('settings-pitch-slider');
+  const speedSlider = document.getElementById('settings-speed-slider');
+  if (!voiceSelect) return;
+
+  const mode = voiceSelect.value;
+  if (mode === 'madhur') {
+    if (pitchSlider) { pitchSlider.value = -6; updatePitchDisplay(-6); }
+    if (speedSlider) { speedSlider.value = 1.0; updateSpeedDisplay(1.0); }
+  } else if (mode === 'swara') {
+    if (pitchSlider) { pitchSlider.value = 0; updatePitchDisplay(0); }
+    if (speedSlider) { speedSlider.value = 1.0; updateSpeedDisplay(1.0); }
+  } else if (mode === 'rj') {
+    if (pitchSlider) { pitchSlider.value = 2; updatePitchDisplay(2); }
+    if (speedSlider) { speedSlider.value = 1.2; updateSpeedDisplay(1.2); }
+  }
+};
+
+window.testHostVoice = function() {
+  const voiceSelect = document.getElementById('settings-voice-select');
+  const pitchSlider = document.getElementById('settings-pitch-slider');
+  const speedSlider = document.getElementById('settings-speed-slider');
+
+  const selectedVoice = voiceSelect ? voiceSelect.value : (profile.voiceMode || 'madhur');
+  const selectedPitch = pitchSlider ? parseInt(pitchSlider.value, 10) : -6;
+  const selectedSpeed = speedSlider ? parseFloat(speedSlider.value) : 1.0;
+
+  // Temporarily apply to profile for the test utterance
+  const origVoice = profile.voiceMode;
+  const origPitch = profile.voicePitch;
+  const origSpeed = profile.voiceSpeed;
+
+  profile.voiceMode = selectedVoice;
+  profile.voicePitch = selectedPitch;
+  profile.voiceSpeed = selectedSpeed;
+
+  if (window.audioEngine) {
+    window.audioEngine.cancelVoice();
+    let previewSpeech = "नमस्कार! मैं हूँ आपका होस्ट, और आप देख रहे हैं सुर केबीसी! आपका स्वागत है!";
+    if (selectedVoice === 'swara') {
+      previewSpeech = "नमस्कार! मैं हूँ आपकी होस्ट स्वरा! सुर केबीसी में आप सभी का स्वागत है!";
+    } else if (selectedVoice === 'rj') {
+      previewSpeech = "हेल्लो दोस्तों! मैं हूँ आपका रेडियो आर-जे! चलिए शुरू करते हैं सुर केबीसी का ये धमाकेदार खेल!";
+    }
+    showToast("Voice Preview chalu...");
+    window.audioEngine.speak(previewSpeech, () => {
+      // Revert temporary preview state
+      profile.voiceMode = origVoice;
+      profile.voicePitch = origPitch;
+      profile.voiceSpeed = origSpeed;
+    });
+  }
+};
 
 window.saveSettings = function() {
   const diffSelect = document.getElementById('settings-difficulty-select');
-  if (diffSelect) {
-    profile.difficulty = diffSelect.value;
-    saveProfile();
-    game = createNewGameState();
-    showToast("Settings Save Ho Gayi!");
-    show('screen-home');
-  }
+  const voiceSelect = document.getElementById('settings-voice-select');
+  const pitchSlider = document.getElementById('settings-pitch-slider');
+  const speedSlider = document.getElementById('settings-speed-slider');
+
+  if (diffSelect) profile.difficulty = diffSelect.value;
+  if (voiceSelect) profile.voiceMode = voiceSelect.value;
+  if (pitchSlider) profile.voicePitch = parseInt(pitchSlider.value, 10);
+  if (speedSlider) profile.voiceSpeed = parseFloat(speedSlider.value);
+
+  saveProfile();
+  game = createNewGameState();
+  showToast("Settings & Voice Save Ho Gayi!");
+  show('screen-home');
 };
 
 // ==========================================================================

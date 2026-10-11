@@ -461,13 +461,55 @@
       });
     }
 
-    // Auto Re-Ask Voice & Audio Clip Routine
+    // Auto Re-Ask Voice & Audio Clip Routine using Neural TTS (/api/tts)
     let hasReasked = false;
     let ttsCancelRequested = false;
+    let friendVoiceAudio = null;
 
     function speakTextTTS(text, onDone = null) {
-      if (!('speechSynthesis' in window) || ttsCancelRequested) {
+      if (!text || ttsCancelRequested) {
         if (onDone) setTimeout(onDone, 300);
+        return;
+      }
+
+      let finished = false;
+      const finish = () => {
+        if (!finished) {
+          finished = true;
+          if (onDone) onDone();
+        }
+      };
+
+      // 1. Try Microsoft Edge Neural Audio Endpoint
+      try {
+        if (friendVoiceAudio) {
+          try { friendVoiceAudio.pause(); } catch (e) {}
+        }
+        const ttsUrl = `/api/tts?text=${encodeURIComponent(text.trim())}`;
+        const neuralAudio = new Audio(ttsUrl);
+        neuralAudio.volume = 1.0;
+        friendVoiceAudio = neuralAudio;
+
+        neuralAudio.onended = finish;
+        neuralAudio.onerror = () => {
+          speakTextTTSFallback(text, finish);
+        };
+
+        const safetyMs = Math.max(5000, text.length * 120);
+        setTimeout(finish, safetyMs);
+
+        neuralAudio.play().catch(() => {
+          speakTextTTSFallback(text, finish);
+        });
+        return;
+      } catch (e) {
+        speakTextTTSFallback(text, finish);
+      }
+    }
+
+    function speakTextTTSFallback(text, onDone = null) {
+      if (!('speechSynthesis' in window) || ttsCancelRequested) {
+        if (onDone) onDone();
         return;
       }
       try {
@@ -488,7 +530,7 @@
         };
         u.onend = finish;
         u.onerror = finish;
-        setTimeout(finish, 6000);
+        setTimeout(finish, Math.max(4500, text.length * 100));
         window.speechSynthesis.speak(u);
       } catch (e) {
         if (onDone) onDone();
@@ -504,8 +546,8 @@
       setTimeout(() => {
         if (ttsCancelRequested) return;
 
-        // 1. Speak Question
-        const qSpeech = qText ? `Sawaal hai: ${qText}. Kripya gaana sunein.` : "Kripya gaana sunein aur sahi vikalp chunein.";
+        // 1. Speak Question in Hindi
+        const qSpeech = qText ? `सवाल है: ${qText}। कृपया गाना सुनें।` : "कृपया गाना सुनें और सही विकल्प चुनें।";
         speakTextTTS(qSpeech, () => {
           if (ttsCancelRequested) return;
 
@@ -545,8 +587,8 @@
     function readOptionsVocally() {
       if (ttsCancelRequested) return;
       if (Array.isArray(optionsList) && optionsList.length >= 4) {
-        const letters = ["Option A", "Option B", "Option C", "Option D"];
-        const optSpeech = `Vikalp hain: ${letters[0]}, ${optionsList[0]}. ${letters[1]}, ${optionsList[1]}. ${letters[2]}, ${optionsList[2]}. ${letters[3]}, ${optionsList[3]}.`;
+        const letters = ["ऑप्शन ए", "ऑप्शन बी", "ऑप्शन सी", "ऑप्शन डी"];
+        const optSpeech = `विकल्प हैं: ${letters[0]}, ${optionsList[0]}... ${letters[1]}, ${optionsList[1]}... ${letters[2]}, ${optionsList[2]}... ${letters[3]}, ${optionsList[3]}!`;
         speakTextTTS(optSpeech);
       }
     }

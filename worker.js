@@ -737,6 +737,105 @@ export default {
         return new Response(JSON.stringify({ success: true, delivered }), { status: 200, headers: corsHeaders });
       }
 
+      // 13B. Neural Hindi TTS Endpoint: GET /api/tts?text=...&voice=...&rate=...&pitch=...
+      if (url.pathname === "/api/tts" && method === "GET") {
+        const text = (url.searchParams.get("text") || "").trim();
+        const voiceParam = url.searchParams.get("voice") || "madhur";
+        const rateParam = url.searchParams.get("rate") || "-4%";
+        const pitchParam = url.searchParams.get("pitch") || "-6Hz";
+
+        if (!text) {
+          return new Response(JSON.stringify({ error: "Missing text" }), { status: 400, headers: corsHeaders });
+        }
+
+        // Check Cloudflare Edge Cache first
+        const cache = caches.default;
+        const cacheKey = new Request(request.url, request);
+        let cachedResponse = await cache.match(cacheKey);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        try {
+          // Resolve Edge Neural Voice
+          let neuralVoice = "hi-IN-MadhurNeural";
+          if (voiceParam === "swara") {
+            neuralVoice = "hi-IN-SwaraNeural";
+          } else if (voiceParam === "rj") {
+            neuralVoice = "hi-IN-MadhurNeural";
+          }
+
+          // Microsoft Edge Speech Endpoint
+          const edgeUrl = "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?trustedclienttoken=6A5AA1D4EAFF4E9FB37E23D68491D6F4";
+          // Fine-tuned pauses and natural cadence
+          const cleanText = text
+            .replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c])
+            .replace(/\.\.\./g, '<break time="300ms"/>')
+            .replace(/—/g, '<break time="250ms"/>');
+
+          const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='hi-IN'>
+            <voice name='${neuralVoice}'>
+              <prosody rate='${rateParam}' pitch='${pitchParam}'>
+                ${cleanText}
+              </prosody>
+            </voice>
+          </speak>`;
+
+          const edgeRes = await fetch(edgeUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/ssml+xml",
+              "X-RequestId": crypto.randomUUID(),
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+            },
+            body: ssml
+          });
+
+          if (edgeRes.ok) {
+            const audioData = await edgeRes.arrayBuffer();
+            const response = new Response(audioData, {
+              status: 200,
+              headers: {
+                "Content-Type": "audio/mpeg",
+                "Cache-Control": "public, max-age=604800, immutable",
+                "Access-Control-Allow-Origin": "*"
+              }
+            });
+            ctx.waitUntil(cache.put(cacheKey, response.clone()));
+            return response;
+          }
+        } catch (e) {
+          console.warn("Edge TTS fetch error:", e);
+        }
+
+        // Fallback: Google Translate TTS audio stream
+        try {
+          const gUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.substring(0, 190))}&tl=hi&client=tw-ob`;
+          const gRes = await fetch(gUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            }
+          });
+          if (gRes.ok) {
+            const gAudio = await gRes.arrayBuffer();
+            const response = new Response(gAudio, {
+              status: 200,
+              headers: {
+                "Content-Type": "audio/mpeg",
+                "Cache-Control": "public, max-age=86400",
+                "Access-Control-Allow-Origin": "*"
+              }
+            });
+            ctx.waitUntil(cache.put(cacheKey, response.clone()));
+            return response;
+          }
+        } catch (e) {
+          console.warn("Google TTS fallback error:", e);
+        }
+
+        return new Response(JSON.stringify({ error: "TTS generation failed" }), { status: 502, headers: corsHeaders });
+      }
+
       // 14. Real-Time WebSocket Endpoint: /ws?session=<sessionId>
       if (url.pathname === "/ws") {
         const sessionId = url.searchParams.get("session");
