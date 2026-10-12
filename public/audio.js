@@ -135,7 +135,7 @@ class AudioEngine {
   }
 
   // c2C.2: Clip Playback with Stop on Lock/Timeout/Quit (supports streaming preview URL or synthesized signature)
-  playClip(clipUrlOrName, onDone = null) {
+  playClip(clipUrlOrName, onDone = null, vocalOffset = null) {
     this.init();
     this.stopClip();
 
@@ -158,6 +158,22 @@ class AudioEngine {
         const audio = new Audio(clipUrlOrName);
         audio.volume = 0.85;
         this.currentAudio = audio;
+
+        // Smart Vocal Seek: Skip instrumental intro so contestant immediately hears the artist singing
+        const targetSeek = (typeof vocalOffset === 'number' && vocalOffset >= 0) ? vocalOffset : 7.0;
+        let hasSeeked = false;
+        const applySeek = () => {
+          if (hasSeeked) return;
+          try {
+            if (audio.duration && audio.duration > (targetSeek + 5)) {
+              audio.currentTime = targetSeek;
+              hasSeeked = true;
+            }
+          } catch (e) {}
+        };
+
+        audio.addEventListener('loadedmetadata', applySeek, { once: true });
+        audio.addEventListener('canplay', applySeek, { once: true });
 
         // When clip completes naturally, invoke callback
         audio.onended = () => {
