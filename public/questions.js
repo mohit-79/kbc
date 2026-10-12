@@ -30,6 +30,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Arijit Singh",
     music: "Mithoon",
     difficulty: "easy",
+    era: "2010s",
     trivia: "Arijit Singh won his first Filmfare Award for Best Male Playback Singer for 'Tum Hi Ho' in 2013.",
     photo: "images/singers/arijit.jpg"
   },
@@ -43,6 +44,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Sonu Nigam",
     music: "Shankar-Ehsaan-Loy",
     difficulty: "easy",
+    era: "2000s",
     trivia: "Sonu Nigam received the National Film Award for Best Male Playback Singer in 2004 for this track.",
     photo: "images/singers/sonu.jpg"
   },
@@ -56,6 +58,7 @@ const SAMPLE_QUESTIONS = [
     singer: "KK",
     music: "Leslie Lewis",
     difficulty: "easy",
+    era: "90s",
     trivia: "Released in 1999, 'Pal' became an eternal youth anthem for farewells and lifelong memories.",
     photo: "images/singers/kk.jpg"
   },
@@ -69,6 +72,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Shreya Ghoshal",
     music: "Sanjay Leela Bhansali",
     difficulty: "easy",
+    era: "2010s",
     trivia: "Shreya Ghoshal won the Filmfare Award for Best Female Playback Singer for her ethereal vocals here.",
     photo: "images/singers/shreya.jpg"
   },
@@ -82,6 +86,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Kishore Kumar",
     music: "S. D. Burman",
     difficulty: "easy",
+    era: "golden",
     trivia: "Filmed in a single continuous camera take, this 1969 track won Kishore Kumar his first Filmfare Award.",
     photo: "images/singers/kishore.jpg"
   },
@@ -97,6 +102,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Sukhwinder Singh",
     music: "A. R. Rahman",
     difficulty: "medium",
+    era: "90s",
     trivia: "Sukhwinder Singh recorded this iconic moving-train track with Sapna Awasthi, composed by A. R. Rahman.",
     photo: "images/singers/sukhwinder.jpg"
   },
@@ -110,6 +116,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Lata Mangeshkar",
     music: "Madan Mohan",
     difficulty: "medium",
+    era: "golden",
     trivia: "Initially rejected by the film director, Madan Mohan and Lata ji insisted on keeping this timeless ghazal.",
     photo: "images/singers/lata.jpg"
   },
@@ -123,6 +130,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Mohit Chauhan",
     music: "Pritam",
     difficulty: "medium",
+    era: "2010s",
     trivia: "Mohit Chauhan's silky mountain-folk inflection gave this retro underworld romance its distinctive heart.",
     photo: "images/singers/mohit.jpg"
   },
@@ -136,6 +144,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Sunidhi Chauhan",
     music: "Pritam",
     difficulty: "medium",
+    era: "2010s",
     trivia: "Sunidhi Chauhan delivered powerhouse high-octane Sufi-dance vocals over complex rhythmic shifts.",
     photo: "images/singers/sunidhi.jpg"
   },
@@ -149,6 +158,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Mukesh",
     music: "Khayyam",
     difficulty: "medium",
+    era: "retro",
     trivia: "Mukesh won the National Film Award for Best Male Playback Singer for this poignant Sahir Ludhianvi poetry.",
     photo: "images/singers/mukesh.jpg"
   },
@@ -164,6 +174,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Mohd. Rafi & Lata Mangeshkar",
     music: "Adi Narayana Rao",
     difficulty: "hard",
+    era: "golden",
     trivia: "A legendary classical jugalbandi weaving four classical ragas: Sohni, Bahar, Jaunpuri, and Yaman Kalyan.",
     photo: "images/singers/rafi.jpg"
   },
@@ -177,6 +188,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Hariharan",
     music: "A. R. Rahman",
     difficulty: "hard",
+    era: "90s",
     trivia: "Hariharan blended classical ghazal dynamics with symphonic orchestration, featuring Kavita Krishnamurthy.",
     photo: "images/singers/hariharan.jpg"
   },
@@ -190,6 +202,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Manna Dey",
     music: "Roshan",
     difficulty: "hard",
+    era: "golden",
     trivia: "Composed in Raga Bhairavi, Manna Dey executed blistering taans that became a gold standard for classical film songs.",
     photo: "images/singers/manna.jpg"
   },
@@ -203,6 +216,7 @@ const SAMPLE_QUESTIONS = [
     singer: "A. R. Rahman, Javed Ali & Mohit Chauhan",
     music: "A. R. Rahman",
     difficulty: "hard",
+    era: "2010s",
     trivia: "Recorded in honor of Hazrat Nizamuddin Auliya, this Sufi qawwali blends Arabic hymns with Urdu poetry.",
     photo: "images/singers/arrahman.jpg"
   },
@@ -216,6 +230,7 @@ const SAMPLE_QUESTIONS = [
     singer: "Manna Dey",
     music: "Salil Chowdhury",
     difficulty: "hard",
+    era: "retro",
     trivia: "Salil Chowdhury originally envisioned this as a background instrumental before lyricist Yogesh and Manna Dey turned it into an immortal classic.",
     photo: "images/singers/manna.jpg"
   }

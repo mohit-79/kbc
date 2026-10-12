@@ -138,16 +138,53 @@ function getSingerPhoto(name) {
 let profile = loadProfile();
 window.profile = profile;
 let musicFactsData = null;
+let previewsCache = {};
 
 fetch('musicFacts.json')
   .then(res => res.json())
   .then(data => { musicFactsData = data; })
   .catch(err => console.warn('Could not load musicFacts.json:', err));
 
+fetch('previews_cache.json')
+  .then(res => res.json())
+  .then(data => { previewsCache = data || {}; })
+  .catch(err => console.warn('Could not load previews_cache.json:', err));
+
+function getSongEra(song) {
+  const y = (song && typeof song.y === 'number') ? song.y : null;
+  if (!y) return "retro";
+  if (y < 1970) return "golden";
+  if (y < 1990) return "retro";
+  if (y < 2000) return "90s";
+  if (y < 2010) return "2000s";
+  if (y < 2020) return "2010s";
+  return "modern";
+}
+
+function getSongPreview(songTitle, singerName) {
+  if (!songTitle) return "";
+  const clean = songTitle.toLowerCase().trim();
+  const slug = clean.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  if (previewsCache[clean]) return previewsCache[clean];
+  if (previewsCache[slug]) return previewsCache[slug];
+  for (const [k, v] of Object.entries(previewsCache)) {
+    if (k.length > 3 && (clean.includes(k) || k.includes(clean))) {
+      return v;
+    }
+  }
+  return "";
+}
+
 function loadProfile() {
   try {
     const raw = localStorage.getItem('surkbc_profile');
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed.selectedEras) || parsed.selectedEras.length === 0) {
+        parsed.selectedEras = ["golden", "retro", "90s", "2000s", "2010s", "modern"];
+      }
+      return parsed;
+    }
   } catch (e) {}
   return {
     name: "Contestant",
@@ -157,7 +194,8 @@ function loadProfile() {
     voiceMode: "madhur",
     voicePitch: -6,
     voiceSpeed: 1.0,
-    friends: []
+    friends: [],
+    selectedEras: ["golden", "retro", "90s", "2000s", "2010s", "modern"]
   };
 }
 
@@ -286,66 +324,111 @@ function saveProfile(shouldPush = true) {
   }
 }
 
-// --- DYNAMIC QUESTION GENERATION (from singers.json with preview streams & deduplication) ---
+// --- ERA FILTERING & ANTI-REPETITION HELPERS ---
+function getActiveEras() {
+  if (Array.isArray(profile && profile.selectedEras) && profile.selectedEras.length > 0) {
+    return profile.selectedEras;
+  }
+  return ["golden", "retro", "90s", "2000s", "2010s", "modern"];
+}
+
+function loadUsedSongKeys() {
+  try {
+    const raw = sessionStorage.getItem('surkbc_used_song_keys');
+    if (raw) return new Set(JSON.parse(raw));
+  } catch (e) {}
+  return new Set();
+}
+
+function recordUsedSongKey(key) {
+  try {
+    const keys = loadUsedSongKeys();
+    keys.add(key);
+    const arr = Array.from(keys).slice(-100);
+    sessionStorage.setItem('surkbc_used_song_keys', JSON.stringify(arr));
+  } catch (e) {}
+}
+
+// --- DYNAMIC QUESTION GENERATION (Era-filtered from singers.json + previews_cache.json) ---
 function buildDynamicQuestionsFromSingers(count = 15) {
   if (!Array.isArray(singersDirectory) || singersDirectory.length < 4) {
     return [];
   }
 
-  // Filter singers that have at least one song with a preview URL
-  const singersWithPreview = singersDirectory.filter(s => 
-    Array.isArray(s.songs) && s.songs.some(song => song && (song.preview || song.previewUrl || song.clip))
-  );
+  const activeEras = getActiveEras();
+  const usedKeys = loadUsedSongKeys();
+  const candidates = [];
 
-  // If preview URLs are still populating or not yet present, return empty to use curated bank
-  if (singersWithPreview.length < 4) {
+  singersDirectory.forEach(singer => {
+    if (!singer.name || !Array.isArray(singer.songs)) return;
+    singer.songs.forEach(song => {
+      if (!song || !(song.t || song.title)) return;
+      const songTitle = song.t || song.title;
+      const era = getSongEra(song);
+      if (!activeEras.includes(era)) return;
+
+      const preview = song.preview || song.previewUrl || song.clip || getSongPreview(songTitle, singer.name);
+      if (preview) {
+        candidates.push({
+          singer: singer.name,
+          song: songTitle,
+          movie: song.m || song.movie || "Bollywood",
+          music: (song.co && song.co.length) ? song.co.join(', ') : "Bollywood",
+          year: song.y,
+          era: era,
+          preview: preview,
+          key: `${singer.name.toLowerCase()}|${songTitle.toLowerCase()}`
+        });
+      }
+    });
+  });
+
+  if (candidates.length < 4) {
     return [];
   }
 
+  // Prioritize unused songs to prevent repetition across games
+  const unused = candidates.filter(c => !usedKeys.has(c.key));
+  const pool = unused.length >= count ? unused : candidates;
+  const shuffledPool = shuffleArray(pool);
+
   const generated = [];
-  const usedSongKeys = new Set();
-  const maxAttempts = count * 20;
-  let attempts = 0;
+  const chosenSingers = new Set();
 
-  while (generated.length < count && attempts < maxAttempts) {
-    attempts++;
-    // 1. Random singer + random song with preview
-    const singer = singersWithPreview[Math.floor(Math.random() * singersWithPreview.length)];
-    const validSongs = singer.songs.filter(song => (song.preview || song.previewUrl || song.clip) && !usedSongKeys.has(`${singer.name}|${song.t || song.title}`));
-    if (!validSongs.length) continue;
+  for (const item of shuffledPool) {
+    if (generated.length >= count) break;
+    if (chosenSingers.has(item.singer) && generated.length < count - 2 && chosenSingers.size < singersDirectory.length) {
+      continue;
+    }
 
-    const song = validSongs[Math.floor(Math.random() * validSongs.length)];
-    const songTitle = song.t || song.title || "Gaana";
-    const songKey = `${singer.name}|${songTitle}`;
-    usedSongKeys.add(songKey);
+    const distractors = singersDirectory.filter(s => 
+      s.name && s.name.toLowerCase().trim() !== item.singer.toLowerCase().trim()
+    );
+    if (distractors.length < 3) continue;
 
-    // 2. 3 Random distinct distractor singers
-    const distractorCandidates = singersDirectory.filter(s => s.name && s.name.toLowerCase().trim() !== singer.name.toLowerCase().trim());
-    if (distractorCandidates.length < 3) continue;
-
-    const shuffledCandidates = [...distractorCandidates].sort(() => 0.5 - Math.random());
-    const distractors = [shuffledCandidates[0].name, shuffledCandidates[1].name, shuffledCandidates[2].name];
-
-    // 3. Assemble and shuffle 4 options
-    const options = [singer.name, ...distractors].sort(() => 0.5 - Math.random());
-    const answerIdx = options.indexOf(singer.name);
-
-    const previewUrl = song.preview || song.previewUrl || song.clip;
+    const shuffledDistractors = shuffleArray(distractors).slice(0, 3);
+    const options = [item.singer, shuffledDistractors[0].name, shuffledDistractors[1].name, shuffledDistractors[2].name];
+    const shuffledOptions = shuffleArray(options);
+    const answerIdx = shuffledOptions.indexOf(item.singer);
 
     generated.push({
-      id: 1000 + generated.length,
-      clip: previewUrl,
-      preview: previewUrl,
-      options: options,
+      id: 2000 + generated.length,
+      clip: item.preview,
+      preview: item.preview,
+      options: shuffledOptions,
       answer: answerIdx,
-      song: songTitle,
-      movie: song.m || song.movie || "Film / Album",
-      singer: singer.name,
-      music: (song.co && song.co.length) ? song.co.join(', ') : "Bollywood",
+      song: item.song,
+      movie: item.movie,
+      singer: item.singer,
+      music: item.music,
+      era: item.era,
       difficulty: generated.length < 5 ? "easy" : (generated.length < 10 ? "medium" : "hard"),
-      trivia: `${singer.name} ka yeh mashhoor gaana '${songTitle}' hai.`,
-      photo: getSingerPhoto(singer.name)
+      trivia: `${item.singer} ka yeh mashhoor gaana '${item.song}' (${item.movie}) hai.`,
+      photo: getSingerPhoto(item.singer)
     });
+
+    chosenSingers.add(item.singer);
+    recordUsedSongKey(item.key);
   }
 
   return generated;
@@ -374,40 +457,31 @@ function randomizeQuestionOptions(q) {
 }
 
 function getQuestionsForGame() {
+  const activeEras = getActiveEras();
   const dynamicQs = buildDynamicQuestionsFromSingers(15);
   if (dynamicQs.length >= 15) {
-    return shuffleArray(dynamicQs).map(randomizeQuestionOptions);
+    return dynamicQs.map(randomizeQuestionOptions);
   }
 
-  if (typeof SAMPLE_QUESTIONS === 'undefined' || !SAMPLE_QUESTIONS.length) {
-    return [];
+  // Combine with curated bank filtered strictly by active eras
+  const curatedMatching = (typeof SAMPLE_QUESTIONS !== 'undefined' && SAMPLE_QUESTIONS.length)
+    ? SAMPLE_QUESTIONS.filter(q => activeEras.includes(q.era || "retro"))
+    : [];
+
+  const combined = [...dynamicQs, ...curatedMatching];
+  if (combined.length >= 15) {
+    return shuffleArray(combined).slice(0, 15).map(randomizeQuestionOptions);
+  }
+  if (combined.length > 0) {
+    // If user filtered down to a single era with fewer questions, loop the bank cleanly
+    const padded = [];
+    while (padded.length < 15) {
+      padded.push(...shuffleArray(combined));
+    }
+    return padded.slice(0, 15).map(randomizeQuestionOptions);
   }
 
-  const diff = profile.difficulty || 'easy';
-  let chosenBank = [];
-
-  if (diff === 'casual') {
-    // Casual mode: mix all difficulty levels randomly
-    chosenBank = shuffleArray(SAMPLE_QUESTIONS).slice(0, 15);
-  } else if (diff === 'easy') {
-    const easyBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy'));
-    const otherBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty !== 'easy'));
-    chosenBank = easyBank.concat(otherBank).slice(0, 15);
-  } else if (diff === 'medium') {
-    const medBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium'));
-    const hardBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'hard'));
-    const easyBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy'));
-    chosenBank = medBank.concat(hardBank).concat(easyBank).slice(0, 15);
-  } else {
-    // Hard mode
-    const hardBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'hard'));
-    const medBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'medium'));
-    const easyBank = shuffleArray(SAMPLE_QUESTIONS.filter(q => q.difficulty === 'easy'));
-    chosenBank = hardBank.concat(medBank).concat(easyBank).slice(0, 15);
-  }
-
-  // Shuffle selected questions and each question's 4 options
-  return shuffleArray(chosenBank).map(randomizeQuestionOptions);
+  return shuffleArray(SAMPLE_QUESTIONS).slice(0, 15).map(randomizeQuestionOptions);
 }
 
 function createNewGameState() {
@@ -479,8 +553,23 @@ function clearGameState() {
 
 let game = loadGameState();
 
+// --- APP TIMER REGISTRY (Kill pending timers on screen transition) ---
+let appTimers = [];
+function registerAppTimer(timerId) {
+  appTimers.push(timerId);
+  return timerId;
+}
+function clearAppTimers() {
+  appTimers.forEach(id => clearTimeout(id));
+  appTimers = [];
+}
+
 // --- ROUTER: show(id) toggles .active ---
 window.show = function(screenId) {
+  clearAppTimers();
+  if (window.audioEngine) {
+    window.audioEngine.stopAllMedia(true);
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(screenId);
   if (target) {
@@ -522,7 +611,33 @@ function renderScreen(screenId) {
 }
 
 // --- SCREEN 1: HOME ---
+function updateThemeMuteUI(isMuted) {
+  const btn = document.getElementById('btn-theme-mute');
+  const icon = document.getElementById('theme-mute-icon');
+  if (!btn || !icon) return;
+  const muted = (typeof isMuted === 'boolean') 
+    ? isMuted 
+    : (window.audioEngine ? window.audioEngine.isThemeMuted() : false);
+  if (muted) {
+    btn.classList.add('muted');
+    icon.textContent = '🔇';
+    btn.setAttribute('title', 'Unmute Theme Music');
+  } else {
+    btn.classList.remove('muted');
+    icon.textContent = '🔊';
+    btn.setAttribute('title', 'Mute Theme Music');
+  }
+}
+
+window.toggleThemeMute = function() {
+  if (window.audioEngine) {
+    const isMuted = window.audioEngine.toggleThemeMute();
+    updateThemeMuteUI(isMuted);
+  }
+};
+
 function renderHome() {
+  updateThemeMuteUI();
   const nameInput = document.getElementById('home-player-name');
   if (nameInput) nameInput.value = profile.name;
 
@@ -621,6 +736,8 @@ window.startHotSeatGame = function() {
     window.audioEngine.cancelVoice();
     const introSpeech = "नमस्कार! मैं हूँ अमरनाथ बच्चन, और आप देख रहे हैं कौन बनेगा करोड़पति! शुरू करते हैं खेल बिना किसी देरी के!";
     window.audioEngine.speak(introSpeech, () => {
+      const introScreen = document.getElementById('screen-intro');
+      if (!introScreen || !introScreen.classList.contains('active')) return;
       // Announce question 1 after opening monologue concludes
       const upcomingLadder = KBC_LADDER[0];
       const levelAnnouncement = `पहला प्रश्न... ${upcomingLadder.prize} के लिए!`;
@@ -668,10 +785,13 @@ function renderIntro() {
       levelAnnouncement = `सावधान! यह एक महत्वपूर्ण पड़ाव है... प्रश्न संख्या ${qNum}... पूरे ${upcomingLadder.prize} के लिए!`;
     }
 
-    setTimeout(() => {
-      window.audioEngine.cancelVoice();
-      window.audioEngine.speak(levelAnnouncement);
-    }, 450);
+    registerAppTimer(setTimeout(() => {
+      const introScreen = document.getElementById('screen-intro');
+      if (introScreen && introScreen.classList.contains('active') && window.audioEngine) {
+        window.audioEngine.cancelVoice();
+        window.audioEngine.speak(levelAnnouncement);
+      }
+    }, 450));
   }
 
   // Update lifeline chips HUD in intro
@@ -755,6 +875,10 @@ function renderQuestion() {
     : `अगला सवाल आपकी स्क्रीन पर... इस गाने ${q.song || 'इस गाने'} के गायक कौन हैं?`;
 
   const activeIndex = game.qIndex;
+  const isQuestionActive = () => {
+    const qScreen = document.getElementById('screen-question');
+    return qScreen && qScreen.classList.contains('active') && game.qIndex === activeIndex && !game.locked;
+  };
 
   if (window.audioEngine) {
     window.audioEngine.cancelVoice();
@@ -762,20 +886,20 @@ function renderQuestion() {
 
     // Step 1: Host announces question in Hindi
     window.audioEngine.speak(qAnnouncement, () => {
-      if (game.qIndex !== activeIndex || game.locked) return;
+      if (!isQuestionActive()) return;
 
       // Step 2: Song clip plays
       window.audioEngine.playClip(q.clip, () => {
-        if (game.qIndex !== activeIndex || game.locked) return;
+        if (!isQuestionActive()) return;
 
         // Step 3: Host vocally recites all 4 options in Hindi
         const optsText = `ऑप्शन ए: ${q.options[0]}... ऑप्शन बी: ${q.options[1]}... ऑप्शन सी: ${q.options[2]}... ऑप्शन डी: ${q.options[3]}!`;
         window.audioEngine.speak(optsText, () => {
-          if (game.qIndex !== activeIndex || game.locked) return;
+          if (!isQuestionActive()) return;
 
           // Step 4: Host declares timer start in Hindi
           window.audioEngine.speak("आपका समय शुरू होता है... अब!", () => {
-            if (game.qIndex !== activeIndex || game.locked) return;
+            if (!isQuestionActive()) return;
 
             // Step 5: Clock begins ticking and countdown starts!
             startTimer();
@@ -879,6 +1003,10 @@ function onTimeout() {
 // --- LOCK FLOW ---
 window.onOptionSelect = function(idx) {
   if (game.locked) return;
+  if (window.audioEngine) {
+    window.audioEngine.cancelVoice();
+    window.audioEngine.stopClip();
+  }
   game.selectedOption = idx;
 
   document.querySelectorAll('.option-card').forEach((el, i) => {
@@ -1253,7 +1381,46 @@ function renderSettings() {
     speedSlider.value = speedVal;
     updateSpeedDisplay(speedVal);
   }
+
+  // Populate Era Checkboxes
+  const activeEras = getActiveEras();
+  const checkboxes = document.querySelectorAll('input[name="music-era"]');
+  checkboxes.forEach(cb => {
+    cb.checked = activeEras.includes(cb.value);
+  });
+  updateSelectAllErasButtonText();
 }
+
+function updateSelectAllErasButtonText() {
+  const checkboxes = Array.from(document.querySelectorAll('input[name="music-era"]'));
+  const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+  const btnText = document.getElementById('btn-select-all-eras-text');
+  if (btnText) {
+    btnText.textContent = allChecked ? "Sabhi Hatayein (Deselect All)" : "Sabhi Daur (Select All)";
+  }
+}
+
+window.onEraCheckboxChange = function() {
+  const checkboxes = Array.from(document.querySelectorAll('input[name="music-era"]'));
+  const checked = checkboxes.filter(cb => cb.checked);
+  if (checked.length === 0) {
+    showToast("Kam se kam ek daur chuna hona chahiye!");
+    checkboxes.forEach(cb => { cb.checked = true; });
+  }
+  updateSelectAllErasButtonText();
+};
+
+window.toggleSelectAllEras = function() {
+  const checkboxes = Array.from(document.querySelectorAll('input[name="music-era"]'));
+  const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+  checkboxes.forEach(cb => {
+    cb.checked = !allChecked;
+  });
+  if (allChecked && checkboxes.length > 0) {
+    checkboxes[0].checked = true;
+  }
+  updateSelectAllErasButtonText();
+};
 
 window.updatePitchDisplay = function(val) {
   const label = document.getElementById('settings-pitch-val');
@@ -1343,6 +1510,13 @@ window.saveSettings = function() {
   if (voiceSelect) profile.voiceMode = voiceSelect.value;
   if (pitchSlider) profile.voicePitch = parseInt(pitchSlider.value, 10);
   if (speedSlider) profile.voiceSpeed = parseFloat(speedSlider.value);
+
+  // Collect checked music eras
+  const eraCheckboxes = Array.from(document.querySelectorAll('input[name="music-era"]'));
+  const checkedEras = eraCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
+  profile.selectedEras = checkedEras.length > 0
+    ? checkedEras
+    : ["golden", "retro", "90s", "2000s", "2010s", "modern"];
 
   saveProfile();
   game = createNewGameState();
@@ -1562,47 +1736,37 @@ window.triggerPhoneAFriendDispatch = async function(friendId) {
 
     if (res.ok) {
       const data = await res.json();
-      if (data && data.gateway === 'wa-me-fallback' && data.waLink) {
-        window.open(data.waLink, '_blank');
+      if (data && data.delivered) {
+        if (waitMsg) waitMsg.textContent = `✅ ${friend.name} ko automated WhatsApp sandesh bhej diya gaya!`;
+      } else {
+        if (waitMsg) {
+          const manualLink = (data && data.waLink) ? data.waLink : `https://wa.me/?text=${encodeURIComponent(qPrompt)}`;
+          waitMsg.innerHTML = `Helpline sakriya hai. <a href="${manualLink}" target="_blank" style="color:var(--neon-cyan);text-decoration:underline;display:inline-block;margin-top:4px;">(WhatsApp par sandesh bhejein ↗)</a>`;
+        }
       }
     } else {
-      fallbackDirectWhatsAppShare(friend, q);
+      if (waitMsg) {
+        waitMsg.textContent = `${friend.name} ke liye in-game helpline chalu hai.`;
+      }
     }
   } catch (e) {
-    fallbackDirectWhatsAppShare(friend, q);
+    if (waitMsg) {
+      waitMsg.textContent = `${friend.name} ke liye in-game helpline chalu hai.`;
+    }
   }
 
   startFriendAnswerListener(friend.name);
 };
 
 function fallbackDirectWhatsAppShare(friend, q) {
-  const origin = window.location.origin.includes("localhost") ? window.location.origin : "https://kbc.harjani.me";
-  const sId = game.sessionId || 'game';
-  const clipUrl = q.clip || q.preview || "";
-  const questionText = q.question || `Gaana '${q.song}' (${q.movie || "Bollywood"}) kis gaayak ne gaya hai?`;
-  const callBase = `${origin}/friend-call.html?session=${encodeURIComponent(sId)}&clip=${encodeURIComponent(clipUrl)}&q=${encodeURIComponent(questionText)}&opts=${encodeURIComponent(JSON.stringify(q.options))}&player=${encodeURIComponent(profile.name || "Khiladi")}`;
-  const audioUrl = `${callBase}&mode=audio`;
-  const videoUrl = `${callBase}&mode=video`;
-
-  // Fix 2: WhatsApp share template with clip link and direct call links (no redundant answer link)
-  let text = `🎵 SurKBC — Aapke dost ${profile.name} ko aapki madad chahiye!\n\nSawaal: ${questionText}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}`;
-  if (clipUrl) {
-    text += `\n\n🎵 Gaane Ki Audio Clip Sunein:\n${clipUrl}`;
-  }
-  text += `\n\n🎙️ Audio Call:\n${audioUrl}\n\n📹 Video Call:\n${videoUrl}`;
-
-  const cleanPhone = (friend.phone || "").replace(/[\s\-\(\)\+]/g, "");
-  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(waUrl, '_blank');
-
-  // Switch to manual input mode for reliable offline entry
+  // Switch to manual input mode for reliable offline entry without hijacking browser window
   const pickerArea = document.getElementById('phone-friend-picker-area');
   const waitingArea = document.getElementById('phone-friend-waiting-area');
   const manualArea = document.getElementById('phone-friend-manual-area');
   if (pickerArea) pickerArea.style.display = 'none';
   if (waitingArea) waitingArea.style.display = 'none';
   if (manualArea) manualArea.style.display = 'block';
-  showToast("Offline fallback: Manual vikalp entry sakriya!");
+  showToast("Manual vikalp entry sakriya!");
 }
 
 function startFriendAnswerListener(friendName) {

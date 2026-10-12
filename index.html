@@ -27,7 +27,10 @@
          SCREEN 1: HOME (screen-home)
          ==================================================================== -->
     <section id="screen-home" class="screen active">
-      <header style="text-align: center; margin-bottom: 12px; margin-top: 6px;">
+      <header style="position: relative; text-align: center; margin-bottom: 12px; margin-top: 6px;">
+        <button id="btn-theme-mute" class="btn-theme-mute" onclick="toggleThemeMute()" aria-label="Toggle Theme Music" title="Mute/Unmute Theme Music">
+          <span id="theme-mute-icon">🔊</span>
+        </button>
         <div style="font-size: 32px; margin-bottom: 4px;">🎙️</div>
         <h1 style="font-size: 22px; font-weight: 900; color: #ffd700; letter-spacing: 1.5px; text-transform: uppercase;">SurKBC</h1>
         <p style="font-size: 11px; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase;">Bollywood Music Quiz</p>
@@ -237,6 +240,47 @@
         <button type="button" class="kbc-btn-secondary" style="height: 38px; font-size: 13px; font-weight: 800; border-color: var(--neon-cyan); color: var(--neon-cyan); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="testHostVoice()">
           <span>▶ Test Voice (Aawaaz Sunein)</span>
         </button>
+      </div>
+
+      <!-- Music Eras Filter Card -->
+      <div class="kbc-card">
+        <div class="card-header-title" style="margin-bottom: 6px;">🎶 Sangeet Ke Daur (Music Eras)</div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+          Chuniye kin daur ke gaano se sawaal poochhe jaayein:
+        </p>
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+          <button type="button" class="kbc-btn-secondary" style="height: 28px; font-size: 11px; padding: 0 10px; margin: 0; border-color: var(--gold-secondary);" onclick="toggleSelectAllEras()">
+            <span id="btn-select-all-eras-text">Sabhi Daur (Select All)</span>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="settings-eras-grid">
+          <label class="era-checkbox-label">
+            <input type="checkbox" name="music-era" value="golden" onchange="onEraCheckboxChange()">
+            <span>👑 Golden (&lt;1970)</span>
+          </label>
+          <label class="era-checkbox-label">
+            <input type="checkbox" name="music-era" value="retro" onchange="onEraCheckboxChange()">
+            <span>📻 Retro (70s-80s)</span>
+          </label>
+          <label class="era-checkbox-label">
+            <input type="checkbox" name="music-era" value="90s" onchange="onEraCheckboxChange()">
+            <span>📼 90s Evergreen</span>
+          </label>
+          <label class="era-checkbox-label">
+            <input type="checkbox" name="music-era" value="2000s" onchange="onEraCheckboxChange()">
+            <span>💿 2000s Hits</span>
+          </label>
+          <label class="era-checkbox-label">
+            <input type="checkbox" name="music-era" value="2010s" onchange="onEraCheckboxChange()">
+            <span>🎧 2010s Modern</span>
+          </label>
+          <label class="era-checkbox-label">
+            <input type="checkbox" name="music-era" value="modern" onchange="onEraCheckboxChange()">
+            <span>🚀 Modern (2020+)</span>
+          </label>
+        </div>
       </div>
 
       <div class="kbc-card">

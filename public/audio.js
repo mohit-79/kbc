@@ -16,6 +16,10 @@ class AudioEngine {
     this.tensionOsc = null;
     this.tensionGain = null;
     this.currentAudio = null;
+    this.currentVoiceAudio = null;
+    this.seqTicket = 0;
+    this.clipSafetyTimer = null;
+    this.voiceSafetyTimer = null;
   }
 
   // Resume / Initialize Web Audio Context on user gesture
@@ -64,13 +68,38 @@ class AudioEngine {
 
       ctx.clearRect(0, 0, w, h);
 
+      let hasRealSignal = false;
       if (this.analyser && this.ctx && this.ctx.state === 'running') {
         this.analyser.getByteFrequencyData(data);
-      } else {
-        // Idle breathing state
-        const t = Date.now() * 0.003;
         for (let i = 0; i < bufferLength; i++) {
-          data[i] = Math.sin(t + i * 0.4) * 16 + 22;
+          if (data[i] > 15) {
+            hasRealSignal = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasRealSignal) {
+        const isSpeaking = this.currentVoiceAudio && !this.currentVoiceAudio.paused;
+        const isClipping = this.currentAudio && !this.currentAudio.paused;
+        const isSpeechSynth = ('speechSynthesis' in window) && window.speechSynthesis.speaking;
+
+        if (isClipping || isSpeaking || isSpeechSynth) {
+          // Energetic dancing visualizer responding to active song clip or host TTS
+          const t = Date.now() * 0.007;
+          for (let i = 0; i < bufferLength; i++) {
+            const wave1 = Math.sin(t * 3.5 + i * 0.5) * 45;
+            const wave2 = Math.cos(t * 5.0 + i * 0.3) * 35;
+            const noise = Math.sin(t * 11 + i) * 20;
+            const height = Math.max(8, 70 + wave1 + wave2 + noise);
+            data[i] = Math.min(240, Math.floor(height));
+          }
+        } else {
+          // Idle breathing state when silence / waiting for user
+          const t = Date.now() * 0.003;
+          for (let i = 0; i < bufferLength; i++) {
+            data[i] = Math.sin(t + i * 0.4) * 14 + 18;
+          }
         }
       }
 
@@ -110,19 +139,21 @@ class AudioEngine {
     this.init();
     this.stopClip();
 
-    let safetyTimer = null;
+    const ticket = ++this.seqTicket;
+    let finished = false;
     const finish = () => {
+      if (ticket !== this.seqTicket) return;
       if (!finished) {
         finished = true;
-        if (safetyTimer) {
-          clearTimeout(safetyTimer);
-          safetyTimer = null;
+        if (this.clipSafetyTimer) {
+          clearTimeout(this.clipSafetyTimer);
+          this.clipSafetyTimer = null;
         }
         if (onDone) onDone();
       }
     };
 
-    if (typeof clipUrlOrName === 'string' && (clipUrlOrName.startsWith('http://') || clipUrlOrName.startsWith('https://') || clipUrlOrName.endsWith('.mp3') || clipUrlOrName.endsWith('.m4a'))) {
+    if (typeof clipUrlOrName === 'string' && (clipUrlOrName.startsWith('http://') || clipUrlOrName.startsWith('https://') || clipUrlOrName.endsWith('.mp3') || clipUrlOrName.endsWith('.m4a') || clipUrlOrName.includes('.mp3') || clipUrlOrName.includes('.m4a'))) {
       try {
         const audio = new Audio(clipUrlOrName);
         audio.volume = 0.85;
@@ -130,11 +161,15 @@ class AudioEngine {
 
         // When clip completes naturally, invoke callback
         audio.onended = () => {
-          setTimeout(finish, 400); // 400ms musical breath before reciting options
+          if (ticket !== this.seqTicket) return;
+          setTimeout(finish, 350); // 350ms musical breath before reciting options
         };
-        audio.onerror = finish;
+        audio.onerror = () => {
+          if (ticket !== this.seqTicket) return;
+          finish();
+        };
         // 14s safety timeout for long song clips
-        safetyTimer = setTimeout(finish, 14000);
+        this.clipSafetyTimer = setTimeout(finish, 14000);
 
         audio.play().catch(e => {
           console.warn("Stream preview play error:", e);
@@ -151,7 +186,7 @@ class AudioEngine {
     // Synthesized melodic signature hook connected to analyser as fallback
     if (this.ctx) {
       const melodyChords = [261.63, 329.63, 392.00, 523.25, 440.00, 392.00];
-      setTimeout(finish, melodyChords.length * 300 + 400);
+      this.clipSafetyTimer = setTimeout(finish, melodyChords.length * 300 + 400);
       melodyChords.forEach((freq, idx) => {
         try {
           const osc = this.ctx.createOscillator();
@@ -176,14 +211,24 @@ class AudioEngine {
           osc.stop(this.ctx.currentTime + idx * 0.3 + 0.4);
         } catch (e) {}
       });
+    } else {
+      finish();
     }
   }
 
   stopClip() {
+    this.seqTicket++;
+    if (this.clipSafetyTimer) {
+      clearTimeout(this.clipSafetyTimer);
+      this.clipSafetyTimer = null;
+    }
     if (this.currentAudio) {
       try {
+        this.currentAudio.onended = null;
+        this.currentAudio.onerror = null;
         this.currentAudio.pause();
         this.currentAudio.currentTime = 0;
+        this.currentAudio.src = '';
       } catch (e) {}
       this.currentAudio = null;
     }
@@ -207,7 +252,29 @@ class AudioEngine {
   // Background Ambience / Beds
   playIntroBg() {
     this.stopBgMusic();
-    this.bgAudio = this.playMusicTrack('intro_bg', true, 0.4);
+    const isMuted = this.isThemeMuted();
+    const volume = isMuted ? 0 : 0.18; // Soft background ambience (lowered from 0.40)
+    this.bgAudio = this.playMusicTrack('intro_bg', true, volume);
+  }
+
+  isThemeMuted() {
+    return localStorage.getItem('surkbc_theme_muted') === 'true';
+  }
+
+  toggleThemeMute() {
+    const currentlyMuted = this.isThemeMuted();
+    const newMuted = !currentlyMuted;
+    try {
+      localStorage.setItem('surkbc_theme_muted', String(newMuted));
+    } catch (e) {}
+
+    if (this.bgAudio) {
+      this.bgAudio.volume = newMuted ? 0 : 0.18;
+      if (!newMuted && this.bgAudio.paused) {
+        this.bgAudio.play().catch(() => {});
+      }
+    }
+    return newMuted;
   }
 
   playQuestionBed() {
@@ -360,11 +427,17 @@ class AudioEngine {
 
     this.init();
     this.cancelVoice();
+    const ticket = ++this.seqTicket;
 
     let finished = false;
     const doneCallback = () => {
+      if (ticket !== this.seqTicket) return;
       if (!finished) {
         finished = true;
+        if (this.voiceSafetyTimer) {
+          clearTimeout(this.voiceSafetyTimer);
+          this.voiceSafetyTimer = null;
+        }
         if (onDone) onDone();
       }
     };
@@ -377,6 +450,7 @@ class AudioEngine {
 
         voiceAudio.onended = () => doneCallback();
         voiceAudio.onerror = () => {
+          if (ticket !== this.seqTicket) return;
           // Fall back to Hindi Baritone Web Speech Synthesis
           if (fallbackText) {
             this.speak(fallbackText, doneCallback);
@@ -386,9 +460,11 @@ class AudioEngine {
         };
 
         this.currentVoiceAudio = voiceAudio;
+        this.voiceSafetyTimer = setTimeout(doneCallback, 10000);
         const playPromise = voiceAudio.play();
         if (playPromise !== undefined) {
           playPromise.catch(() => {
+            if (ticket !== this.seqTicket) return;
             if (fallbackText) {
               this.speak(fallbackText, doneCallback);
             } else {
@@ -418,11 +494,17 @@ class AudioEngine {
 
     this.init();
     this.cancelVoice();
+    const ticket = ++this.seqTicket;
 
     let finished = false;
     const finish = () => {
+      if (ticket !== this.seqTicket) return;
       if (!finished) {
         finished = true;
+        if (this.voiceSafetyTimer) {
+          clearTimeout(this.voiceSafetyTimer);
+          this.voiceSafetyTimer = null;
+        }
         if (onDone) onDone();
       }
     };
@@ -460,7 +542,7 @@ class AudioEngine {
 
     // Device Native Voice mode
     if (voiceMode === "device") {
-      this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+      this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz, ticket);
       return;
     }
 
@@ -526,24 +608,28 @@ class AudioEngine {
 
       neuralAudio.onended = finish;
       neuralAudio.onerror = () => {
+        if (ticket !== this.seqTicket) return;
         // Fall back to client SpeechSynthesis
-        this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+        this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz, ticket);
       };
 
       // Dynamic safety timeout
       const safetyMs = Math.max(5000, devanagariText.length * 120);
-      setTimeout(finish, safetyMs);
+      this.voiceSafetyTimer = setTimeout(finish, safetyMs);
 
       neuralAudio.play().catch(() => {
-        this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+        if (ticket !== this.seqTicket) return;
+        this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz, ticket);
       });
       return;
     } catch (e) {
-      this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz);
+      if (ticket !== this.seqTicket) return;
+      this.speakFallback(devanagariText, finish, userSpeedMult, userPitchHz, ticket);
     }
   }
 
-  speakFallback(text, onDone = null, speed = 1.0, pitchHz = -6) {
+  speakFallback(text, onDone = null, speed = 1.0, pitchHz = -6, ticket = null) {
+    if (ticket !== null && ticket !== this.seqTicket) return;
     if (!('speechSynthesis' in window)) {
       if (onDone) onDone();
       return;
@@ -589,15 +675,20 @@ class AudioEngine {
 
       let called = false;
       const done = () => {
+        if (ticket !== null && ticket !== this.seqTicket) return;
         if (!called) {
           called = true;
+          if (this.voiceSafetyTimer) {
+            clearTimeout(this.voiceSafetyTimer);
+            this.voiceSafetyTimer = null;
+          }
           if (onDone) onDone();
         }
       };
 
       utterance.onend = done;
       utterance.onerror = done;
-      setTimeout(done, Math.max(4500, text.length * 100));
+      this.voiceSafetyTimer = setTimeout(done, Math.max(4500, text.length * 100));
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       if (onDone) onDone();
@@ -605,10 +696,18 @@ class AudioEngine {
   }
 
   cancelVoice() {
+    this.seqTicket++;
+    if (this.voiceSafetyTimer) {
+      clearTimeout(this.voiceSafetyTimer);
+      this.voiceSafetyTimer = null;
+    }
     if (this.currentVoiceAudio) {
       try {
+        this.currentVoiceAudio.onended = null;
+        this.currentVoiceAudio.onerror = null;
         this.currentVoiceAudio.pause();
         this.currentVoiceAudio.currentTime = 0;
+        this.currentVoiceAudio.src = '';
       } catch (e) {}
       this.currentVoiceAudio = null;
     }
@@ -616,6 +715,15 @@ class AudioEngine {
       try {
         window.speechSynthesis.cancel();
       } catch (e) {}
+    }
+  }
+
+  stopAllMedia(keepBg = false) {
+    this.cancelVoice();
+    this.stopClip();
+    this.stopTensionLoop();
+    if (!keepBg) {
+      this.stopBgMusic();
     }
   }
 }

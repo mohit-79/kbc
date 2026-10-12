@@ -239,7 +239,12 @@ export default {
 
         // Clean phone for WhatsApp
         const digitsOnly = friendPhone.replace(/\D/g, "");
-        const formattedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
+        let formattedPhone = digitsOnly;
+        if (digitsOnly.length === 10) {
+          formattedPhone = `91${digitsOnly}`;
+        } else if (digitsOnly.length === 11 && digitsOnly.startsWith("0")) {
+          formattedPhone = `91${digitsOnly.slice(1)}`;
+        }
         const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`;
 
         let delivered = false;
@@ -275,6 +280,7 @@ export default {
             } else {
               const errBody = await gwRes.text().catch(() => "");
               console.warn("Green-API error status:", gwRes.status, errBody);
+              gatewayResponse = (gwRes.status === 466) ? "quota-limit" : "gw-failed";
             }
           } catch (e) {
             console.warn("WhatsApp gateway error:", e);
@@ -288,7 +294,7 @@ export default {
             const creds = btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`);
             const bodyParams = new URLSearchParams({
               From: `whatsapp:${env.TWILIO_FROM_PHONE}`,
-              To: `whatsapp:${cleanPhone}`,
+              To: `whatsapp:+${formattedPhone}`,
               Body: messageText
             });
             const twRes = await fetch(twilioUrl, {
@@ -318,7 +324,7 @@ export default {
           messageText,
           waLink,
           delivered,
-          gateway: gatewayResponse || "wa-me-fallback",
+          gateway: gatewayResponse || "direct-in-app",
           expiresAt
         }), { status: 200, headers: corsHeaders });
       }
@@ -834,6 +840,59 @@ export default {
         }
 
         return new Response(JSON.stringify({ error: "TTS generation failed" }), { status: 502, headers: corsHeaders });
+      }
+
+      // 13C. Song Audio Preview API: GET /api/song-preview?song=...&singer=...
+      if (url.pathname === "/api/song-preview" && method === "GET") {
+        const songParam = (url.searchParams.get("song") || url.searchParams.get("track") || "").trim();
+        const singerParam = (url.searchParams.get("singer") || url.searchParams.get("artist") || "").trim();
+
+        if (!songParam) {
+          return new Response(JSON.stringify({ error: "Missing song parameter" }), { status: 400, headers: corsHeaders });
+        }
+
+        const cache = caches.default;
+        const cacheKey = new Request(request.url, request);
+        let cached = await cache.match(cacheKey);
+        if (cached) {
+          return cached;
+        }
+
+        try {
+          const query = `${songParam} ${singerParam}`.trim();
+          const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=1`;
+          const itunesRes = await fetch(itunesUrl, {
+            headers: { "User-Agent": "Mozilla/5.0 SurKBC/2.0" }
+          });
+
+          if (itunesRes.ok) {
+            const data = await itunesRes.json();
+            if (data && data.results && data.results.length > 0) {
+              const item = data.results[0];
+              const previewUrl = item.previewUrl;
+              if (previewUrl) {
+                const response = new Response(JSON.stringify({
+                  success: true,
+                  previewUrl,
+                  trackName: item.trackName,
+                  artistName: item.artistName
+                }), {
+                  status: 200,
+                  headers: {
+                    ...corsHeaders,
+                    "Cache-Control": "public, max-age=604800, immutable"
+                  }
+                });
+                ctx.waitUntil(cache.put(cacheKey, response.clone()));
+                return response;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("iTunes preview fetch error:", e);
+        }
+
+        return new Response(JSON.stringify({ success: false, previewUrl: null }), { status: 200, headers: corsHeaders });
       }
 
       // 14. Real-Time WebSocket Endpoint: /ws?session=<sessionId>
