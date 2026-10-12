@@ -239,6 +239,32 @@ async function ensureQuestionClip(q) {
   return "";
 }
 
+// --- PRIZE CURRENCY CONVERSION & SCORING HELPERS ---
+function parsePrizeToNumber(prizeStr) {
+  if (typeof prizeStr === 'number') return prizeStr;
+  if (!prizeStr || typeof prizeStr !== 'string') return 0;
+  const clean = prizeStr.replace(/₹/g, '').replace(/,/g, '').trim().toLowerCase();
+  if (clean.includes('crore')) {
+    const num = parseFloat(clean.replace('crore', '').trim()) || 0;
+    return Math.round(num * 10000000);
+  }
+  if (clean.includes('lakh')) {
+    const num = parseFloat(clean.replace('lakh', '').trim()) || 0;
+    return Math.round(num * 100000);
+  }
+  const parsed = parseInt(clean, 10);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+function formatNumberToPrize(num) {
+  if (typeof num !== 'number' || num <= 0) return "₹ 0";
+  if (num >= 10000000) {
+    const cr = num / 10000000;
+    return cr === Math.floor(cr) ? `₹ ${cr} Crore` : `₹ ${cr.toFixed(2)} Crore`;
+  }
+  return `₹ ${num.toLocaleString('en-IN')}`;
+}
+
 function loadProfile() {
   try {
     const raw = localStorage.getItem('surkbc_profile');
@@ -247,12 +273,16 @@ function loadProfile() {
       if (!Array.isArray(parsed.selectedEras) || parsed.selectedEras.length === 0) {
         parsed.selectedEras = ["golden", "retro", "90s", "2000s", "2010s", "modern"];
       }
+      if (typeof parsed.totalWinnings === 'undefined') {
+        parsed.totalWinnings = parsed.highScore || "₹ 0";
+      }
       return parsed;
     }
   } catch (e) {}
   return {
     name: "Contestant",
     highScore: "₹ 0",
+    totalWinnings: "₹ 0",
     gamesPlayed: 0,
     difficulty: "easy",
     voiceMode: "madhur",
@@ -289,7 +319,18 @@ async function syncProfileFromServer() {
     const data = await res.json();
     if (data && data.profile) {
       if (data.profile.highScore && data.profile.highScore !== '₹ 0') {
-        profile.highScore = data.profile.highScore;
+        const remoteHigh = parsePrizeToNumber(data.profile.highScore);
+        const localHigh = parsePrizeToNumber(profile.highScore);
+        if (remoteHigh > localHigh) {
+          profile.highScore = data.profile.highScore;
+        }
+      }
+      if (data.profile.totalWinnings) {
+        const remoteTotal = parsePrizeToNumber(data.profile.totalWinnings);
+        const localTotal = parsePrizeToNumber(profile.totalWinnings);
+        if (remoteTotal > localTotal) {
+          profile.totalWinnings = data.profile.totalWinnings;
+        }
       }
       if (typeof data.profile.gamesPlayed === 'number' && data.profile.gamesPlayed > profile.gamesPlayed) {
         profile.gamesPlayed = data.profile.gamesPlayed;
@@ -314,6 +355,7 @@ async function pushProfileToServer() {
       body: JSON.stringify({
         name: profile.name,
         highScore: profile.highScore,
+        totalWinnings: profile.totalWinnings,
         gamesPlayed: profile.gamesPlayed,
         friends: profile.friends
       })
@@ -448,11 +490,108 @@ const ERA_ANCHOR_YEARS = {
 };
 
 let singerMetadataMap = null;
+
+// --- SINGER GENRE & VOCAL STYLE TAXONOMY ---
+const SINGER_PROFILES = {
+  // Romantic & Melodic Pop / Bollywood
+  "arijit singh": { genres: ["romantic", "melodic", "acoustic"], style: "soulful_expressive" },
+  "atif aslam": { genres: ["romantic", "rock", "sufi"], style: "soulful_expressive" },
+  "shreya ghoshal": { genres: ["romantic", "classical", "melodic"], style: "silky_high" },
+  "sonu nigam": { genres: ["romantic", "melodic", "pop"], style: "silky_high" },
+  "alka yagnik": { genres: ["romantic", "melodic", "filmi"], style: "silky_high" },
+  "kumar sanu": { genres: ["romantic", "melodic", "filmi"], style: "melodic_nostalgic" },
+  "udit narayan": { genres: ["romantic", "melodic", "peppy"], style: "bright_peppy" },
+  "armaan malik": { genres: ["pop", "romantic", "rnb"], style: "smooth_contemporary" },
+  "jubin nautiyal": { genres: ["romantic", "sufi", "devotional"], style: "acoustic_gentle" },
+  "darshan raval": { genres: ["pop", "romantic", "indie"], style: "contemporary_pop" },
+  "kk": { genres: ["rock", "romantic", "pop"], style: "energetic_expressive" },
+  "shaan": { genres: ["pop", "romantic", "melodic"], style: "bright_peppy" },
+  "kunal ganjawala": { genres: ["romantic", "pop", "peppy"], style: "smooth_contemporary" },
+  "abhijeet bhattacharya": { genres: ["romantic", "melodic", "filmi"], style: "melodic_nostalgic" },
+  "vinod rathod": { genres: ["romantic", "filmi", "peppy"], style: "versatile_filmi" },
+  "amit kumar": { genres: ["romantic", "peppy", "filmi"], style: "versatile_filmi" },
+  "shailendra singh": { genres: ["romantic", "peppy", "filmi"], style: "melodic_nostalgic" },
+
+  // Soulful, Sufi, Folk, Raw & Acoustic
+  "kailash kher": { genres: ["sufi", "folk", "devotional"], style: "raw_high_folk" },
+  "rahat fateh ali khan": { genres: ["sufi", "qawwali", "romantic"], style: "classical_qawwali" },
+  "mohit chauhan": { genres: ["sufi", "indie", "romantic"], style: "acoustic_gentle" },
+  "harshdeep kaur": { genres: ["sufi", "folk", "spiritual"], style: "soulful_sufi" },
+  "rekha bhardwaj": { genres: ["folk", "sufi", "ghazal"], style: "husky_rustic" },
+  "richa sharma": { genres: ["sufi", "folk", "high_power"], style: "high_power_soul" },
+  "shilpa rao": { genres: ["sufi", "contemporary", "ghazal"], style: "husky_rustic" },
+  "sadhana sargam": { genres: ["melodic", "classical", "devotional"], style: "sweet_serene" },
+  "kavita krishnamurthy": { genres: ["classical", "filmi", "romantic"], style: "classical_expressive" },
+  "anuradha paudwal": { genres: ["devotional", "romantic", "melodic"], style: "sweet_serene" },
+  "mahalakshmi iyer": { genres: ["melodic", "romantic", "gentle"], style: "sweet_serene" },
+  "palak muchhal": { genres: ["romantic", "melodic", "sweet"], style: "sweet_serene" },
+  "asees kaur": { genres: ["romantic", "sufi", "pop"], style: "husky_contemporary" },
+  "jasleen royal": { genres: ["indie", "acoustic", "folk"], style: "raw_acoustic" },
+  "anuv jain": { genres: ["indie", "acoustic", "ballad"], style: "raw_acoustic" },
+  "prateek kuhad": { genres: ["indie", "acoustic", "ballad"], style: "raw_acoustic" },
+  "lucky ali": { genres: ["indie", "pop", "ballad"], style: "deep_acoustic" },
+  "b praak": { genres: ["punjabi", "sad_ballad", "high_pitch"], style: "high_power_soul" },
+  "zubeen garg": { genres: ["folk", "pop", "romantic"], style: "husky_contemporary" },
+
+  // Dance, Pop, Urban, Punjabi & Hip-hop
+  "ap dhillon": { genres: ["punjabi", "hiphop", "urban"], style: "urban_swag" },
+  "diljit dosanjh": { genres: ["punjabi", "pop", "dance"], style: "energetic_punjabi" },
+  "badshah": { genres: ["hiphop", "party", "rap"], style: "urban_rap" },
+  "raftaar": { genres: ["hiphop", "rap", "drill"], style: "urban_rap" },
+  "divine": { genres: ["hiphop", "gully_rap", "street"], style: "urban_rap" },
+  "king": { genres: ["hiphop", "pop", "rnb"], style: "urban_swag" },
+  "guru randhawa": { genres: ["punjabi", "pop", "party"], style: "peppy_punjabi" },
+  "hardy sandhu": { genres: ["punjabi", "pop", "ballad"], style: "energetic_punjabi" },
+  "neha kakkar": { genres: ["party", "pop", "peppy"], style: "high_peppy" },
+  "dhvani bhanushali": { genres: ["pop", "romantic", "dance"], style: "contemporary_pop" },
+  "kanika kapoor": { genres: ["item_dance", "punjabi", "pop"], style: "high_peppy" },
+  "mika singh": { genres: ["party", "punjabi", "dance"], style: "rustic_boisterous" },
+  "daler mehndi": { genres: ["bhangra", "pop", "high_energy"], style: "high_power_bhangra" },
+  "tony kakkar": { genres: ["pop", "dance", "party"], style: "contemporary_pop" },
+  "benny dayal": { genres: ["dance", "funk", "pop"], style: "high_energy_versatile" },
+  "vishal dadlani": { genres: ["rock", "dance", "high_energy"], style: "high_power_soul" },
+  "shekhar ravjiani": { genres: ["romantic", "acoustic", "pop"], style: "smooth_contemporary" },
+  "salim merchant": { genres: ["sufi", "pop", "contemporary"], style: "smooth_contemporary" },
+  "sunidhi chauhan": { genres: ["item_dance", "power", "rock"], style: "high_power_versatile" },
+  "alisha chinai": { genres: ["pop", "indipop", "dance"], style: "husky_pop" },
+  "sapna mukherjee": { genres: ["dance", "pop", "filmi"], style: "husky_pop" },
+  "poornima": { genres: ["dance", "peppy", "filmi"], style: "high_peppy" },
+  "shalmali kholgade": { genres: ["pop", "dance", "jazz"], style: "versatile_expressive" },
+  "monali thakur": { genres: ["melodic", "dance", "peppy"], style: "sweet_peppy" },
+  "neeti mohan": { genres: ["dance", "romantic", "pop"], style: "sweet_peppy" },
+  "nikhita gandhi": { genres: ["pop", "rnb", "dance"], style: "smooth_contemporary" },
+  "jonita gandhi": { genres: ["pop", "dance", "melodic"], style: "versatile_expressive" },
+  "lisa mishra": { genres: ["rnb", "pop", "acoustic"], style: "smooth_contemporary" },
+  "sona mohapatra": { genres: ["folk", "rock", "pop"], style: "raw_high_folk" },
+  "tulsi kumar": { genres: ["romantic", "pop", "sweet"], style: "sweet_serene" },
+  "himesh reshammiya": { genres: ["sufi_rock", "high_pitch", "pop"], style: "nasal_high_rock" },
+  "sukhwinder singh": { genres: ["sufi", "high_power", "folk"], style: "high_power_soul" },
+
+  // Ghazal, Classical, Vintage Legends
+  "pankaj udhas": { genres: ["ghazal", "nazm", "romantic"], style: "gentle_ghazal" },
+  "hariharan": { genres: ["ghazal", "classical", "fusion"], style: "classical_expressive" },
+  "suresh wadkar": { genres: ["classical", "devotional", "melodic"], style: "sweet_serene" },
+  "roop kumar rathod": { genres: ["ghazal", "sufi", "romantic"], style: "classical_qawwali" },
+  "mohammed aziz": { genres: ["filmi", "qawwali", "romantic"], style: "high_power_filmi" },
+  "talat mahmood": { genres: ["ghazal", "silky", "vintage"], style: "velvet_tremolo" },
+  "hemant kumar": { genres: ["rabindra_sangeet", "vintage", "ballad"], style: "deep_baritone" },
+  "manna dey": { genres: ["classical", "vintage", "versatile"], style: "classical_master" },
+  "mukesh": { genres: ["dard_bhare", "vintage", "romantic"], style: "deep_melancholic" },
+  "mohammed rafi": { genres: ["versatile", "vintage", "romantic"], style: "golden_legend" },
+  "kishore kumar": { genres: ["yodeling", "romantic", "comedy"], style: "golden_legend" },
+  "mahendra kapoor": { genres: ["patriotic", "vintage", "high_pitch"], style: "high_power_filmi" },
+  "geeta dutt": { genres: ["vintage", "husky", "romantic"], style: "husky_rustic" },
+  "shamshad begum": { genres: ["vintage", "folk", "raw"], style: "raw_high_folk" },
+  "lata mangeshkar": { genres: ["golden", "classical", "melodic"], style: "golden_legend" },
+  "asha bhosle": { genres: ["versatile", "cabaret", "ghazal"], style: "golden_legend" }
+};
+
 function getSingerMetadataMap(directory) {
   if (singerMetadataMap && singerMetadataMap.size > 0) return singerMetadataMap;
   singerMetadataMap = new Map();
   (directory || []).forEach(s => {
     if (!s || !s.name) return;
+    const cleanName = s.name.toLowerCase().trim();
     const gender = getSingerGender(s.name);
     const validSongs = (s.songs || []).filter(x => x && typeof x.y === 'number' && x.y > 1900 && x.y < 2030);
     const years = validSongs.map(x => x.y).sort((a, b) => a - b);
@@ -465,7 +604,6 @@ function getSingerMetadataMap(directory) {
       eraCounts[era] = (eraCounts[era] || 0) + 1;
     });
 
-    // Active in era if singer has at least 2 songs or >= 10% of their valid catalog
     const activeEras = new Set();
     Object.keys(eraCounts).forEach(e => {
       if (eraCounts[e] >= 2 || (validSongs.length > 0 && eraCounts[e] / validSongs.length >= 0.1)) {
@@ -473,16 +611,19 @@ function getSingerMetadataMap(directory) {
       }
     });
 
-    // Also include any era if singer has small catalog (<= 5 songs)
     if (validSongs.length <= 5) {
       Object.keys(eraCounts).forEach(e => activeEras.add(e));
     }
 
-    singerMetadataMap.set(s.name.toLowerCase().trim(), {
+    const taxonomy = SINGER_PROFILES[cleanName] || { genres: ["bollywood", "melodic"], style: "versatile" };
+
+    singerMetadataMap.set(cleanName, {
       name: s.name,
       gender,
       medianYear,
-      eras: activeEras
+      eras: activeEras,
+      genres: taxonomy.genres || ["bollywood"],
+      style: taxonomy.style || "versatile"
     });
   });
   return singerMetadataMap;
@@ -493,6 +634,7 @@ function getEraAndGenderMatchedDistractors(targetSingerName, targetYear, targetE
   const targetClean = (targetSingerName || '').toLowerCase().trim();
   const targetGender = getSingerGender(targetSingerName);
   const year = targetYear || ERA_ANCHOR_YEARS[targetEra] || 2000;
+  const targetMeta = metaMap.get(targetClean) || { genres: ["bollywood"], style: "versatile" };
 
   // Separate candidates strictly matching gender into Tier 1 (active in targetEra) & Tier 2 (active in neighboring eras)
   const tier1 = [];
@@ -503,7 +645,24 @@ function getEraAndGenderMatchedDistractors(targetSingerName, targetYear, targetE
     if (meta.gender !== targetGender) return;
 
     const yearDiff = Math.abs(year - meta.medianYear);
-    const item = { name: meta.name, yearDiff };
+    
+    // Calculate Genre and Style Affinity Score
+    let genreScore = 0;
+    if (Array.isArray(targetMeta.genres) && Array.isArray(meta.genres)) {
+      meta.genres.forEach(g => {
+        if (targetMeta.genres.includes(g)) genreScore += 300;
+      });
+    }
+    let styleScore = 0;
+    if (targetMeta.style && meta.style && targetMeta.style === meta.style) {
+      styleScore += 350;
+    }
+
+    // Temporal proximity score
+    const proximityScore = 1000 - (yearDiff * 20);
+    const totalScore = proximityScore + genreScore + styleScore;
+
+    const item = { name: meta.name, totalScore, yearDiff };
 
     if (meta.eras && meta.eras.has(targetEra)) {
       tier1.push(item);
@@ -512,9 +671,9 @@ function getEraAndGenderMatchedDistractors(targetSingerName, targetYear, targetE
     }
   });
 
-  // Sort candidates by proximity to the question's year
-  tier1.sort((a, b) => a.yearDiff - b.yearDiff);
-  tier2.sort((a, b) => a.yearDiff - b.yearDiff);
+  // Sort candidates by combined score (highest affinity + closest era peers first)
+  tier1.sort((a, b) => b.totalScore - a.totalScore);
+  tier2.sort((a, b) => b.totalScore - a.totalScore);
 
   let pool = [];
   if (tier1.length >= count) {
@@ -570,13 +729,18 @@ function buildDynamicQuestionsFromSingers(count = 15) {
       seenSongTitles.add(cleanTitle);
 
       const preview = song.preview || song.previewUrl || song.clip || getSongPreview(songTitle, singer.name) || "";
+      const singerProfile = SINGER_PROFILES[singer.name.toLowerCase().trim()] || { genres: ["bollywood"], style: "versatile" };
       candidates.push({
         singer: singer.name,
+        singerGender: getSingerGender(singer.name),
         song: songTitle,
         movie: song.m || song.movie || "Bollywood",
         music: (song.co && song.co.length) ? song.co.join(', ') : "Bollywood",
         year: song.y,
         era: era,
+        genres: singerProfile.genres || ["bollywood"],
+        style: singerProfile.style || "versatile",
+        vocalOffset: 7.0,
         preview: preview,
         hasPreview: !!preview,
         key: songTitle.toLowerCase().trim()
@@ -639,11 +803,15 @@ function buildDynamicQuestionsFromSingers(count = 15) {
       id: 2000 + generated.length,
       clip: item.preview,
       preview: item.preview,
+      vocalOffset: item.vocalOffset || 7.0,
       options: shuffledOptions,
       answer: answerIdx,
       song: item.song,
       movie: item.movie,
       singer: item.singer,
+      singerGender: item.singerGender,
+      genres: item.genres,
+      style: item.style,
       music: item.music,
       era: item.era,
       difficulty: generated.length < 5 ? "easy" : (generated.length < 10 ? "medium" : "hard"),
@@ -672,11 +840,15 @@ function buildDynamicQuestionsFromSingers(count = 15) {
         id: 2000 + generated.length,
         clip: item.preview,
         preview: item.preview,
+        vocalOffset: item.vocalOffset || 7.0,
         options: shuffledOptions,
         answer: answerIdx,
         song: item.song,
         movie: item.movie,
         singer: item.singer,
+        singerGender: item.singerGender,
+        genres: item.genres,
+        style: item.style,
         music: item.music,
         era: item.era,
         difficulty: generated.length < 5 ? "easy" : (generated.length < 10 ? "medium" : "hard"),
@@ -944,10 +1116,13 @@ function renderHome() {
   if (nameInput) nameInput.value = profile.name;
 
   const statsHigh = document.getElementById('home-stat-high');
-  if (statsHigh) statsHigh.textContent = profile.highScore;
+  if (statsHigh) statsHigh.textContent = profile.highScore || "₹ 0";
+
+  const statsTotal = document.getElementById('home-stat-total');
+  if (statsTotal) statsTotal.textContent = profile.totalWinnings || profile.highScore || "₹ 0";
 
   const statsGames = document.getElementById('home-stat-games');
-  if (statsGames) statsGames.textContent = profile.gamesPlayed;
+  if (statsGames) statsGames.textContent = profile.gamesPlayed || 0;
 
   const friendsList = document.getElementById('home-friends-list');
   if (friendsList) {
@@ -1198,7 +1373,7 @@ function renderQuestion() {
     window.audioEngine.speak(qAnnouncement, () => {
       if (!isQuestionActive()) return;
 
-      // Step 2: Song clip plays
+      // Step 2: Song clip plays with smart vocal seek
       window.audioEngine.playClip(q.clip, () => {
         if (!isQuestionActive()) return;
 
@@ -1215,7 +1390,7 @@ function renderQuestion() {
             startTimer();
           });
         });
-      });
+      }, q.vocalOffset || 7.0);
     });
   } else {
     startTimer();
@@ -1228,10 +1403,10 @@ window.playQuestionClip = function() {
   if (window.audioEngine) {
     if (!q.clip || (typeof q.clip === 'string' && !q.clip.startsWith('http'))) {
       ensureQuestionClip(q).then(clipUrl => {
-        window.audioEngine.playClip(clipUrl || q.clip);
+        window.audioEngine.playClip(clipUrl || q.clip, null, q.vocalOffset || 7.0);
       });
     } else {
-      window.audioEngine.playClip(q.clip);
+      window.audioEngine.playClip(q.clip, null, q.vocalOffset || 7.0);
     }
   }
 };
@@ -1661,11 +1836,29 @@ function renderGameOver() {
   stopTimer();
   profile.gamesPlayed++;
 
-  const finalAmount = game.guaranteedPrize || "₹ 0";
-  const finalEl = document.getElementById('gameover-prize-text');
-  if (finalEl) finalEl.textContent = `Aapne jeete: ${finalAmount}`;
+  // Determine winnings for this game:
+  // If player won final question (15/15), prize is KBC_LADDER[14].prize ("₹ 1,00,00,000")
+  // If player voluntarily quit, prize is game.guaranteedPrize (last successfully locked padaav/level)
+  // If player gave wrong answer, prize drops to locked padaav amount (game.guaranteedPrize)
+  let wonThisGame = game.guaranteedPrize || "₹ 0";
+  if (game.lastAnswerCorrect === true && game.qIndex >= 14) {
+    wonThisGame = KBC_LADDER[14].prize;
+  }
 
-  profile.highScore = game.currentPrize;
+  const wonNumeric = parsePrizeToNumber(wonThisGame);
+  const currentHighNumeric = parsePrizeToNumber(profile.highScore);
+  const currentTotalNumeric = parsePrizeToNumber(profile.totalWinnings);
+
+  if (wonNumeric > currentHighNumeric) {
+    profile.highScore = wonThisGame;
+  }
+  profile.totalWinnings = formatNumberToPrize(currentTotalNumeric + wonNumeric);
+
+  const finalEl = document.getElementById('gameover-prize-text');
+  if (finalEl) {
+    finalEl.textContent = `Aapne jeete: ${wonThisGame}`;
+  }
+
   saveProfile();
   endServerSession(game.lastAnswerCorrect === false ? 'lost' : 'won');
 }
