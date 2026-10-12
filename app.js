@@ -154,8 +154,10 @@ fetch('previews_cache.json')
   })
   .catch(err => console.warn('Could not load previews_cache.json:', err));
 
-function getSongEra(song) {
-  const y = (song && typeof song.y === 'number') ? song.y : null;
+function getSongEra(songOrYear) {
+  const y = (typeof songOrYear === 'number')
+    ? songOrYear
+    : ((songOrYear && typeof songOrYear.y === 'number') ? songOrYear.y : null);
   if (!y) return "retro";
   if (y < 1970) return "golden";
   if (y < 1990) return "retro";
@@ -169,13 +171,26 @@ function getSongPreview(songTitle, singerName) {
   if (!songTitle) return "";
   const clean = songTitle.toLowerCase().trim();
   const slug = clean.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  const cleanSinger = (singerName || '').toLowerCase().trim();
+
+  // 1. Composite singer + song key
+  if (cleanSinger) {
+    const compKey = `${cleanSinger}|${clean}`;
+    if (previewsCache[compKey]) return previewsCache[compKey];
+  }
+
+  // 2. Exact match on clean title or slug
   if (previewsCache[clean]) return previewsCache[clean];
   if (previewsCache[slug]) return previewsCache[slug];
-  for (const [k, v] of Object.entries(previewsCache)) {
-    if (k.length > 3 && (clean.includes(k) || k.includes(clean))) {
-      return v;
-    }
+
+  // 3. Normalized title (strip trailing parenthetical info like '(From "Movie")' or '- Remix')
+  const simplified = clean.replace(/\s*[\(\[\-].*$/, '').trim();
+  if (simplified && simplified.length > 3 && simplified !== clean) {
+    if (previewsCache[simplified]) return previewsCache[simplified];
+    const simplifiedSlug = simplified.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (previewsCache[simplifiedSlug]) return previewsCache[simplifiedSlug];
   }
+
   return "";
 }
 
@@ -398,6 +413,135 @@ function recordUsedSongKey(key) {
   } catch (e) {}
 }
 
+// --- GENDER & ERA SINGER MATCHING (Peer-Matched Distractors) ---
+const FEMALE_SINGER_NAMES = new Set([
+  'alisha chinai', 'alka yagnik', 'anuradha paudwal', 'asees kaur',
+  'asha bhosle', 'dhvani bhanushali', 'geeta dutt', 'harshdeep kaur',
+  'jasleen royal', 'jonita gandhi', 'kanika kapoor', 'kavita krishnamurthy',
+  'lata mangeshkar', 'lisa mishra', 'mahalakshmi iyer', 'monali thakur',
+  'neeti mohan', 'neha kakkar', 'nikhita gandhi', 'palak muchhal',
+  'poornima', 'rekha bhardwaj', 'richa sharma', 'sadhana sargam',
+  'sapna mukherjee', 'shalmali kholgade', 'shamshad begum', 'shilpa rao',
+  'shreya ghoshal', 'sona mohapatra', 'sunidhi chauhan', 'tulsi kumar'
+]);
+
+function getSingerGender(name) {
+  if (!name) return 'male';
+  const clean = name.toLowerCase().trim();
+  const directory = (Array.isArray(singersDirectory) && singersDirectory.length > 0)
+    ? singersDirectory
+    : ((typeof window !== 'undefined' && Array.isArray(window.singersDirectory)) ? window.singersDirectory : []);
+  const found = directory.find(s => s && s.name && s.name.toLowerCase().trim() === clean);
+  if (found && found.gender) {
+    return found.gender.toLowerCase();
+  }
+  return FEMALE_SINGER_NAMES.has(clean) ? 'female' : 'male';
+}
+
+const ERA_ANCHOR_YEARS = {
+  "golden": 1960,
+  "retro": 1978,
+  "90s": 1995,
+  "2000s": 2005,
+  "2010s": 2015,
+  "modern": 2022
+};
+
+let singerMetadataMap = null;
+function getSingerMetadataMap(directory) {
+  if (singerMetadataMap && singerMetadataMap.size > 0) return singerMetadataMap;
+  singerMetadataMap = new Map();
+  (directory || []).forEach(s => {
+    if (!s || !s.name) return;
+    const gender = getSingerGender(s.name);
+    const validSongs = (s.songs || []).filter(x => x && typeof x.y === 'number' && x.y > 1900 && x.y < 2030);
+    const years = validSongs.map(x => x.y).sort((a, b) => a - b);
+    const medianYear = years.length ? years[Math.floor(years.length / 2)] : 2005;
+
+    // Tally era counts for this singer
+    const eraCounts = {};
+    validSongs.forEach(x => {
+      const era = getSongEra(x.y);
+      eraCounts[era] = (eraCounts[era] || 0) + 1;
+    });
+
+    // Active in era if singer has at least 2 songs or >= 10% of their valid catalog
+    const activeEras = new Set();
+    Object.keys(eraCounts).forEach(e => {
+      if (eraCounts[e] >= 2 || (validSongs.length > 0 && eraCounts[e] / validSongs.length >= 0.1)) {
+        activeEras.add(e);
+      }
+    });
+
+    // Also include any era if singer has small catalog (<= 5 songs)
+    if (validSongs.length <= 5) {
+      Object.keys(eraCounts).forEach(e => activeEras.add(e));
+    }
+
+    singerMetadataMap.set(s.name.toLowerCase().trim(), {
+      name: s.name,
+      gender,
+      medianYear,
+      eras: activeEras
+    });
+  });
+  return singerMetadataMap;
+}
+
+function getEraAndGenderMatchedDistractors(targetSingerName, targetYear, targetEra, directory, count = 3) {
+  const metaMap = getSingerMetadataMap(directory);
+  const targetClean = (targetSingerName || '').toLowerCase().trim();
+  const targetGender = getSingerGender(targetSingerName);
+  const year = targetYear || ERA_ANCHOR_YEARS[targetEra] || 2000;
+
+  // Separate candidates strictly matching gender into Tier 1 (active in targetEra) & Tier 2 (active in neighboring eras)
+  const tier1 = [];
+  const tier2 = [];
+
+  metaMap.forEach((meta, key) => {
+    if (key === targetClean) return;
+    if (meta.gender !== targetGender) return;
+
+    const yearDiff = Math.abs(year - meta.medianYear);
+    const item = { name: meta.name, yearDiff };
+
+    if (meta.eras && meta.eras.has(targetEra)) {
+      tier1.push(item);
+    } else {
+      tier2.push(item);
+    }
+  });
+
+  // Sort candidates by proximity to the question's year
+  tier1.sort((a, b) => a.yearDiff - b.yearDiff);
+  tier2.sort((a, b) => a.yearDiff - b.yearDiff);
+
+  let pool = [];
+  if (tier1.length >= count) {
+    const candidateWindow = Math.min(tier1.length, Math.max(count + 3, 6));
+    pool = shuffleArray(tier1.slice(0, candidateWindow)).slice(0, count).map(c => c.name);
+  } else {
+    const needed = count - tier1.length;
+    pool = [
+      ...tier1.map(c => c.name),
+      ...tier2.slice(0, needed).map(c => c.name)
+    ];
+  }
+
+  // Safety fallback if directory was small: ensure strictly matching gender
+  if (pool.length < count) {
+    (directory || []).forEach(s => {
+      if (!s || !s.name) return;
+      if (s.name.toLowerCase().trim() === targetClean) return;
+      if (getSingerGender(s.name) === targetGender && !pool.includes(s.name)) {
+        pool.push(s.name);
+      }
+    });
+  }
+
+  return pool.slice(0, count);
+}
+
 // --- DYNAMIC QUESTION GENERATION (Era-filtered from full 3,199-song catalog in singers.json + previews_cache.json) ---
 function buildDynamicQuestionsFromSingers(count = 15) {
   const directory = (Array.isArray(singersDirectory) && singersDirectory.length > 0)
@@ -484,13 +628,10 @@ function buildDynamicQuestionsFromSingers(count = 15) {
       continue;
     }
 
-    const distractors = directory.filter(s => 
-      s.name && s.name.toLowerCase().trim() !== item.singer.toLowerCase().trim()
-    );
+    const distractors = getEraAndGenderMatchedDistractors(item.singer, item.year, item.era, directory, 3);
     if (distractors.length < 3) continue;
 
-    const shuffledDistractors = shuffleArray(distractors).slice(0, 3);
-    const options = [item.singer, shuffledDistractors[0].name, shuffledDistractors[1].name, shuffledDistractors[2].name];
+    const options = [item.singer, distractors[0], distractors[1], distractors[2]];
     const shuffledOptions = shuffleArray(options);
     const answerIdx = shuffledOptions.indexOf(item.singer);
 
@@ -520,13 +661,10 @@ function buildDynamicQuestionsFromSingers(count = 15) {
       if (generated.length >= count) break;
       if (generated.some(g => g.song === item.song && g.singer === item.singer)) continue;
 
-      const distractors = directory.filter(s => 
-        s.name && s.name.toLowerCase().trim() !== item.singer.toLowerCase().trim()
-      );
+      const distractors = getEraAndGenderMatchedDistractors(item.singer, item.year, item.era, directory, 3);
       if (distractors.length < 3) continue;
 
-      const shuffledDistractors = shuffleArray(distractors).slice(0, 3);
-      const options = [item.singer, shuffledDistractors[0].name, shuffledDistractors[1].name, shuffledDistractors[2].name];
+      const options = [item.singer, distractors[0], distractors[1], distractors[2]];
       const shuffledOptions = shuffleArray(options);
       const answerIdx = shuffledOptions.indexOf(item.singer);
 
@@ -563,7 +701,26 @@ function shuffleArray(arr) {
 }
 
 function randomizeQuestionOptions(q) {
-  if (!q || !Array.isArray(q.options) || q.options.length < 2) return q;
+  if (!q) return q;
+  const directory = (Array.isArray(singersDirectory) && singersDirectory.length > 0)
+    ? singersDirectory
+    : ((typeof window !== 'undefined' && Array.isArray(window.singersDirectory)) ? window.singersDirectory : []);
+
+  if (q.singer && Array.isArray(directory) && directory.length >= 4) {
+    const distractors = getEraAndGenderMatchedDistractors(q.singer, q.year, q.era || getSongEra(q.song), directory, 3);
+    if (distractors.length >= 3) {
+      const options = [q.singer, distractors[0], distractors[1], distractors[2]];
+      const shuffledOptions = shuffleArray(options);
+      const answerIdx = shuffledOptions.indexOf(q.singer);
+      return {
+        ...q,
+        options: shuffledOptions,
+        answer: answerIdx
+      };
+    }
+  }
+
+  if (!Array.isArray(q.options) || q.options.length < 2) return q;
   const correctOptionText = q.options[q.answer];
   const shuffledOptions = shuffleArray(q.options);
   const newAnswerIdx = shuffledOptions.indexOf(correctOptionText);
@@ -616,7 +773,7 @@ function getQuestionsForGame() {
     id: 9000 + i,
     clip: "",
     preview: "",
-    options: ["Kishore Kumar", "Lata Mangeshkar", "Mohammed Rafi", "Mukesh"],
+    options: ["Kishore Kumar", "Mohammed Rafi", "Mukesh", "Manna Dey"],
     answer: 0,
     song: "Gaata Rahe Mera Dil",
     movie: "Guide",
@@ -2505,18 +2662,19 @@ window.useFlipQuestion = function() {
   }
   updateLifelineHUD();
 
-  const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
-  const currentQ = qList[game.qIndex % qList.length];
+  const currentQ = game.questions[game.qIndex];
+  const freshQs = buildDynamicQuestionsFromSingers(5);
+  const replacement = freshQs.find(q => !game.questions.some(g => g.song === q.song && g.singer === q.singer)) || freshQs[0];
 
-  // Find unused backup question with matching difficulty
-  const backup = SAMPLE_QUESTIONS.find(q => q.id !== currentQ.id && q.difficulty === currentQ.difficulty);
-
-  if (backup) {
-    game.questions[game.qIndex] = backup;
+  if (replacement) {
+    game.questions[game.qIndex] = replacement;
   } else {
-    // If no exact difficulty match, pick any other question
-    const anyBackup = SAMPLE_QUESTIONS.find(q => q.id !== currentQ.id);
-    if (anyBackup) game.questions[game.qIndex] = anyBackup;
+    // If no dynamic question available, pick from SAMPLE_QUESTIONS matching active eras
+    const activeEras = getActiveEras();
+    const backup = SAMPLE_QUESTIONS.find(q => (!currentQ || q.id !== currentQ.id) && activeEras.includes(q.era || "retro"));
+    if (backup) {
+      game.questions[game.qIndex] = randomizeQuestionOptions(backup);
+    }
   }
 
   showToast("Prashn Badal Diya Gaya!");
