@@ -205,6 +205,7 @@ export default {
         const question = body.question || "";
         const options = Array.isArray(body.options) ? body.options : [];
         const playerName = (body.playerName || "Khiladi").trim();
+        const audioClip = (body.clip || "").trim();
 
         if (!sessionId || !friendPhone) {
           return new Response(JSON.stringify({ error: "Missing sessionId or friendPhone" }), { status: 400, headers: corsHeaders });
@@ -216,26 +217,39 @@ export default {
 
         await env.DB.prepare(
           "INSERT INTO friend_requests (id, session_id, friend_name, friend_phone, token, question_text, options_json, status, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)"
-        ).bind(requestId, sessionId, friendName, friendPhone, token, question, JSON.stringify(options), expiresAt).run();
+        ).bind(
+          requestId,
+          sessionId,
+          friendName,
+          friendPhone,
+          token,
+          question,
+          JSON.stringify({ options, clip: audioClip, player: playerName }),
+          expiresAt
+        ).run();
 
-        // Target URL links
+        // Target URL links (Domain-branded compact short URLs)
         const origin = url.origin.includes("localhost") || url.origin.includes("127.0.0.1") ? url.origin : "https://kbc.harjani.me";
-        const answerUrl = `${origin}/friend.html?session=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}`;
-        const audioClip = body.clip || "";
-        const callBase = `${origin}/friend-call.html?session=${encodeURIComponent(sessionId)}&clip=${encodeURIComponent(audioClip)}&q=${encodeURIComponent(question)}&opts=${encodeURIComponent(JSON.stringify(options))}&player=${encodeURIComponent(playerName)}`;
-        const audioUrl = `${callBase}&mode=audio`;
-        const videoUrl = `${callBase}&mode=video`;
+        const videoLink = `${origin}/call/video?id=${token}`;
+        const audioLink = `${origin}/call/audio?id=${token}`;
+        const answerLink = `${origin}/call/answer?id=${token}`;
+        const answerUrl = answerLink;
+        const audioUrl = audioLink;
+        const videoUrl = videoLink;
 
-        // Fix 2: Message template with audio clip link and no redundant answer link
+        // Compact WhatsApp template: Video Call on Line 3, ~290 characters total (never truncated by WhatsApp 'Read more...')
         const optA = options[0] || "";
         const optB = options[1] || "";
         const optC = options[2] || "";
         const optD = options[3] || "";
-        let messageText = `🎵 SurKBC — Aapke dost ${playerName} ko aapki madad chahiye!\n\nSawaal: ${question}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}`;
-        if (audioClip) {
-          messageText += `\n\n🎵 Gaana (Audio Clip) Sunein:\n${audioClip}`;
-        }
-        messageText += `\n\n🎙️ Audio call:\n${audioUrl}\n\n📹 Video call:\n${videoUrl}`;
+
+        let messageText = `🎵 *SurKBC:* *${playerName}* ko aapki zaroorat hai!\n\n` +
+          `📹 *Video Call:* ${videoLink}\n` +
+          `🎙️ *Audio Call:* ${audioLink}\n\n` +
+          `*Sawaal:* ${question}\n` +
+          `A) ${optA} | B) ${optB}\n` +
+          `C) ${optC} | D) ${optD}\n\n` +
+          `✍️ *Uttar / Clip:* ${answerLink}`;
 
         // Clean phone for WhatsApp
         const digitsOnly = friendPhone.replace(/\D/g, "");
@@ -361,9 +375,25 @@ export default {
           return new Response(JSON.stringify({ error: "Token expired", status: "expired" }), { status: 410, headers: corsHeaders });
         }
 
+        let opts = [];
+        let clip = "";
+        let playerName = reqRow.friend_name;
+        try {
+          const parsed = JSON.parse(reqRow.options_json || "[]");
+          if (Array.isArray(parsed)) {
+            opts = parsed;
+          } else if (parsed && typeof parsed === "object") {
+            opts = Array.isArray(parsed.options) ? parsed.options : [];
+            clip = parsed.clip || "";
+            if (parsed.player) playerName = parsed.player;
+          }
+        } catch (e) {}
+
         return new Response(JSON.stringify({
           question: reqRow.question_text,
-          options: JSON.parse(reqRow.options_json || "[]"),
+          options: opts,
+          clip,
+          playerName,
           friendName: reqRow.friend_name,
           status: reqRow.status,
           answer: reqRow.answer,
@@ -562,34 +592,89 @@ export default {
         }), { status: 200, headers: corsHeaders });
       }
 
-      // 11. Call Auto-Connect Trigger: GET /call?session=&mode=
-      if (url.pathname === "/call" && method === "GET") {
-        const sessionId = url.searchParams.get("session");
-        const mode = url.searchParams.get("mode") === "video" ? "video" : "audio";
-        const roomName = `surkbc-${encodeURIComponent(sessionId || "game")}`;
+      // 11. Short Call & Portal Redirects: /call/video?id=..., /call/audio?id=..., /call/answer?id=...
+      if ((url.pathname.startsWith("/call/") || url.pathname === "/call") && method === "GET") {
+        const subAction = url.pathname.replace(/^\/call\/?/, "").toLowerCase() || (url.searchParams.get("mode") === "video" ? "video" : "audio");
+        const tokenId = url.searchParams.get("id") || url.searchParams.get("token") || url.searchParams.get("session") || "";
 
-        if (sessionId && env.SESSION_ROOM) {
+        if (env.DB && tokenId) {
           try {
-            const roomId = env.SESSION_ROOM.idFromName(sessionId);
+            const row = await env.DB.prepare(
+              "SELECT session_id, token, question_text, options_json, friend_name FROM friend_requests WHERE token = ? OR id = ? OR session_id = ? ORDER BY created_at DESC LIMIT 1"
+            ).bind(tokenId, tokenId, tokenId).first();
+
+            if (row) {
+              let opts = [];
+              let clip = "";
+              let player = "Aapke dost";
+              try {
+                const parsed = JSON.parse(row.options_json || "[]");
+                if (Array.isArray(parsed)) {
+                  opts = parsed;
+                } else if (parsed && typeof parsed === "object") {
+                  opts = Array.isArray(parsed.options) ? parsed.options : [];
+                  clip = parsed.clip || "";
+                  player = parsed.player || "Aapke dost";
+                }
+              } catch (e) {}
+
+              if (subAction === "answer") {
+                const answerTarget = `/friend.html?session=${encodeURIComponent(row.session_id)}&token=${encodeURIComponent(row.token)}`;
+                return Response.redirect(new URL(answerTarget, url.origin).toString(), 302);
+              }
+
+              const callMode = (subAction === "video" || url.searchParams.get("mode") === "video") ? "video" : "audio";
+              // Trigger live broadcast to host player
+              if (env.SESSION_ROOM) {
+                try {
+                  const roomId = env.SESSION_ROOM.idFromName(row.session_id);
+                  const room = env.SESSION_ROOM.get(roomId);
+                  await room.fetch(new Request("https://internal/broadcast", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      type: "call_started",
+                      sessionId: row.session_id,
+                      mode: callMode,
+                      roomName: `surkbc-${encodeURIComponent(row.session_id)}`,
+                      timestamp: Date.now()
+                    })
+                  }));
+                } catch (e) {
+                  console.warn("Call broadcast warning:", e);
+                }
+              }
+
+              // Full parameters passed to friend-call.html on 302 redirect
+              const fullCallTarget = `/friend-call.html?session=${encodeURIComponent(row.session_id)}&clip=${encodeURIComponent(clip)}&q=${encodeURIComponent(row.question_text)}&opts=${encodeURIComponent(JSON.stringify(opts))}&player=${encodeURIComponent(player)}&mode=${callMode}`;
+              return Response.redirect(new URL(fullCallTarget, url.origin).toString(), 302);
+            }
+          } catch (e) {
+            console.warn("D1 lookup error in /call redirect:", e);
+          }
+        }
+
+        // Direct session fallback for /call?session=...&mode=...
+        const sId = url.searchParams.get("session") || tokenId || "game";
+        const cMode = (subAction === "video" || url.searchParams.get("mode") === "video") ? "video" : "audio";
+        if (sId && env.SESSION_ROOM) {
+          try {
+            const roomId = env.SESSION_ROOM.idFromName(sId);
             const room = env.SESSION_ROOM.get(roomId);
             await room.fetch(new Request("https://internal/broadcast", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 type: "call_started",
-                sessionId,
-                mode,
-                roomName,
+                sessionId: sId,
+                mode: cMode,
+                roomName: `surkbc-${encodeURIComponent(sId)}`,
                 timestamp: Date.now()
               })
             }));
-          } catch (e) {
-            console.warn("Call broadcast warning:", e);
-          }
+          } catch (e) {}
         }
-
-        // Direct friend to native PeerJS call client
-        const callTarget = `/friend-call.html?session=${encodeURIComponent(sessionId || "game")}&mode=${mode}`;
+        const callTarget = `/friend-call.html?session=${encodeURIComponent(sId)}&mode=${cMode}`;
         return Response.redirect(new URL(callTarget, url.origin).toString(), 302);
       }
 
@@ -860,33 +945,45 @@ export default {
 
         try {
           const query = `${songParam} ${singerParam}`.trim();
-          const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=1`;
-          const itunesRes = await fetch(itunesUrl, {
-            headers: { "User-Agent": "Mozilla/5.0 SurKBC/2.0" }
-          });
+          const headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" };
+          let itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&country=IN&media=music&entity=song&limit=3`;
+          let itunesRes = await fetch(itunesUrl, { headers });
 
+          let foundItem = null;
           if (itunesRes.ok) {
             const data = await itunesRes.json();
             if (data && data.results && data.results.length > 0) {
-              const item = data.results[0];
-              const previewUrl = item.previewUrl;
-              if (previewUrl) {
-                const response = new Response(JSON.stringify({
-                  success: true,
-                  previewUrl,
-                  trackName: item.trackName,
-                  artistName: item.artistName
-                }), {
-                  status: 200,
-                  headers: {
-                    ...corsHeaders,
-                    "Cache-Control": "public, max-age=604800, immutable"
-                  }
-                });
-                ctx.waitUntil(cache.put(cacheKey, response.clone()));
-                return response;
+              foundItem = data.results.find(r => r.previewUrl) || data.results[0];
+            }
+          }
+
+          // Fallback query with song title only if full artist query returned no preview
+          if (!foundItem || !foundItem.previewUrl) {
+            const fallbackUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(songParam)}&country=IN&media=music&entity=song&limit=3`;
+            const fallbackRes = await fetch(fallbackUrl, { headers });
+            if (fallbackRes.ok) {
+              const fbData = await fallbackRes.json();
+              if (fbData && fbData.results && fbData.results.length > 0) {
+                foundItem = fbData.results.find(r => r.previewUrl) || fbData.results[0];
               }
             }
+          }
+
+          if (foundItem && foundItem.previewUrl) {
+            const response = new Response(JSON.stringify({
+              success: true,
+              previewUrl: foundItem.previewUrl,
+              trackName: foundItem.trackName,
+              artistName: foundItem.artistName
+            }), {
+              status: 200,
+              headers: {
+                ...corsHeaders,
+                "Cache-Control": "public, max-age=604800, immutable"
+              }
+            });
+            ctx.waitUntil(cache.put(cacheKey, response.clone()));
+            return response;
           }
         } catch (e) {
           console.warn("iTunes preview fetch error:", e);

@@ -38,7 +38,22 @@ This document tracks all planned, in-progress, and completed tasks with strict a
     - `questions.js`: Tagged all sample questions with eras.
     - `worker.js`: Added iTunes preview search proxy with edge caching.
     - `audio.js`: Added responsive visualizer fallback for cross-origin audio elements and host TTS utterances.
-  - **Status**: Completed, built, and deploying.
+  - **Status**: Completed and verified.
+
+- [x] **Milestone 5: Compact WhatsApp Helpline Message (Green-API Safe & Top Video Call)**
+  - **Objective**: Reduce WhatsApp message length from ~1,150 chars to ~290 chars. Move Video Call to Line 3. Use server-side HTTP 302 redirects (`/call/video?id=...`, `/call/audio?id=...`, `/call/answer?id=...`) to expand full parameters on click, ensuring `friend-call.html` and `friend.html` receive all query parameters without breaking.
+  - **Files Affected**:
+    - `worker.js`: Store `{ options, clip, player }` in D1 `options_json`, format compact message template with short links, add HTTP 302 redirect handler for `/call/video`, `/call/audio`, `/call/answer`.
+  - **Status**: Completed and verified.
+
+- [x] **Milestone 6: 3,199-Song Catalog Unlock, Zero-Leak Era Enforcement & Dynamic Audio Resolution**
+  - **Objective**: Unlock all 3,199 songs in `singers.json` across all 6 eras, expand `previews_cache.json` to 207 verified tracks, implement smart blending (up to 9 cached preview tracks + 6 catalog gems per game), strictly enforce zero-leak era isolation in `getQuestionsForGame()`, resolve dynamic clips on the fly via `ensureQuestionClip(q)` and enhanced `/api/song-preview` with India iTunes store integration, deduplicate songs across games via 300-entry history, and re-generate a fresh randomized deck whenever "Take The Hot Seat" is clicked.
+  - **Files Affected**:
+    - `app.js` & `public/app.js`: Unlocked catalog in `buildDynamicQuestionsFromSingers()`, added song deduplication and anti-repetition memory, guaranteed zero-leak era filter in `getQuestionsForGame()`, added `ensureQuestionClip()` with background prefetching, and refreshed deck on `startHotSeatGame()` and `singers.json` load.
+    - `worker.js`: Enhanced `/api/song-preview` with `country=IN`, browser user-agent, and fallback queries for reliable Bollywood preview resolution.
+    - `previews_cache.json` & `public/previews_cache.json`: Enriched with 207 verified previews.
+  - **Status**: Completed and verified.
+
 
 ---
 

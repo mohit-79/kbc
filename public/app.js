@@ -78,13 +78,14 @@ const SINGER_PHOTO_MAP = {
 };
 
 let gallerySingers = {};
-let singersDirectory = [];
+let singersDirectory = (typeof window !== 'undefined' && window.singersDirectory) || [];
 
 fetch('singers.json')
   .then(res => res.json())
   .then(data => {
     if (Array.isArray(data)) {
       singersDirectory = data;
+      if (typeof window !== 'undefined') window.singersDirectory = data;
       data.forEach(s => {
         if (s.name) {
           const norm = s.name.toLowerCase().trim().replace(/^mohd\.?\s+/i, 'mohammed ').replace(/[^a-z0-9]/g, '');
@@ -92,8 +93,8 @@ fetch('singers.json')
           gallerySingers[s.name.toLowerCase().trim()] = localImg;
         }
       });
-      // If active game has no questions or is at question 0, try enriching with dynamic questions
-      if (game && (!game.questions || !game.questions.length) && typeof getQuestionsForGame === 'function') {
+      // If active game has no questions or is at question 0, enrich with dynamic questions
+      if (game && (!game.questions || !game.questions.length || game.qIndex === 0) && typeof getQuestionsForGame === 'function') {
         game.questions = getQuestionsForGame();
       }
     }
@@ -138,7 +139,7 @@ function getSingerPhoto(name) {
 let profile = loadProfile();
 window.profile = profile;
 let musicFactsData = null;
-let previewsCache = {};
+let previewsCache = (typeof window !== 'undefined' && window.previewsCache) || {};
 
 fetch('musicFacts.json')
   .then(res => res.json())
@@ -147,7 +148,10 @@ fetch('musicFacts.json')
 
 fetch('previews_cache.json')
   .then(res => res.json())
-  .then(data => { previewsCache = data || {}; })
+  .then(data => {
+    previewsCache = data || {};
+    if (typeof window !== 'undefined') window.previewsCache = previewsCache;
+  })
   .catch(err => console.warn('Could not load previews_cache.json:', err));
 
 function getSongEra(song) {
@@ -172,6 +176,51 @@ function getSongPreview(songTitle, singerName) {
       return v;
     }
   }
+  return "";
+}
+
+async function ensureQuestionClip(q) {
+  if (!q) return "";
+  if (q.clip && (typeof q.clip === 'string') && (q.clip.startsWith('http://') || q.clip.startsWith('https://'))) {
+    return q.clip;
+  }
+  const cached = getSongPreview(q.song, q.singer);
+  if (cached) {
+    q.clip = cached;
+    q.preview = cached;
+    return cached;
+  }
+  try {
+    const res = await fetch(`/api/song-preview?song=${encodeURIComponent(q.song || '')}&singer=${encodeURIComponent(q.singer || '')}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.previewUrl) {
+        q.clip = data.previewUrl;
+        q.preview = data.previewUrl;
+        const clean = (q.song || '').toLowerCase().trim();
+        previewsCache[clean] = data.previewUrl;
+        return data.previewUrl;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const term = `${q.song || ''} ${q.singer || ''}`.trim();
+    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=IN&entity=song&limit=1`;
+    const res = await fetch(itunesUrl);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.results && data.results.length > 0 && data.results[0].previewUrl) {
+        const previewUrl = data.results[0].previewUrl;
+        q.clip = previewUrl;
+        q.preview = previewUrl;
+        const clean = (q.song || '').toLowerCase().trim();
+        previewsCache[clean] = previewUrl;
+        return previewUrl;
+      }
+    }
+  } catch (e) {}
+
   return "";
 }
 
@@ -344,42 +393,50 @@ function recordUsedSongKey(key) {
   try {
     const keys = loadUsedSongKeys();
     keys.add(key);
-    const arr = Array.from(keys).slice(-100);
+    const arr = Array.from(keys).slice(-300);
     sessionStorage.setItem('surkbc_used_song_keys', JSON.stringify(arr));
   } catch (e) {}
 }
 
-// --- DYNAMIC QUESTION GENERATION (Era-filtered from singers.json + previews_cache.json) ---
+// --- DYNAMIC QUESTION GENERATION (Era-filtered from full 3,199-song catalog in singers.json + previews_cache.json) ---
 function buildDynamicQuestionsFromSingers(count = 15) {
-  if (!Array.isArray(singersDirectory) || singersDirectory.length < 4) {
+  const directory = (Array.isArray(singersDirectory) && singersDirectory.length > 0)
+    ? singersDirectory
+    : ((typeof window !== 'undefined' && Array.isArray(window.singersDirectory)) ? window.singersDirectory : []);
+
+  if (!Array.isArray(directory) || directory.length < 4) {
     return [];
   }
 
   const activeEras = getActiveEras();
   const usedKeys = loadUsedSongKeys();
   const candidates = [];
+  const seenSongTitles = new Set();
 
-  singersDirectory.forEach(singer => {
+  directory.forEach(singer => {
     if (!singer.name || !Array.isArray(singer.songs)) return;
     singer.songs.forEach(song => {
       if (!song || !(song.t || song.title)) return;
       const songTitle = song.t || song.title;
+      const cleanTitle = songTitle.toLowerCase().trim();
       const era = getSongEra(song);
+      // Zero-leak check: must belong strictly to activeEras
       if (!activeEras.includes(era)) return;
+      if (seenSongTitles.has(cleanTitle)) return;
+      seenSongTitles.add(cleanTitle);
 
-      const preview = song.preview || song.previewUrl || song.clip || getSongPreview(songTitle, singer.name);
-      if (preview) {
-        candidates.push({
-          singer: singer.name,
-          song: songTitle,
-          movie: song.m || song.movie || "Bollywood",
-          music: (song.co && song.co.length) ? song.co.join(', ') : "Bollywood",
-          year: song.y,
-          era: era,
-          preview: preview,
-          key: `${singer.name.toLowerCase()}|${songTitle.toLowerCase()}`
-        });
-      }
+      const preview = song.preview || song.previewUrl || song.clip || getSongPreview(songTitle, singer.name) || "";
+      candidates.push({
+        singer: singer.name,
+        song: songTitle,
+        movie: song.m || song.movie || "Bollywood",
+        music: (song.co && song.co.length) ? song.co.join(', ') : "Bollywood",
+        year: song.y,
+        era: era,
+        preview: preview,
+        hasPreview: !!preview,
+        key: songTitle.toLowerCase().trim()
+      });
     });
   });
 
@@ -387,21 +444,47 @@ function buildDynamicQuestionsFromSingers(count = 15) {
     return [];
   }
 
-  // Prioritize unused songs to prevent repetition across games
-  const unused = candidates.filter(c => !usedKeys.has(c.key));
-  const pool = unused.length >= count ? unused : candidates;
-  const shuffledPool = shuffleArray(pool);
+  // Prioritize unused songs to eliminate repetition across games
+  let unused = candidates.filter(c => !usedKeys.has(c.key));
+  // If user has played through the entire era catalog, reset the pool so game never starves
+  if (unused.length < count) {
+    unused = candidates;
+  }
+
+  // Separate unused pool into verified preview tracks and broader catalog tracks
+  const withPrev = shuffleArray(unused.filter(c => c.hasPreview));
+  const withoutPrev = shuffleArray(unused.filter(c => !c.hasPreview));
+
+  // Blend up to 9 verified preview tracks with 6 catalog tracks for rich variety
+  const targetWith = Math.min(withPrev.length, Math.min(count, 9));
+  const targetWithout = count - targetWith;
+
+  const selectedCandidates = [
+    ...withPrev.slice(0, targetWith),
+    ...withoutPrev.slice(0, targetWithout)
+  ];
+
+  // If still fewer than count, take whatever remains
+  if (selectedCandidates.length < count) {
+    const remaining = [...withPrev.slice(targetWith), ...withoutPrev.slice(targetWithout)];
+    selectedCandidates.push(...remaining.slice(0, count - selectedCandidates.length));
+  }
+
+  // Shuffle the chosen 15 candidates
+  const shuffledPool = shuffleArray(selectedCandidates);
 
   const generated = [];
-  const chosenSingers = new Set();
+  const chosenSingers = new Map();
 
   for (const item of shuffledPool) {
     if (generated.length >= count) break;
-    if (chosenSingers.has(item.singer) && generated.length < count - 2 && chosenSingers.size < singersDirectory.length) {
+    const singerCount = chosenSingers.get(item.singer) || 0;
+    // Don't repeat the same singer more than twice unless pool of singers is tiny
+    if (singerCount >= 2 && chosenSingers.size < directory.length) {
       continue;
     }
 
-    const distractors = singersDirectory.filter(s => 
+    const distractors = directory.filter(s => 
       s.name && s.name.toLowerCase().trim() !== item.singer.toLowerCase().trim()
     );
     if (distractors.length < 3) continue;
@@ -427,8 +510,43 @@ function buildDynamicQuestionsFromSingers(count = 15) {
       photo: getSingerPhoto(item.singer)
     });
 
-    chosenSingers.add(item.singer);
+    chosenSingers.set(item.singer, singerCount + 1);
     recordUsedSongKey(item.key);
+  }
+
+  // Fallback pass if singer diversity constraints left us slightly short of count
+  if (generated.length < count) {
+    for (const item of shuffledPool) {
+      if (generated.length >= count) break;
+      if (generated.some(g => g.song === item.song && g.singer === item.singer)) continue;
+
+      const distractors = directory.filter(s => 
+        s.name && s.name.toLowerCase().trim() !== item.singer.toLowerCase().trim()
+      );
+      if (distractors.length < 3) continue;
+
+      const shuffledDistractors = shuffleArray(distractors).slice(0, 3);
+      const options = [item.singer, shuffledDistractors[0].name, shuffledDistractors[1].name, shuffledDistractors[2].name];
+      const shuffledOptions = shuffleArray(options);
+      const answerIdx = shuffledOptions.indexOf(item.singer);
+
+      generated.push({
+        id: 2000 + generated.length,
+        clip: item.preview,
+        preview: item.preview,
+        options: shuffledOptions,
+        answer: answerIdx,
+        song: item.song,
+        movie: item.movie,
+        singer: item.singer,
+        music: item.music,
+        era: item.era,
+        difficulty: generated.length < 5 ? "easy" : (generated.length < 10 ? "medium" : "hard"),
+        trivia: `${item.singer} ka yeh mashhoor gaana '${item.song}' (${item.movie}) hai.`,
+        photo: getSingerPhoto(item.singer)
+      });
+      recordUsedSongKey(item.key);
+    }
   }
 
   return generated;
@@ -468,12 +586,12 @@ function getQuestionsForGame() {
     ? SAMPLE_QUESTIONS.filter(q => activeEras.includes(q.era || "retro"))
     : [];
 
-  const combined = [...dynamicQs, ...curatedMatching];
+  const combined = [...dynamicQs, ...curatedMatching].filter(q => activeEras.includes(q.era));
   if (combined.length >= 15) {
     return shuffleArray(combined).slice(0, 15).map(randomizeQuestionOptions);
   }
   if (combined.length > 0) {
-    // If user filtered down to a single era with fewer questions, loop the bank cleanly
+    // If fewer than 15 total questions exist in this era, loop ONLY matching questions
     const padded = [];
     while (padded.length < 15) {
       padded.push(...shuffleArray(combined));
@@ -481,7 +599,34 @@ function getQuestionsForGame() {
     return padded.slice(0, 15).map(randomizeQuestionOptions);
   }
 
-  return shuffleArray(SAMPLE_QUESTIONS).slice(0, 15).map(randomizeQuestionOptions);
+  // Ultimate fallback (e.g. if singersDirectory not yet loaded and SAMPLE_QUESTIONS has active era):
+  const strictSamples = (typeof SAMPLE_QUESTIONS !== 'undefined' && SAMPLE_QUESTIONS.length)
+    ? SAMPLE_QUESTIONS.filter(q => activeEras.includes(q.era || "retro"))
+    : [];
+  if (strictSamples.length > 0) {
+    const padded = [];
+    while (padded.length < 15) {
+      padded.push(...shuffleArray(strictSamples));
+    }
+    return padded.slice(0, 15).map(randomizeQuestionOptions);
+  }
+
+  // Zero-leak fallback placeholder for active eras
+  return Array.from({ length: 15 }, (_, i) => ({
+    id: 9000 + i,
+    clip: "",
+    preview: "",
+    options: ["Kishore Kumar", "Lata Mangeshkar", "Mohammed Rafi", "Mukesh"],
+    answer: 0,
+    song: "Gaata Rahe Mera Dil",
+    movie: "Guide",
+    singer: "Kishore Kumar",
+    music: "S. D. Burman",
+    era: activeEras[0] || "retro",
+    difficulty: i < 5 ? "easy" : (i < 10 ? "medium" : "hard"),
+    trivia: "Classic Bollywood music trivia.",
+    photo: getSingerPhoto("Kishore Kumar")
+  })).map(randomizeQuestionOptions);
 }
 
 function createNewGameState() {
@@ -731,6 +876,10 @@ window.removeFriend = function(id) {
 
 // Fix 5: Grand Opening Intro Dialogue ("Namaskar mai hu amarnath bachpan...")
 window.startHotSeatGame = function() {
+  if (typeof getQuestionsForGame === 'function') {
+    game.questions = getQuestionsForGame();
+    game.qIndex = 0;
+  }
   show('screen-intro');
   if (window.audioEngine) {
     window.audioEngine.cancelVoice();
@@ -818,6 +967,10 @@ function renderIntro() {
 function renderQuestion() {
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
   const q = qList[game.qIndex % qList.length];
+  ensureQuestionClip(q);
+  if (qList[(game.qIndex + 1) % qList.length]) {
+    ensureQuestionClip(qList[(game.qIndex + 1) % qList.length]);
+  }
   const qNum = document.getElementById('q-num-badge');
   const qPrize = document.getElementById('q-prize-badge');
   const qText = document.getElementById('q-text');
@@ -916,7 +1069,13 @@ window.playQuestionClip = function() {
   const qList = game.questions.length ? game.questions : SAMPLE_QUESTIONS;
   const q = qList[game.qIndex % qList.length];
   if (window.audioEngine) {
-    window.audioEngine.playClip(q.clip);
+    if (!q.clip || (typeof q.clip === 'string' && !q.clip.startsWith('http'))) {
+      ensureQuestionClip(q).then(clipUrl => {
+        window.audioEngine.playClip(clipUrl || q.clip);
+      });
+    } else {
+      window.audioEngine.playClip(q.clip);
+    }
   }
 };
 
